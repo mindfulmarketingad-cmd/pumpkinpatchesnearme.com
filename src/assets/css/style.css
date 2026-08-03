@@ -630,6 +630,11 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 .post-item h3 a:hover { color: var(--orange-700); }
 .post-meta { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.55rem; }
 .post-meta a { color: var(--orange-700); }
+.pagination {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  margin: 1.5rem 0 0.5rem;
+}
+.pagination-status { color: var(--muted); font-size: 0.9rem; }
 .post-item p { margin-bottom: 0.85rem; color: var(--ink-2); }
 
 .byline {

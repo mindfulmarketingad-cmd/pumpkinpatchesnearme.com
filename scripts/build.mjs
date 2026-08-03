@@ -991,15 +991,16 @@ ${closingSummary}`;
 /* --- programmatic "X Best <Attraction> in <City>" posts ------------------
    Same idea as the city-wide "5 Best Pumpkin Patches" posts above, but
    scoped to one attraction (corn maze, hayride, etc.) within one city. Only
-   generated where at least three distinctly-named businesses in that city
-   carry the attraction's feature tag — the same honesty bar used above: a
-   "best of" list with fewer than three real options isn't a list worth
-   publishing, so most city/attraction combinations simply don't get a page.
+   generated where at least one distinctly-named business in that city
+   carries the attraction's feature tag — with a single qualifying business
+   the post reads as "Best <Attraction> in <City>" (singular, no leading
+   count) rather than the grammatically odd "1 Best Attractions".
 */
-const ATTRACTION_POST_MIN_LISTINGS = 3;
+const ATTRACTION_POST_MIN_LISTINGS = 1;
 const ATTRACTION_POST_MAX_LISTINGS = 5;
 const attractionCityPosts = [];
 let attractionPostIndex = 0;
+const titleCase = (s) => s.replace(/(^|[\s-])([a-z])/g, (m, sep, c) => sep + c.toUpperCase());
 
 for (const [key, items] of byCity) {
   const [stateName, cityName] = key.split('|');
@@ -1021,9 +1022,15 @@ for (const [key, items] of byCity) {
     const x = topN.length;
     const names = topN.map((l) => l.name);
     const attractionAuthorSlug = authors[attractionPostIndex++ % authors.length].slug;
-    const slug = slugify(`${x} best ${cat.name} in ${cityName} ${stateCode}`);
+    // A single qualifying business reads as "Best <Attraction> in <City>"
+    // (singular, no leading count) rather than "1 Best Attractions".
+    const attractionNamePlural = cat.name;
+    const attractionNameForCount = x === 1 ? titleCase(cat.singular) : cat.name;
+    const slug = x === 1
+      ? slugify(`best ${cat.singular} in ${cityName} ${stateCode}`)
+      : slugify(`${x} best ${cat.name} in ${cityName} ${stateCode}`);
     const path = `/blog/${slug}/`;
-    const h1 = `${x} Best ${cat.name} in ${label}`;
+    const h1 = x === 1 ? `Best ${attractionNameForCount} in ${label}` : `${x} Best ${attractionNamePlural} in ${label}`;
 
     const heroSrc = (topN.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
     const heroHtml = blogHeroFigureHtml(heroSrc, `${cat.name} near ${label}`);
@@ -1032,7 +1039,9 @@ for (const [key, items] of byCity) {
       .map((l, i) => `<a href="#${attr(l.slug)}">${i + 1}. ${esc(l.name)}</a>`)
       .join(' <span aria-hidden="true">&middot;</span> ')}</p>`;
 
-    const summaryIntro = `<p>The ${x} best ${esc(cat.name.toLowerCase())} in ${esc(label)} are ${joinNatural(names.map((n) => esc(n)))}, ranked by rating and review volume. Here's what each offers, how it's rated, and how to get there — followed by the questions we hear most about visiting. For every pumpkin patch we track nearby, see the full <a href="${cityPath(stateName, cityName)}">list of pumpkin patches in ${esc(label)}</a> or browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>. You can also browse ${esc(cat.name.toLowerCase())} everywhere we track them on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>`;
+    const summaryIntro = x === 1
+      ? `<p>The best ${esc(cat.singular)} in ${esc(label)} is ${esc(names[0])}, based on rating and review volume — it's the only one we currently track in town. Here's what it offers, how it's rated, and how to get there — followed by the questions we hear most about visiting. For every pumpkin patch we track nearby, see the full <a href="${cityPath(stateName, cityName)}">list of pumpkin patches in ${esc(label)}</a> or browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>. You can also browse ${esc(cat.name.toLowerCase())} everywhere we track them on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>`
+      : `<p>The ${x} best ${esc(cat.name.toLowerCase())} in ${esc(label)} are ${joinNatural(names.map((n) => esc(n)))}, ranked by rating and review volume. Here's what each offers, how it's rated, and how to get there — followed by the questions we hear most about visiting. For every pumpkin patch we track nearby, see the full <a href="${cityPath(stateName, cityName)}">list of pumpkin patches in ${esc(label)}</a> or browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>. You can also browse ${esc(cat.name.toLowerCase())} everywhere we track them on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>`;
 
     const listicleHtml = `<ol class="listicle">
 ${topN.map((l, i) => renderListicleEntry(l, i + 1, cityName)).join('\n')}
@@ -1052,7 +1061,7 @@ ${topN.map((l, i) => renderListicleEntry(l, i + 1, cityName)).join('\n')}
         a: `It varies by farm — some bundle the ${esc(cat.singular)} into general admission, others charge separately. See the admission details on each listing above where we have them, or call the farm directly to confirm current pricing.`,
       },
       {
-        q: `Are these ${esc(cat.name.toLowerCase())} good for young kids?`,
+        q: x === 1 ? `Is this ${esc(cat.singular)} good for young kids?` : `Are these ${esc(cat.name.toLowerCase())} good for young kids?`,
         a: `It depends on the farm and, for haunted attractions in particular, can vary a lot in intensity. Check the individual listing pages above for feature tags and details, and call ahead if you're planning around a specific age group.`,
       },
       {
@@ -1073,7 +1082,7 @@ ${faqQa
 </div>`;
 
     const closingSummary = `<h2>Summary</h2>
-<p>${esc(topN[0].name)} tops our list of ${esc(cat.name.toLowerCase())} in ${esc(label)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${names.length > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and hours, admission and what's actually running on a given day can vary week to week during the season — always confirm with the farm directly before you drive out. For more options nearby, see the full <a href="${cityPath(stateName, cityName)}">list of pumpkin patches in ${esc(label)}</a> or browse ${esc(cat.name.toLowerCase())} across every state on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>`;
+<p>${esc(topN[0].name)} is${names.length > 1 ? ' our top pick' : ' the only farm we currently track'} with a ${esc(cat.singular)} in ${esc(label)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${names.length > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and hours, admission and what's actually running on a given day can vary week to week during the season — always confirm with the farm directly before you drive out. For more options nearby, see the full <a href="${cityPath(stateName, cityName)}">list of pumpkin patches in ${esc(label)}</a> or browse ${esc(cat.name.toLowerCase())} across every state on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>`;
 
     const body = `${tocSection}
 ${summaryIntro}
@@ -1085,9 +1094,13 @@ ${closingSummary}`;
       path,
       slug,
       title: h1,
-      description: `The ${x} best ${cat.name.toLowerCase()} in ${label} are ${joinNatural(names)}. Compare ratings, hours and directions before you go.`,
+      description: x === 1
+        ? `The best ${cat.singular} in ${label} is ${names[0]}. See its rating, hours and directions before you go.`
+        : `The ${x} best ${cat.name.toLowerCase()} in ${label} are ${joinNatural(names)}. Compare ratings, hours and directions before you go.`,
       h1,
-      excerpt: `Our picks for the best ${cat.name.toLowerCase()} in ${label}, ranked by rating and reviews: ${joinNatural(names)}.`,
+      excerpt: x === 1
+        ? `Our pick for the best ${cat.singular} in ${label}: ${names[0]}.`
+        : `Our picks for the best ${cat.name.toLowerCase()} in ${label}, ranked by rating and reviews: ${joinNatural(names)}.`,
       date: BUILD_DATE,
       readingTime: '6 min read',
       author: attractionAuthorSlug,
@@ -1177,13 +1190,15 @@ const blogTeasers = posts
    avatars are explicitly illustrated initials, never presented as photos of
    real people. */
 
+const AUTHOR_PAGE_ARTICLE_CAP = 40;
 for (const author of authors) {
   const path = authorPath(author);
   const authored = posts.filter((p) => p.meta.author === author.slug);
+  const shown = authored.slice(0, AUTHOR_PAGE_ARTICLE_CAP);
 
   const articleList = authored.length
     ? `<div class="post-list">
-${authored
+${shown
   .map(
     (p) => `  <article class="post-item">
     <h3><a href="/blog/${p.meta.slug}/">${esc(p.meta.h1 || p.meta.title)}</a></h3>
@@ -1193,7 +1208,8 @@ ${authored
   </article>`
   )
   .join('\n')}
-</div>`
+</div>
+${authored.length > shown.length ? `<p style="margin-top:1rem"><a href="/blog/">See all ${authored.length} guides by ${esc(author.name)}, or browse the full blog &rarr;</a></p>` : ''}`
     : `<p>${esc(author.name)} hasn't published a guide yet — check back soon.</p>`;
 
   const body = `<div class="author-header">
@@ -1300,9 +1316,13 @@ const tokens = {
   '{{SITEMAP_STATES}}': stateNames
     .map((s) => `<li><a href="${statePath(s)}">Pumpkin patches in ${esc(s)}</a></li>`)
     .join('\n'),
-  '{{SITEMAP_POSTS}}': posts
+  // Hand-authored and citywide guides only — the 800+ programmatic
+  // attraction/city posts are reachable from the paginated /blog/ index and
+  // the XML sitemap, but listing every one of them here would make this
+  // human-facing page unusable.
+  '{{SITEMAP_POSTS}}': [...handAuthoredPosts, ...cityPosts]
     .map((p) => `<li><a href="/blog/${p.meta.slug}/">${esc(p.meta.h1 || p.meta.title)}</a></li>`)
-    .join('\n'),
+    .join('\n') + `\n<li><a href="/blog/">All ${posts.length} guides &amp; local roundups &rarr;</a></li>`,
   '{{CATEGORY_GRID}}': renderCategoryGrid(),
   '{{SITEMAP_CATEGORIES}}': categories
     .map((c) => `<li><a href="${categoryPath(c)}">${esc(c.name)} near me</a></li>`)
@@ -1323,7 +1343,65 @@ function expandTokens(html) {
   return out;
 }
 
+// The blog index is paginated rather than dumping every post on one page —
+// with 800+ programmatic attraction/city posts alongside the hand-written
+// guides, an unpaginated /blog/ would be an unreasonably large single page.
+// Page 1 is /blog/, subsequent pages are /blog/page/2/, /blog/page/3/, etc.,
+// each indexable with its own title and canonical (a differing set of
+// teasers per page, not duplicate content).
+const BLOG_PAGE_SIZE = 24;
+
 for (const page of staticPages) {
+  if (page.meta.path === '/blog/') {
+    const totalPages = Math.max(1, Math.ceil(posts.length / BLOG_PAGE_SIZE));
+    const [beforeTeasers, afterTeasers] = page.body.split('{{BLOG_TEASERS}}');
+    for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+      const pagePath = pageNum === 1 ? '/blog/' : `/blog/page/${pageNum}/`;
+      const slice = posts.slice((pageNum - 1) * BLOG_PAGE_SIZE, pageNum * BLOG_PAGE_SIZE);
+      const teasersForPage = slice
+        .map((p) => {
+          const author = authorsBySlug.get(p.meta.author);
+          const byAuthor = author ? `By <a href="${authorPath(author)}">${esc(author.name)}</a> &middot; ` : '';
+          return `<article class="post-item">
+  <h3><a href="/blog/${p.meta.slug}/">${esc(p.meta.h1 || p.meta.title)}</a></h3>
+  <p class="post-meta">${byAuthor}${p.meta.date ? new Date(`${p.meta.date}T12:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : ''}${p.meta.readingTime ? ` &middot; ${esc(p.meta.readingTime)}` : ''}</p>
+  <p>${esc(p.meta.excerpt || p.meta.description)}</p>
+  <a class="btn btn-outline btn-sm" href="/blog/${p.meta.slug}/">Read the guide</a>
+</article>`;
+        })
+        .join('\n');
+      const paginationHtml = totalPages > 1
+        ? `<nav class="pagination" aria-label="Blog pagination">
+  ${pageNum > 1 ? `<a class="btn btn-outline btn-sm" href="${pageNum === 2 ? '/blog/' : `/blog/page/${pageNum - 1}/`}">&larr; Newer</a>` : '<span></span>'}
+  <span class="pagination-status">Page ${pageNum} of ${totalPages}</span>
+  ${pageNum < totalPages ? `<a class="btn btn-outline btn-sm" href="/blog/page/${pageNum + 1}/">Older &rarr;</a>` : '<span></span>'}
+</nav>`
+        : '';
+      const closeIdx = afterTeasers.indexOf('</div>') + '</div>'.length;
+      const afterWithPagination = afterTeasers.slice(0, closeIdx) + '\n' + paginationHtml + afterTeasers.slice(closeIdx);
+      const pageBody = expandTokens(`${beforeTeasers}${teasersForPage}${afterWithPagination}`);
+
+      const pageMeta = {
+        ...page.meta,
+        path: pagePath,
+        title: pageNum === 1 ? page.meta.title : `${page.meta.title} — Page ${pageNum} of ${totalPages}`,
+        description: pageNum === 1 ? page.meta.description : `${page.meta.description} Page ${pageNum} of ${totalPages}.`,
+        trail: pageNum === 1 ? page.meta.trail : [{ label: 'Blog', href: '/blog/' }, { label: `Page ${pageNum}` }],
+      };
+      const crumbs = breadcrumbJsonLd(pageMeta.trail, pagePath);
+      const jsonld = {
+        '@context': 'https://schema.org',
+        '@graph': [
+          { '@type': 'WebPage', name: pageMeta.title, description: pageMeta.description, url: SITE_URL + pagePath },
+          crumbs,
+        ],
+      };
+      writePage(pagePath, render(pageMeta, pageBody, { jsonld }));
+      addToSitemap(pagePath, pageNum === 1 ? '0.7' : '0.4', 'weekly');
+    }
+    continue;
+  }
+
   const meta = page.meta;
   const body = expandTokens(page.body);
   let jsonld = null;
