@@ -289,6 +289,12 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
   box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--orange-100);
 }
 .listing-card.is-active { border-color: var(--orange); }
+.listing-card-media {
+  display: block; aspect-ratio: 8 / 5; overflow: hidden; background: var(--orange-50);
+}
+.listing-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.listing-card:hover .listing-card-img { transform: scale(1.03); }
+.listing-card-img { transition: transform 0.3s ease; }
 .listing-card-body { padding: 1rem 1.1rem 1.1rem; }
 /* Cards render an h3 heading everywhere except the state/city overflow grids,
    which use h2 (farm names are the only h2s on those pages, by design). */
@@ -368,6 +374,11 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
   width: 44px; height: 44px; border-radius: 50%; background: var(--orange); color: #fff;
   font-family: var(--font-display); font-weight: 700; font-size: 1.2rem;
 }
+.listicle-media {
+  flex: 0 0 auto; display: block; width: 168px; aspect-ratio: 8 / 5;
+  border-radius: var(--r-sm); overflow: hidden; background: var(--orange-50);
+}
+.listicle-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .listicle-body { flex: 1; min-width: 0; }
 .listicle-body h2 { margin-bottom: 0.3rem; font-size: 1.2rem; }
 .listicle-body h2 a { color: var(--ink); text-decoration: none; }
@@ -377,9 +388,14 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
   display: inline-block; border-radius: var(--r-pill); margin-bottom: 0.5rem; padding: 0.15rem 0.75rem;
 }
 
-@media (max-width: 560px) {
-  .listicle-item { gap: 0.75rem; padding: 1.1rem; }
+@media (max-width: 700px) {
+  .listicle-item { flex-wrap: wrap; gap: 0.75rem; padding: 1.1rem; }
   .listicle-rank { width: 34px; height: 34px; font-size: 1rem; }
+  .listicle-media { width: 100px; }
+  .listicle-body { flex-basis: 100%; }
+}
+@media (max-width: 420px) {
+  .listicle-media { width: 80px; }
 }
 
 .category-card {
@@ -450,6 +466,11 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 
 .leaflet-popup-content-wrapper { border-radius: var(--r-md); box-shadow: var(--shadow-md); }
 .leaflet-popup-content { margin: 0.85rem 1rem; font-family: var(--font-body); line-height: 1.5; }
+.map-popup { min-width: 190px; }
+.map-popup-img {
+  width: 100%; height: 92px; object-fit: cover; border-radius: var(--r-sm);
+  margin-bottom: 0.55rem; display: block; background: var(--orange-50);
+}
 .map-popup h4 { margin: 0 0 0.2rem; font-size: 1.02rem; }
 .map-popup p { margin: 0 0 0.5rem; font-size: 0.88rem; color: var(--muted); }
 .map-popup a.btn { font-size: 0.83rem; padding: 0.35rem 0.85rem; }
@@ -460,15 +481,18 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
   box-shadow: 0 2px 6px rgba(31, 26, 23, 0.35);
 }
 .patch-marker.is-active { background: var(--orange-900); transform: rotate(-45deg) scale(1.2); }
-.marker-cluster-pumpkin {
-  background: rgba(242, 106, 33, 0.28); border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
+
+/* Pins pop up from their anchor point (the pin's tip) when the map loads,
+   like a seedling sprouting — a small overshoot-and-settle rather than a
+   flat fade. Each marker carries its own animation-delay inline for a
+   light stagger across the map. */
+.patch-marker.sprout {
+  transform-origin: bottom center;
+  animation: patch-sprout 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
-.marker-cluster-pumpkin div {
-  background: var(--orange); color: #fff; border-radius: 50%; width: 34px; height: 34px;
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-display); font-weight: 600; font-size: 0.85rem;
-  border: 2px solid #fff; box-shadow: var(--shadow-sm);
+@keyframes patch-sprout {
+  from { transform: rotate(-45deg) scale(0); opacity: 0; }
+  to { transform: rotate(-45deg) scale(1); opacity: 1; }
 }
 
 /* ------------------------------------------------------------ sections */
@@ -596,6 +620,26 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 .post-item h3 a:hover { color: var(--orange-700); }
 .post-meta { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.55rem; }
 .post-item p { margin-bottom: 0.85rem; color: var(--ink-2); }
+
+.detail-hero { margin: 0 0 1.75rem; }
+.detail-hero-img {
+  width: 100%; aspect-ratio: 16 / 7; object-fit: cover; display: block;
+  border-radius: var(--r-lg); background: var(--orange-50);
+}
+.detail-hero figcaption {
+  margin-top: 0.5rem; font-size: 0.82rem; color: var(--muted); text-align: right;
+}
+@media (max-width: 640px) { .detail-hero-img { aspect-ratio: 4 / 3; border-radius: var(--r-md); } }
+
+.rating-bars { display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0 1.75rem; }
+.rating-bar-row { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 0.65rem; }
+.rating-bar-label { font-size: 0.88rem; font-weight: 600; color: var(--ink-2); text-align: right; }
+.rating-bar-track {
+  height: 10px; border-radius: var(--r-pill); background: var(--orange-50);
+  border: 1px solid var(--orange-100); overflow: hidden;
+}
+.rating-bar-fill { display: block; height: 100%; background: var(--orange); border-radius: var(--r-pill); }
+.rating-bar-count { font-size: 0.85rem; color: var(--muted); }
 
 .detail-grid { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; align-items: start; }
 @media (max-width: 900px) { .detail-grid { grid-template-columns: 1fr; } }

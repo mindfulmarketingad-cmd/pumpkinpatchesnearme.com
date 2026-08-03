@@ -155,6 +155,70 @@ export function parsePayments(value) {
   return accepted.length ? accepted : null;
 }
 
+/**
+ * Outscraper's `reviews_per_score` column is a JSON object of star-count ->
+ * number of reviews, e.g. {"1": 46, "2": 30, "3": 57, "4": 191, "5": 1010}.
+ * Falls back to the five separate reviews_per_score_1..5 columns some
+ * exports use instead. Powers the visual rating-distribution bars.
+ */
+export function parseReviewsPerScore(value, discrete) {
+  let obj = value;
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      obj = JSON.parse(value);
+    } catch {
+      obj = null;
+    }
+  } else if (typeof value !== 'object' || value === null) {
+    obj = null;
+  }
+
+  const out = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  let found = false;
+  if (obj) {
+    for (const star of [1, 2, 3, 4, 5]) {
+      const n = Number(obj[star] ?? obj[String(star)]);
+      if (Number.isFinite(n) && n >= 0) {
+        out[star] = Math.round(n);
+        found = true;
+      }
+    }
+  }
+  if (!found && discrete) {
+    for (const star of [1, 2, 3, 4, 5]) {
+      // Outscraper leaves these blank (empty string) rather than "0" when a
+      // listing has no reviews at all — Number('') is 0, so an explicit
+      // empty check is needed or every unrated listing would get a fake
+      // all-zero chart instead of no chart.
+      const raw = discrete[star];
+      if (raw === '' || raw == null) continue;
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= 0) {
+        out[star] = Math.round(n);
+        found = true;
+      }
+    }
+  }
+  return found ? out : null;
+}
+
+/**
+ * Outscraper's `reviews_tags` column is a comma-separated list of keywords
+ * Google itself extracts from review text (e.g. "corn maze, family friendly,
+ * hayride"). Real phrases from real reviews, not a review quote — Outscraper
+ * doesn't export individual review bodies at all, so a page must never
+ * present this (or anything else) as though it were a quoted review.
+ */
+export function parseReviewTags(value) {
+  if (!value) return null;
+  const tags = String(value)
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+  return tags.length ? tags : null;
+}
+
 /** Final shape consumed by the site build and the front-end map. */
 export function normaliseListing(input, taken) {
   const stateCode = resolveStateCode(input.state, input.us_state || input.state_code);
@@ -194,8 +258,17 @@ export function normaliseListing(input, taken) {
     email: cleanField(input.email_1 || input.email),
     rating: Number.isFinite(rating) && rating > 0 ? Math.round(rating * 10) / 10 : null,
     reviews: Number.isFinite(reviews) && reviews > 0 ? Math.round(reviews) : null,
+    reviewsPerScore: parseReviewsPerScore(input.reviews_per_score, {
+      1: input.reviews_per_score_1,
+      2: input.reviews_per_score_2,
+      3: input.reviews_per_score_3,
+      4: input.reviews_per_score_4,
+      5: input.reviews_per_score_5,
+    }),
+    reviewTags: parseReviewTags(input.reviews_tags),
     hours: parseWorkingHours(input.working_hours || input.hours),
     photo: String(input.photo || '').trim() || null,
+    photosCount: Number.isFinite(Number(input.photos_count)) ? Math.round(Number(input.photos_count)) || null : null,
     mapsUrl: String(input.location_link || input.mapsUrl || '').trim() || null,
     placeId: String(input.place_id || '').trim() || null,
     features:

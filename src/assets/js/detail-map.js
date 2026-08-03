@@ -9,7 +9,14 @@
   var lng = parseFloat(el.getAttribute('data-lng'));
   if (!isFinite(lat) || !isFinite(lng)) return;
 
-  var map = L.map(el, { center: [lat, lng], zoom: 13, scrollWheelZoom: false });
+  var map = L.map(el, {
+    center: [lat, lng],
+    zoom: 13,
+    scrollWheelZoom: false,
+    doubleClickZoom: false,
+    touchZoom: false,
+    boxZoom: false,
+  });
 
   var street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
@@ -24,7 +31,7 @@
   L.marker([lat, lng], {
     icon: L.divIcon({
       className: '',
-      html: '<div class="patch-marker"></div>',
+      html: '<div class="patch-marker sprout"></div>',
       iconSize: [26, 26],
       iconAnchor: [13, 26],
     }),

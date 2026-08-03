@@ -22,6 +22,17 @@ const SITE_NAME = 'Pumpkin Patches Near Me';
 const CONTACT_EMAIL = 'hello@pumpkinpatchesnearme.com';
 const ASSET_VERSION = String(Date.now()).slice(-6);
 const BUILD_DATE = new Date().toISOString().slice(0, 10);
+const PLACEHOLDER_IMAGE = '/assets/img/patch-placeholder.svg';
+
+/** Every listing image: the real photo when we have one, the illustrated
+ *  placeholder when we don't — a listing never renders with no image. Google
+ *  photo URLs occasionally 404 after the fact, so onerror swaps to the same
+ *  placeholder client-side rather than leaving a broken-image icon. */
+function listingImage(l, { alt, className = '', sizes = '' } = {}) {
+  const src = l.photo || PLACEHOLDER_IMAGE;
+  const altText = alt || `${l.name}${l.city ? ` in ${l.city}` : ''}`;
+  return `<img class="${className}" src="${attr(src)}" alt="${attr(altText)}" loading="lazy" decoding="async"${sizes ? ` sizes="${attr(sizes)}"` : ''} onerror="this.onerror=null;this.src='${PLACEHOLDER_IMAGE}';">`;
+}
 
 /* ----------------------------------------------------------------- inputs */
 
@@ -161,6 +172,9 @@ function renderCard(l, { showState = true, showCity = true, headingLevel = 3 } =
   const h = headingLevel;
   return `<article class="listing-card${l.featured ? ' is-featured' : ''}">
   ${l.featured ? '<p class="featured-flag">Featured farm</p>' : ''}
+  <a class="listing-card-media" href="${listingPath(l)}" tabindex="-1" aria-hidden="true">
+    ${listingImage(l, { className: 'listing-card-img', sizes: '(min-width: 900px) 340px, 100vw' })}
+  </a>
   <div class="listing-card-body">
     <h${h}><a href="${listingPath(l)}">${esc(l.name)}</a></h${h}>
     <div class="listing-meta">
@@ -216,6 +230,9 @@ function renderListicleEntry(l, rank, stateName) {
   const tags = (l.features || []).slice(0, 4);
   return `<li class="listicle-item${l.featured ? ' is-featured' : ''}" id="${attr(l.slug)}">
   <span class="listicle-rank" aria-hidden="true">${rank}</span>
+  <a class="listicle-media" href="${listingPath(l)}" tabindex="-1" aria-hidden="true">
+    ${listingImage(l, { className: 'listicle-img', sizes: '(min-width: 640px) 180px, 100vw' })}
+  </a>
   <div class="listicle-body">
     ${l.featured ? '<p class="featured-flag featured-flag-inline">Featured farm</p>' : ''}
     <h2><a href="${listingPath(l)}">${esc(l.name)}</a></h2>
@@ -234,6 +251,165 @@ function renderListicleEntry(l, rank, stateName) {
     </div>
   </div>
 </li>`;
+}
+
+/* ------------------------------------------------ listing detail content */
+/* Everything below builds the substantial, data-grounded content a single
+   listing page needs so it is never thin: real numbers restated in prose
+   where we have them (ratings, review counts, hours, season, payment), and
+   evergreen practical guidance where we don't. Nothing here invents a fact
+   about a specific farm — where data is missing, the copy says so and
+   points the visitor to confirm directly, matching the voice used
+   everywhere else on the site. */
+
+function ratingBarsHtml(l) {
+  if (!l.reviewsPerScore) return '';
+  const total = [1, 2, 3, 4, 5].reduce((sum, star) => sum + (l.reviewsPerScore[star] || 0), 0);
+  if (!total) return '';
+  const rows = [5, 4, 3, 2, 1]
+    .map((star) => {
+      const count = l.reviewsPerScore[star] || 0;
+      const pct = Math.round((count / total) * 100);
+      return `      <div class="rating-bar-row">
+        <span class="rating-bar-label">${star}<span aria-hidden="true"> &#9733;</span></span>
+        <span class="rating-bar-track" role="img" aria-label="${pct}% of reviews gave ${star} star${star === 1 ? '' : 's'}"><span class="rating-bar-fill" style="width:${pct}%"></span></span>
+        <span class="rating-bar-count">${count.toLocaleString('en-US')}</span>
+      </div>`;
+    })
+    .join('\n');
+  return `<h2>Rating breakdown</h2>
+    <p>${esc(l.name)} is rated ${l.rating ? l.rating.toFixed(1) : '—'} out of 5 based on ${total.toLocaleString('en-US')} Google reviews. Here is how those reviews break down by star rating:</p>
+    <div class="rating-bars">
+${rows}
+    </div>`;
+}
+
+function knownForHtml(l) {
+  if (!l.reviewTags || !l.reviewTags.length) return '';
+  return `<h2>What visitors mention</h2>
+    <p>These are recurring themes Google surfaces from reviews of ${esc(l.name)} — not a quote from any single review, but the topics visitors bring up most:</p>
+    <div class="tag-row">${l.reviewTags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>`;
+}
+
+function whatToExpectHtml(l) {
+  const matched = categories.filter((c) => (l.features || []).includes(c.feature));
+  if (!matched.length) {
+    return `<h2>What to expect</h2>
+    <p>${esc(l.name)}'s full list of attractions is not catalogued in our data yet, but most pumpkin patches share a similar core visit: a field or lot of pumpkins to choose from, usually priced individually or by weight, sometimes with a wagon ride out to the picking area. Many farms also run at least one extra attraction in season — a corn maze, hayride or animal area are the most common — though what is actually running on a given day can change with the weather and the week. Calling ahead or checking ${l.website ? `<a href="${attr(l.website)}" target="_blank" rel="noopener nofollow">${esc(l.name)}'s website</a>` : 'the farm’s website or phone number'} before you drive out is the most reliable way to know what to expect the day you go.</p>`;
+  }
+  const sections = matched
+    .slice(0, 5)
+    .map((c) => {
+      const firstPara = (c.intro.match(/<p>.*?<\/p>/) || [c.intro])[0];
+      return `    <h3>${esc(c.name)}</h3>
+    ${firstPara}`;
+    })
+    .join('\n');
+  return `<h2>What to expect at ${esc(l.name)}</h2>
+    <p>Based on its listing, ${esc(l.name)} offers ${joinNatural(matched.map((c) => c.singular))}. Here is what each of those typically involves, and what to plan for:</p>
+${sections}`;
+}
+
+function visitingGuidanceHtml(l, place) {
+  const name = esc(l.name);
+  return `<h2>Visiting ${name}</h2>
+    <p>Like almost every pumpkin patch in the country, ${name} runs on a compressed seasonal schedule — typically open from mid-to-late September through the first days of November, with the exact opening and closing dates shifting slightly year to year based on weather and how the pumpkin crop comes in. Hours are also prone to change week to week during the season: many farms extend their hours on the two or three weekends around mid-October, when demand peaks, and cut back to weekend-only or reduced hours toward either end of the season.</p>
+    <p>Because of that variability, the hours listed on this page — sourced from ${name}'s public business listing — are a strong starting point but not a guarantee. A farm can close early for a private event, shut the field after heavy rain, or sell out of pumpkins before the posted closing time. If ${place ? `the trip to ${esc(place)}` : 'the trip'} is more than a few minutes for you, it is worth a quick call to confirm the farm is open and the field is accessible before you leave.</p>
+    <p>Payment practices are another area where it pays to check ahead. A meaningful share of pumpkin patches — especially smaller, family-run operations — are cash-only or limit card payments to the main farm store while wagon rides and field admission are collected in cash. Carrying some cash covers you even if ${name} does take cards, and avoids an awkward trip back to the car at the gate.</p>
+    <p>If you are planning around young children, it is worth thinking about nap schedules and stamina rather than just the drive time — a two- or three-hour outing that includes a wagon ride, a walk through the field and a stop at a play area or animal pen tends to hold a toddler's attention better than a rushed visit squeezed between other errands. Groups with a wider age range often do best splitting up once on site, since older kids and adults can tackle a corn maze or longer walk while younger children stay closer to the main picking area.</p>`;
+}
+
+function visitTipsHtml() {
+  return `<h2>Tips for a good visit</h2>
+    <ul>
+      <li><strong>Go on a weekday morning if you can.</strong> It is consistently the quietest time at almost any pumpkin patch, with shorter waits for wagon rides and easier parking.</li>
+      <li><strong>Wear shoes you don't mind getting muddy.</strong> Pumpkin fields are working farmland, not paved lots, and they get soft fast after rain.</li>
+      <li><strong>Bring cash.</strong> Even farms that accept cards at the store sometimes run field admission and wagon rides as cash-only.</li>
+      <li><strong>Call ahead after wet weather.</strong> Field access and hayrides are the first things a farm closes when the ground is saturated.</li>
+      <li><strong>Check what's actually running that day.</strong> Corn mazes and haunted attractions in particular often open later in the season than the pumpkin patch itself, or run on a more limited schedule.</li>
+      <li><strong>Pack layers.</strong> Fall mornings can start cold and warm up fast once the sun is out over an open field, especially if you're there for a few hours.</li>
+    </ul>`;
+}
+
+function locationParagraphHtml(l, address, place) {
+  const name = esc(l.name);
+  const parts = [];
+  parts.push(
+    `<h2>Getting to ${name}</h2>`
+  );
+  if (address) {
+    parts.push(
+      `<p>${name} is located at ${esc(address)}${l.county ? ` in ${esc(l.county)} County` : ''}. Use the <strong>Get directions</strong> button on this page to route from your current location in Google Maps, or the map below to see exactly where the farm sits relative to nearby towns.</p>`
+    );
+  } else {
+    parts.push(
+      `<p>Use the map on this page for ${name}'s exact location${place ? ` near ${esc(place)}` : ''}, or the <strong>Get directions</strong> button to route there from your current location.</p>`
+    );
+  }
+  parts.push(
+    `<p>As with most pumpkin patches, parking is typically in a grass field rather than a paved lot, so allow a few extra minutes on busy weekends for staff or volunteers to direct traffic. If you are relying on a GPS app rather than the link on this page, search the farm name directly rather than just the street address — rural addresses sometimes route to the wrong gate or an adjacent property.</p>`
+  );
+  return parts.join('\n    ');
+}
+
+/**
+ * Five FAQ pairs per listing, grounded in whatever real data exists (hours,
+ * admission, payment) and falling back to honest, evergreen guidance where
+ * it doesn't. Returns both the rendered HTML and the plain question/answer
+ * pairs so the FAQPage JSON-LD can be built from the exact same source.
+ */
+function listingFaqData(l, place) {
+  const name = l.name;
+  const hoursSummary = l.hours
+    ? DAYS.filter((d) => l.hours[d] && l.hours[d].toLowerCase() !== 'closed')
+        .map((d) => `${d[0].toUpperCase()}${d.slice(1)} ${l.hours[d]}`)
+        .join(', ')
+    : '';
+
+  const qa = [
+    {
+      q: `What are ${name}'s hours?`,
+      a: hoursSummary
+        ? `Based on its public listing, ${name} is typically open ${hoursSummary}. Pumpkin patch hours change often during the season, so confirm directly with the farm before visiting, especially outside of peak October weekends.`
+        : `Hours are not listed for ${name} in our data. Most pumpkin patches open daily or on weekends from mid-September through early November, but the safest way to know for certain is to call the farm or check its website before you drive out.`,
+    },
+    {
+      q: `How much does it cost to visit ${name}?`,
+      a: l.admission
+        ? `${l.admission} That said, pricing can change season to season — confirm current admission and pumpkin pricing with the farm directly.`
+        : `Admission pricing is not listed for ${name}. Pumpkin patches generally use one of three models: free entry with pumpkins priced individually or by weight, a flat gate admission that bundles attractions like a corn maze or hayride, or a wristband system priced per attraction. Call ahead or check the farm's website to find out which applies here.`,
+    },
+    {
+      q: `When is the best time to visit ${name}?`,
+      a: `Weekday mornings are consistently the quietest time to visit any pumpkin patch, including this one. The two weekends on either side of mid-October are typically the busiest of the season nationwide, so expect longer waits for wagon rides and parking if you go then. Late October usually means a thinner pumpkin selection but shorter lines.`,
+    },
+    {
+      q: `Does ${name} accept credit cards?`,
+      a: l.payment && l.payment.length
+        ? `Yes — based on its listing, ${name} accepts ${joinNatural(l.payment.map((p) => p.toLowerCase()))}. It's still worth carrying some cash, since field admission and wagon rides are sometimes handled separately from the main store.`
+        : `Payment methods are not listed for ${name}. Many pumpkin patches, particularly smaller family-run farms, are cash-only for field admission and wagon rides even when the farm store accepts cards, so it is worth bringing cash as a backup.`,
+    },
+    {
+      q: `Where is ${name} located?`,
+      a: place
+        ? `${name} is located in or near ${place}${l.county ? `, in ${l.county} County` : ''}. See the address and map on this page, or use the Get Directions button to route there from your current location.`
+        : `See the address and map on this page for ${name}'s exact location, or use the Get Directions button to route there from your current location.`,
+    },
+  ];
+
+  const html = `<h2>Frequently asked questions</h2>
+    <div class="faq-list">
+${qa
+  .map(
+    (item) => `      <details class="faq-item">
+        <summary>${esc(item.q)}</summary>
+        <div class="faq-answer"><p>${esc(item.a)}</p></div>
+      </details>`
+  )
+  .join('\n')}
+    </div>`;
+
+  return { html, qa };
 }
 
 function renderFaqHtml(items) {
@@ -296,6 +472,7 @@ function renderScopedMap(items, listHtml) {
     reviews: l.reviews,
     city: l.city,
     stateCode: l.stateCode,
+    photo: l.photo,
   }));
   // Inline JSON inside a <script> tag must not contain a literal "</" or a
   // browser will parse it as the tag's own closing tag.
@@ -594,9 +771,7 @@ for (const page of staticPages) {
       ],
     };
     scripts = `<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css">
-<link rel="stylesheet" href="/assets/vendor/leaflet/MarkerCluster.css">
 <script src="/assets/vendor/leaflet/leaflet.js" defer></script>
-<script src="/assets/vendor/leaflet/leaflet.markercluster.js" defer></script>
 <script src="/assets/js/map.js?v=${ASSET_VERSION}" defer></script>`;
   }
 
@@ -924,7 +1099,13 @@ for (const l of listings) {
       ).join('')
     : '';
 
+  const faq = listingFaqData(l, place);
+
   const body = `${l.sample ? `<div class="notice"><p><strong>Sample listing.</strong> This is placeholder data used to demonstrate the directory layout. It is excluded from search engines and will be replaced when the live Outscraper import runs.</p></div>` : ''}
+<figure class="detail-hero">
+  ${listingImage(l, { className: 'detail-hero-img', sizes: '(min-width: 900px) 900px, 100vw' })}
+  <figcaption>${l.photo ? `Photo of ${esc(l.name)} via Google` : `Illustration — a real photo is not yet available for ${esc(l.name)}`}</figcaption>
+</figure>
 <div class="detail-grid">
   <div class="prose">
     <div class="listing-meta">
@@ -933,16 +1114,38 @@ for (const l of listings) {
       ${l.category ? `<span>${esc(l.category)}</span>` : ''}
     </div>
     ${(l.features || []).length ? `<div class="tag-row">${l.features.map((f) => `<span class="tag">${esc(f)}</span>`).join('')}</div>` : ''}
-    ${l.description ? `<p>${esc(l.description)}</p>` : ''}
-    <h2>Visiting ${esc(l.name)}</h2>
-    <p>Pumpkin patch hours change week to week during the fall, and many farms open only on weekends outside of October. Confirm hours, admission and pumpkin pricing with the farm directly before you drive out.</p>
-    ${l.season ? `<p><strong>Typical season:</strong> ${esc(l.season)}</p>` : ''}
-    ${l.admission ? `<p><strong>Admission:</strong> ${esc(l.admission)}</p>` : ''}
-    ${l.payment && l.payment.length ? `<p><strong>Payment accepted:</strong> ${l.payment.map((p) => esc(p)).join(', ')}</p>` : ''}
+    ${l.description
+      ? `<p>${esc(l.description)}</p>`
+      : `<p>${esc(l.name)} is a listed pumpkin patch${place ? ` in ${esc(place)}` : ''}${l.county ? `, ${esc(l.county)} County` : ''}. We don't yet have a farm-provided description for this listing — if you run or have visited ${esc(l.name)}, <a href="/contact/">let us know</a> what makes it worth a stop and we will add it.</p>`}
+
+    ${ratingBarsHtml(l)}
+
+    ${knownForHtml(l)}
+
+    ${whatToExpectHtml(l)}
+
+    ${visitingGuidanceHtml(l, place)}
+
+    ${l.season || l.admission || (l.payment && l.payment.length) ? `<h3>Quick facts</h3>
+    <ul class="fact-list">
+      ${l.season ? `<li><b>Season</b><span>${esc(l.season)}</span></li>` : ''}
+      ${l.admission ? `<li><b>Admission</b><span>${esc(l.admission)}</span></li>` : ''}
+      ${l.payment && l.payment.length ? `<li><b>Payment</b><span>${l.payment.map((p) => esc(p)).join(', ')}</span></li>` : ''}
+    </ul>` : ''}
+
+    ${visitTipsHtml()}
+
     <h2>Hours</h2>
-    ${hoursRows ? `<table class="hours-table"><tbody>${hoursRows}</tbody></table>` : '<p>Hours are not listed for this location. Contact the farm to confirm before visiting.</p>'}
+    <p>${hoursRows ? `Listed hours for ${esc(l.name)} are below. As with any seasonal farm, treat these as a strong starting point rather than a guarantee — confirm directly if you are travelling any distance to visit.` : `Hours are not listed for ${esc(l.name)} in our data. Contact the farm directly to confirm before visiting — see the phone number and website in the panel to the right, if listed.`}</p>
+    ${hoursRows ? `<table class="hours-table"><tbody>${hoursRows}</tbody></table>` : ''}
     ${l.directions ? `<h2>Directions</h2>\n    <p>${esc(l.directions)}</p>` : ''}
+
+    ${locationParagraphHtml(l, address, place)}
+
+    ${faq.html}
+
     ${nearby.length ? `<h2>Other pumpkin patches near ${esc(l.city)}</h2>
+    <p>Comparing options nearby is always worth a minute before you commit to a drive — hours, pricing and what's running can vary a lot between farms just a few miles apart.</p>
     <div class="grid grid-2">
 ${nearby.map((o) => renderCard(o, { showState: false, showCity: false })).join('\n')}
     </div>
@@ -999,6 +1202,14 @@ ${categories
         ...(l.rating && l.reviews
           ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: l.rating, reviewCount: l.reviews } }
           : {}),
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: faq.qa.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
       },
       breadcrumbJsonLd(meta.trail, path),
     ],

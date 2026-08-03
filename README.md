@@ -232,14 +232,14 @@ full lockup (`logo.svg`) are hand-authored SVG. Brand colours live at the top of
 | Google Fonts | Fredoka + Inter | swap for self-hosted if you want zero third parties |
 | Google AdSense | advertising | publisher `pub-9332749804326149`, matching `ads.txt` |
 
-Leaflet is self-hosted in `src/assets/vendor/leaflet/`. To upgrade it:
+Leaflet is self-hosted in `src/assets/vendor/leaflet/` (no marker-clustering
+plugin — every listing gets its own pin, on every map, at every zoom level).
+To upgrade it:
 
 ```bash
-npm install --save-dev leaflet@<version> leaflet.markercluster@<version>
+npm install --save-dev leaflet@<version>
 cp node_modules/leaflet/dist/leaflet.{js,css} src/assets/vendor/leaflet/
 cp node_modules/leaflet/dist/images/*.png src/assets/vendor/leaflet/images/
-cp node_modules/leaflet.markercluster/dist/leaflet.markercluster.js src/assets/vendor/leaflet/
-cp node_modules/leaflet.markercluster/dist/MarkerCluster.css src/assets/vendor/leaflet/
 ```
 
 ---

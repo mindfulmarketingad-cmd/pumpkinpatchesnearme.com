@@ -1,6 +1,8 @@
 /* =====================================================================
-   Homepage search map: Leaflet + clustered listings, ZIP search, filters,
-   sort, list/map toggle and satellite basemap toggle.
+   Homepage search map: Leaflet with individual (unclustered) pumpkin pins,
+   ZIP search, filters, sort, list/map toggle and satellite basemap toggle.
+   Zoom is restricted to the +/- controls — no scroll-wheel, double-click or
+   pinch zoom — so the page scrolls normally over the map.
    ===================================================================== */
 (function () {
   'use strict';
@@ -37,12 +39,19 @@
 
   /* ------------------------------------------------------------- helpers */
 
+  var PLACEHOLDER_IMAGE = '/assets/img/patch-placeholder.svg';
+
   function esc(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function imgHtml(item, className) {
+    var src = item.photo || PLACEHOLDER_IMAGE;
+    return '<img class="' + className + '" src="' + esc(src) + '" alt="' + esc(item.name) + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + PLACEHOLDER_IMAGE + '\';">';
   }
 
   function distanceMiles(lat1, lng1, lat2, lng2) {
@@ -66,7 +75,10 @@
     center: [39.5, -98.35],
     zoom: 4,
     minZoom: 3,
-    scrollWheelZoom: true,
+    scrollWheelZoom: false,
+    doubleClickZoom: false,
+    touchZoom: false,
+    boxZoom: false,
     zoomControl: true,
   });
 
@@ -83,27 +95,21 @@
     }
   );
 
-  var cluster = L.markerClusterGroup
-    ? L.markerClusterGroup({
-        showCoverageOnHover: false,
-        maxClusterRadius: 55,
-        iconCreateFunction: function (c) {
-          return L.divIcon({
-            html: '<div>' + c.getChildCount() + '</div>',
-            className: 'marker-cluster-pumpkin',
-            iconSize: L.point(44, 44),
-          });
-        },
-      })
-    : L.layerGroup();
-  map.addLayer(cluster);
+  // Plain layer group — every listing gets its own pumpkin pin, never a
+  // clustered number bubble, even zoomed out to the whole country.
+  var markerLayer = L.layerGroup().addTo(map);
 
   var originMarker = null;
 
+  // Markers sprout up from their anchor point when they first appear, with a
+  // small stagger so a page full of pins doesn't pop in as one flat flash.
+  // The stagger is capped so it stays quick even with thousands of markers.
+  var sproutCounter = 0;
   function markerIcon(active) {
+    var delay = Math.min(sproutCounter++ % 40, 40) * 12;
     return L.divIcon({
       className: '',
-      html: '<div class="patch-marker' + (active ? ' is-active' : '') + '"></div>',
+      html: '<div class="patch-marker sprout' + (active ? ' is-active' : '') + '" style="animation-delay:' + delay + 'ms"></div>',
       iconSize: [26, 26],
       iconAnchor: [13, 26],
       popupAnchor: [0, -24],
@@ -116,6 +122,7 @@
     var place = [item.city, item.stateCode].filter(Boolean).join(', ');
     var tags = (item.features || []).slice(0, 3);
     return '<article class="listing-card" data-slug="' + esc(item.slug) + '">' +
+      '<a class="listing-card-media" href="' + esc(item.url) + '" tabindex="-1" aria-hidden="true">' + imgHtml(item, 'listing-card-img') + '</a>' +
       '<div class="listing-card-body">' +
         '<h3><a href="' + esc(item.url) + '">' + esc(item.name) + '</a></h3>' +
         '<div class="listing-meta">' +
@@ -138,6 +145,7 @@
   function popupHtml(item) {
     var place = [item.city, item.stateCode].filter(Boolean).join(', ');
     return '<div class="map-popup">' +
+      imgHtml(item, 'map-popup-img') +
       '<h4>' + esc(item.name) + '</h4>' +
       '<p>' + (item.rating ? '<span class="stars">' + starString(item.rating) + '</span> ' + item.rating.toFixed(1) + ' &middot; ' : '') + esc(place) + '</p>' +
       '<a class="btn btn-primary btn-sm" href="' + esc(item.url) + '">View details</a>' +
@@ -173,7 +181,7 @@
   }
 
   function renderMarkers() {
-    cluster.clearLayers();
+    markerLayer.clearLayers();
     state.markers = {};
     var bounds = [];
 
@@ -185,7 +193,7 @@
       marker.bindPopup(popupHtml(item));
       marker.on('click', function () { setActive(item.slug, false); });
       state.markers[item.slug] = marker;
-      cluster.addLayer(marker);
+      markerLayer.addLayer(marker);
       bounds.push([item.lat, item.lng]);
     });
 
@@ -221,8 +229,8 @@
     var marker = state.markers[slug];
     if (marker) {
       if (pan) {
-        if (cluster.zoomToShowLayer) cluster.zoomToShowLayer(marker, function () { marker.openPopup(); });
-        else { map.setView(marker.getLatLng(), Math.max(map.getZoom(), 12)); marker.openPopup(); }
+        map.setView(marker.getLatLng(), Math.max(map.getZoom(), 12));
+        marker.openPopup();
       }
       if (els.app.getAttribute('data-view') === 'list' && window.innerWidth <= 900) {
         setView('map');

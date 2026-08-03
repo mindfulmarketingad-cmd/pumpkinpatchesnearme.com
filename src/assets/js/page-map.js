@@ -26,6 +26,8 @@
   var streetLayer = null;
   var satelliteLayer = null;
 
+  var PLACEHOLDER_IMAGE = '/assets/img/patch-placeholder.svg';
+
   function esc(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;')
@@ -39,9 +41,15 @@
     return new Array(full + 1).join('★') + new Array(Math.max(0, 5 - full) + 1).join('☆');
   }
 
+  function imgHtml(item) {
+    var src = item.photo || PLACEHOLDER_IMAGE;
+    return '<img class="map-popup-img" src="' + esc(src) + '" alt="' + esc(item.name) + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + PLACEHOLDER_IMAGE + '\';">';
+  }
+
   function popupHtml(item) {
     var place = [item.city, item.stateCode].filter(Boolean).join(', ');
     return '<div class="map-popup">' +
+      imgHtml(item) +
       '<h4>' + esc(item.name) + '</h4>' +
       '<p>' + (item.rating ? '<span class="stars">' + starString(item.rating) + '</span> ' + item.rating.toFixed(1) + (item.reviews ? ' &middot; ' + item.reviews.toLocaleString('en-US') + ' reviews' : '') + ' &middot; ' : '') + esc(place) + '</p>' +
       '<a class="btn btn-primary btn-sm" href="' + esc(item.url) + '">View details</a>' +
@@ -51,7 +59,13 @@
   function initMap() {
     if (map) return;
 
-    map = L.map(mapEl, { scrollWheelZoom: true });
+    map = L.map(mapEl, {
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      touchZoom: false,
+      boxZoom: false,
+      zoomControl: true,
+    });
 
     streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -64,11 +78,12 @@
     );
 
     var bounds = [];
-    items.forEach(function (item) {
+    items.forEach(function (item, index) {
+      var delay = Math.min(index, 40) * 12;
       var marker = L.marker([item.lat, item.lng], {
         icon: L.divIcon({
           className: '',
-          html: '<div class="patch-marker"></div>',
+          html: '<div class="patch-marker sprout" style="animation-delay:' + delay + 'ms"></div>',
           iconSize: [26, 26],
           iconAnchor: [13, 26],
           popupAnchor: [0, -24],
