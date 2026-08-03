@@ -9,6 +9,7 @@
     "dev": "node scripts/build.mjs && node scripts/serve.mjs",
     "serve": "node scripts/serve.mjs",
     "icons": "node scripts/make-icons.mjs",
+    "avatars": "node scripts/make-avatars.mjs",
     "sample-data": "node scripts/make-sample-data.mjs",
     "import": "node scripts/import-outscraper.mjs"
   },

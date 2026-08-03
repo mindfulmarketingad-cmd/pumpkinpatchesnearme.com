@@ -1,0 +1,38 @@
+[
+  {
+    "slug": "emily-carter",
+    "name": "Emily Carter",
+    "title": "Family Travel Editor",
+    "focus": "Family logistics and trip planning",
+    "color": "#F26A21",
+    "bio": "Emily has spent the past several fall seasons taking her own kids through corn mazes and pumpkin fields across the Midwest, and writes about what actually works when you're travelling with young children — timing, crowds, what to bring — over hype. She joined Pumpkin Patches Near Me to help other families plan trips that don't fall apart by hour two.",
+    "short": "Writes about family logistics: timing a visit, managing crowds, and travelling with young kids."
+  },
+  {
+    "slug": "marcus-webb",
+    "name": "Marcus Webb",
+    "title": "Agritourism & Farms Writer",
+    "focus": "How seasonal farms operate and price admission",
+    "color": "#3F7A2E",
+    "bio": "Marcus grew up around small farms and has spent years following the business side of agritourism — how seasonal operations price admission, staff up for October, and compete with larger fall festivals. He writes about the practical and financial side of visiting a pumpkin patch, and occasionally the operational side of running one.",
+    "short": "Covers pricing models, admission structures, and how seasonal farms actually run."
+  },
+  {
+    "slug": "dana-okafor",
+    "name": "Dana Okafor",
+    "title": "Food Contributor",
+    "focus": "Cooking with real, whole pumpkins",
+    "color": "#C74A0F",
+    "bio": "Dana is a home cook who got tired of pumpkin recipes that call for a can. She develops and tests recipes using real, whole pumpkins picked from the field, and writes about what actually works in a home kitchen — including the mistakes worth skipping.",
+    "short": "Develops and tests recipes using real, whole pumpkins — not canned puree."
+  },
+  {
+    "slug": "ryan-sato",
+    "name": "Ryan Sato",
+    "title": "Fall Traditions Writer",
+    "focus": "The culture and history behind fall traditions",
+    "color": "#8F3406",
+    "bio": "Ryan has covered fall traditions and small-town festivals for several regional outlets and writes about the culture behind pumpkin carving, corn mazes and harvest festivals, alongside practical guides to visiting them. He is usually the one still carving pumpkins in November.",
+    "short": "Writes about the traditions behind carving, corn mazes and harvest festivals."
+  }
+]

@@ -117,7 +117,7 @@ dist/                       build output (generated, git-ignored)
 | --- | --- |
 | `/` | `src/pages/index.html` — full-screen search map |
 | `/about/`, `/contact/`, `/find/`, `/partners/`, `/add-a-listing/`, `/featured/`, `/search/`, `/blog/`, `/disclaimer/`, `/privacy/`, `/terms/`, `/sitemap/` | `src/pages/*.html` |
-| `/blog/<slug>/` | `src/pages/blog/*.html` |
+| `/blog/<slug>/` | `src/pages/blog/*.html` (hand-written) plus one auto-generated `/blog/5-best-pumpkin-patches-in-<city>-<state>/` per town with 5+ listings, see below |
 | `/<state>/` | one page per state, e.g. `/nebraska/` — a ranked listicle ("The N Best Pumpkin Patches in Nebraska"), see below |
 | `/<state>/<city>/` | one page per town, e.g. `/nebraska/lincoln/` — also a ranked listicle, same treatment as state pages |
 | `/<state>/<city>/<business-name>/` | one page per listing, e.g. `/nebraska/lincoln/cider-creek-pumpkin-farm/` |
@@ -172,6 +172,62 @@ highlighted card border and a "Featured farm" flag, and are collected on
 `/featured/`. This is enforced consistently in `rankListings()` in
 `scripts/build.mjs` — there is one ranking function, used everywhere, so a farm
 can't be featured on one page and buried on another.
+
+### Programmatic "5 Best Pumpkin Patches in <City>" posts
+
+For every town with at least `CITY_POST_MIN_LISTINGS` (5) **distinctly-named**
+businesses, the build generates a full blog post at
+`/blog/5-best-pumpkin-patches-in-<city>-<state>/` with no hand-written source
+file — it comes straight from the dataset, so the set of posts grows on its
+own as future imports push more towns past the threshold. Each post has:
+
+- A summary paragraph naming all five farms, a jump-to table of contents, and
+  a closing "Summary" section
+- The five farms as business-card listicle entries (`renderListicleEntry()` —
+  the same component state and city pages use), with the business name as an
+  H2, an image, rating, review count and a data-grounded blurb
+- A 5-question FAQ (also emitted as `FAQPage` JSON-LD), generated from real
+  fields where we have them (e.g. which of the five have a petting zoo or
+  kids' play area) and honest evergreen guidance where we don't
+- A byline for one of the site's authors (see below)
+
+The distinct-name requirement is deliberately a hard gate, not a preference:
+some towns have one operator running several same-named seasonal lots, which
+are legitimate separate listings on the directory pages but make a curated
+"5 Best" post look broken if the identical name shows up three times in a
+top-5. A town that has, say, 9 raw listings but only 3 distinct business
+names does not get a post at all, rather than getting one padded out with
+repeats. Programmatic posts share one feed with the hand-written guides in
+`src/pages/blog/` — both appear in the blog index, both XML and HTML
+sitemaps, and the search index — so nothing downstream needs to know which
+kind a given post is.
+
+### Authors
+
+`src/data/authors.json` defines the site's writers — four personas, each with
+a focus area, a bio and a generated avatar (`npm run avatars`, or
+`scripts/make-avatars.mjs` directly — a flat-colour circle with initials,
+deliberately illustrated rather than a photo, since nothing on this site
+claims to be a photograph of a real person). Every blog post, hand-written or
+programmatic, carries an `author` slug: hand-written posts set it in their
+own front matter; programmatic city posts rotate through the author pool
+deterministically by iteration order, so a given city always lands on the
+same byline across rebuilds.
+
+Author data flows into:
+
+- A byline (avatar, name, title, publish date, reading time) at the top of
+  every post, linking to that author's page (`renderByline()`)
+- `Person` schema as the `author` of each post's `BlogPosting` JSON-LD
+  (falls back to the site `Organization` if a post has no author set)
+- `/authors/` — an index card grid — and `/authors/<slug>/`, each with its
+  own `Person` JSON-LD and a list of that author's posts
+
+Bios describe general, non-verifiable experience ("has spent years
+covering...") rather than specific claims about real institutions,
+publications or credentials — deliberately, to stay on the right side of the
+line between a content-team persona (common, generally accepted) and
+fabricating a checkable, false credential.
 
 ---
 

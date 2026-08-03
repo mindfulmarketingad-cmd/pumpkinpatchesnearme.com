@@ -626,7 +626,39 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 .post-item h3 a { color: var(--ink); text-decoration: none; }
 .post-item h3 a:hover { color: var(--orange-700); }
 .post-meta { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.55rem; }
+.post-meta a { color: var(--orange-700); }
 .post-item p { margin-bottom: 0.85rem; color: var(--ink-2); }
+
+.byline {
+  display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem; border-bottom: 1px solid var(--line);
+}
+.byline-avatar { flex: 0 0 auto; display: block; border-radius: 50%; overflow: hidden; line-height: 0; }
+.byline-avatar img { width: 44px; height: 44px; display: block; }
+.byline-text { min-width: 0; }
+.byline-name { margin: 0; font-weight: 600; font-size: 0.95rem; }
+.byline-name a { color: var(--ink); text-decoration: none; }
+.byline-name a:hover { color: var(--orange-700); text-decoration: underline; }
+.byline-meta { margin: 0.1rem 0 0; font-size: 0.85rem; color: var(--muted); }
+
+.author-header {
+  display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;
+}
+.author-avatar { border-radius: 50%; flex: 0 0 auto; }
+.author-title { margin: 0; font-family: var(--font-display); font-weight: 600; color: var(--orange-700); }
+.author-focus { margin: 0.2rem 0 0; color: var(--muted); font-size: 0.95rem; }
+
+.author-card {
+  display: flex; gap: 1.1rem; align-items: flex-start; background: #fff;
+  border: 1px solid var(--line); border-radius: var(--r-md); padding: 1.25rem;
+  text-decoration: none; box-shadow: var(--shadow-sm);
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.author-card:hover { border-color: var(--orange); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.author-card img { border-radius: 50%; flex: 0 0 auto; }
+.author-card h2 { margin: 0 0 0.15rem; font-size: 1.15rem; color: var(--ink); }
+.author-card .author-title { font-size: 0.88rem; margin-bottom: 0.4rem; }
+.author-card p:last-child { margin: 0; color: var(--ink-2); font-size: 0.92rem; }
 
 .detail-hero { margin: 0 0 1.75rem; }
 .detail-hero-img {

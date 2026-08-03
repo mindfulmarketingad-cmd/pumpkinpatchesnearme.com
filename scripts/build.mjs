@@ -40,6 +40,8 @@ const data = JSON.parse(readFileSync(join(ROOT, 'data/listings.json'), 'utf8'));
 const listings = data.listings || [];
 const faqs = JSON.parse(readFileSync(join(SRC, 'data/faqs.json'), 'utf8'));
 const categories = JSON.parse(readFileSync(join(SRC, 'data/categories.json'), 'utf8'));
+const authors = JSON.parse(readFileSync(join(SRC, 'data/authors.json'), 'utf8'));
+const authorsBySlug = new Map(authors.map((a) => [a.slug, a]));
 const template = readFileSync(join(SRC, 'templates/base.html'), 'utf8');
 const SEASON_YEAR = new Date().getFullYear();
 
@@ -201,19 +203,26 @@ function joinNatural(words) {
 
 // Cycles through a handful of sentence shapes so a page of 10 ranked farms
 // doesn't read as the same template ten times in a row.
+// Index 0 is reserved for the #1 entry specifically — it must never cycle
+// back onto a later rank (a 5- or 9-item list previously wrapped modulo-4
+// and told visitors the last entry "takes the top spot").
 const BLURB_OPENERS = [
   (name, place) => `${name}${place ? ` in ${place}` : ''} takes the top spot`,
   (name, place) => `${name}${place ? `, out in ${place},` : ''} is next up`,
   (name, place) => `${name}${place ? ` near ${place}` : ''} rounds out this stretch of the list`,
   (name, place) => `Also worth the drive: ${name}${place ? ` in ${place}` : ''}`,
+  (name, place) => `${name}${place ? ` in ${place}` : ''} is another strong option`,
 ];
 
 function blurbFor(l, rank, stateName) {
   const place = l.city && l.city !== stateName ? l.city : null;
-  const opener = BLURB_OPENERS[rank % BLURB_OPENERS.length](esc(l.name), place ? esc(place) : null);
+  const opener =
+    rank === 0
+      ? BLURB_OPENERS[0](esc(l.name), place ? esc(place) : null)
+      : BLURB_OPENERS[1 + ((rank - 1) % (BLURB_OPENERS.length - 1))](esc(l.name), place ? esc(place) : null);
 
   const ratingClause = l.rating
-    ? `, rated ${l.rating.toFixed(1)} out of 5${l.reviews ? ` from ${l.reviews.toLocaleString('en-US')} reviews` : ''}`
+    ? `, rated ${l.rating.toFixed(1)} out of 5${l.reviews ? ` from ${l.reviews.toLocaleString('en-US')} review${l.reviews === 1 ? '' : 's'}` : ''}`
     : '';
 
   const features = (l.features || []).slice(0, 2).map((f) => esc(f.toLowerCase()));
@@ -410,6 +419,57 @@ ${qa
     </div>`;
 
   return { html, qa };
+}
+
+/* ---------------------------------------------------------- blog authors */
+
+const authorPath = (author) => `/authors/${author.slug}/`;
+
+function renderByline(authorSlug, dateStr, readingTime) {
+  const author = authorsBySlug.get(authorSlug);
+  const dateHtml = dateStr
+    ? new Date(`${dateStr}T12:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })
+    : '';
+  if (!author) {
+    return dateStr ? `<p class="post-meta">Published ${dateHtml}</p>` : '';
+  }
+  return `<div class="byline">
+  <a href="${authorPath(author)}" class="byline-avatar"><img src="/assets/img/authors/${author.slug}.svg" alt="" width="44" height="44" loading="lazy"></a>
+  <div class="byline-text">
+    <p class="byline-name">By <a href="${authorPath(author)}">${esc(author.name)}</a>, ${esc(author.title)}</p>
+    <p class="byline-meta">${dateStr ? `Published ${dateHtml}` : ''}${dateStr && readingTime ? ' &middot; ' : ''}${readingTime ? esc(readingTime) : ''}</p>
+  </div>
+</div>`;
+}
+
+/**
+ * Auto-builds a jump-link table of contents from a post's own <h2> headings,
+ * and stamps matching ids onto those headings so the links resolve. Used for
+ * hand-authored guides; programmatic city posts build their own TOC over
+ * business names instead (see the city-post loop) since that is the more
+ * useful granularity there.
+ */
+function autoToc(bodyHtml) {
+  const headings = [...bodyHtml.matchAll(/<h2>(.*?)<\/h2>/g)];
+  if (headings.length < 2) return { toc: '', body: bodyHtml };
+
+  const used = new Set();
+  let i = 0;
+  const body = bodyHtml.replace(/<h2>(.*?)<\/h2>/g, (match, inner) => {
+    const text = inner.replace(/<[^>]+>/g, '');
+    let id = slugify(text) || `section-${i}`;
+    while (used.has(id)) id = `${id}-${++i}`;
+    used.add(id);
+    i++;
+    return `<h2 id="${id}">${inner}</h2>`;
+  });
+
+  const ids = [...used];
+  const toc = `<p class="listicle-toc"><strong>Jump to:</strong> ${headings
+    .map((h, idx) => `<a href="#${ids[idx]}">${h[1].replace(/<[^>]+>/g, '')}</a>`)
+    .join(' <span aria-hidden="true">&middot;</span> ')}</p>`;
+
+  return { toc, body };
 }
 
 function renderFaqHtml(items) {
@@ -633,11 +693,11 @@ const addToSitemap = (path, priority, changefreq) =>
 
 /* --- blog posts ---------------------------------------------------------- */
 
-const posts = readPageFiles(join(SRC, 'pages/blog'))
+const handAuthoredPosts = readPageFiles(join(SRC, 'pages/blog'))
   .map((p) => ({ ...p, meta: { ...p.meta, path: `/blog/${p.meta.slug}/` } }))
   .sort((a, b) => (b.meta.date || '').localeCompare(a.meta.date || ''));
 
-for (const post of posts) {
+for (const post of handAuthoredPosts) {
   const meta = {
     ...post.meta,
     nav: 'blog',
@@ -645,6 +705,8 @@ for (const post of posts) {
     ogType: 'article',
     trail: [{ label: 'Blog', href: '/blog/' }, { label: post.meta.h1 || post.meta.title }],
   };
+  const author = authorsBySlug.get(post.meta.author);
+  const { toc, body: bodyWithIds } = autoToc(post.body);
   const jsonld = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -656,7 +718,9 @@ for (const post of posts) {
         dateModified: post.meta.updated || post.meta.date,
         mainEntityOfPage: SITE_URL + meta.path,
         image: `${SITE_URL}/assets/img/og-image.png`,
-        author: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+        author: author
+          ? { '@type': 'Person', name: author.name, url: SITE_URL + authorPath(author), jobTitle: author.title }
+          : { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
         publisher: {
           '@type': 'Organization',
           name: SITE_NAME,
@@ -667,23 +731,298 @@ for (const post of posts) {
       breadcrumbJsonLd(meta.trail, meta.path),
     ],
   };
-  const dateLine = post.meta.date
-    ? `<p class="post-meta">Published ${new Date(`${post.meta.date}T12:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>`
-    : '';
-  writePage(meta.path, render(meta, dateLine + post.body, { jsonld }));
+  const byline = renderByline(post.meta.author, post.meta.date, post.meta.readingTime);
+  writePage(meta.path, render(meta, byline + toc + bodyWithIds, { jsonld }));
   addToSitemap(meta.path, '0.6', 'monthly');
 }
 
-const blogTeasers = posts
+/* --- programmatic "5 Best Pumpkin Patches in <City>" posts --------------- */
+// One per town with at least this many listings, generated straight from
+// the dataset — no hand-written source file, so this list grows on its own
+// as new cities clear the bar on future imports.
+const CITY_POST_MIN_LISTINGS = 5;
+const CITY_POST_KID_FEATURES = ['Petting zoo', 'Kids play area'];
+
+const cityPosts = [];
+let cityPostIndex = 0;
+for (const [key, items] of byCity) {
+  // Some towns have one operator running several same-named seasonal lots —
+  // legitimate separate listings, but a curated "5 Best" post that features
+  // the identical business name two or three times reads like a data error,
+  // which undercuts the trust this format is supposed to build. A post only
+  // gets generated when a town has at least five *distinctly named*
+  // businesses, not just five raw listings.
+  const seenNames = new Set();
+  const distinct = items.filter((l) => {
+    const nameKey = l.name.trim().toLowerCase();
+    if (seenNames.has(nameKey)) return false;
+    seenNames.add(nameKey);
+    return true;
+  });
+  if (distinct.length < CITY_POST_MIN_LISTINGS) continue;
+
+  const [stateName, cityName] = key.split('|');
+  const stateCode = items[0].stateCode || '';
+  const label = `${cityName}, ${stateCode}`;
+  // Rotate deterministically through the author pool rather than picking
+  // one writer for every city post — Map iteration order is stable for a
+  // given dataset, so the same city always lands on the same byline.
+  const cityAuthorSlug = authors[cityPostIndex++ % authors.length].slug;
+  const top5 = distinct.slice(0, 5);
+  const names = top5.map((l) => l.name);
+  const slug = slugify(`5 best pumpkin patches in ${cityName} ${stateCode}`);
+  const path = `/blog/${slug}/`;
+
+  const tocSection = `<p class="listicle-toc"><strong>Jump to:</strong> ${top5
+    .map((l, i) => `<a href="#${attr(l.slug)}">${i + 1}. ${esc(l.name)}</a>`)
+    .join(' <span aria-hidden="true">&middot;</span> ')}</p>`;
+
+  const summaryIntro = `<p>The 5 best pumpkin patches in ${esc(label)} are ${joinNatural(names.map((n) => esc(n)))}, ranked by rating and review volume. Here's a closer look at each — what they offer, how they're rated, and how to get there — followed by answers to the questions we hear most about visiting.</p>`;
+
+  const listicleHtml = `<ol class="listicle">
+${top5.map((l, i) => renderListicleEntry(l, i + 1, cityName)).join('\n')}
+</ol>`;
+
+  const kidFriendly = top5.filter((l) => (l.features || []).some((f) => CITY_POST_KID_FEATURES.includes(f)));
+  const kidAnswer = kidFriendly.length
+    ? `${joinNatural(kidFriendly.map((l) => esc(l.name)))} ${kidFriendly.length === 1 ? 'stands' : 'stand'} out for younger children on this list, with a petting zoo or a dedicated play area. Hours and what's running can change week to week, so confirm directly before you go.`
+    : `None of the farms on this list are tagged with a dedicated kids' play area or petting zoo in our data, though most pumpkin patches are stroller- and toddler-friendly at a basic level. Call ahead if young kids need specific attractions.`;
+
+  const faqQa = [
+    {
+      q: `When do pumpkin patches in ${cityName} open for the season?`,
+      a: `Most pumpkin patches near ${cityName} open in mid-to-late September and run through the first days of November, though exact dates shift year to year with weather and how the pumpkin crop comes in. Check the individual listings above, or call ahead, to confirm current dates.`,
+    },
+    {
+      q: `How much does it cost to visit a pumpkin patch in ${cityName}?`,
+      a: `It varies by farm. Some charge only for the pumpkins you pick, priced individually or by weight; others charge a flat gate admission that bundles in attractions like a corn maze or hayride. See the admission details on each listing above where we have them, or call the farm directly.`,
+    },
+    { q: `Which pumpkin patch near ${cityName} is best for young kids?`, a: kidAnswer },
+    {
+      q: `Are pumpkin patches near ${cityName} open on weekdays?`,
+      a: `Many are, though weekday hours are often shorter than weekends, and some smaller farms only open Friday through Sunday during the season. Weekday mornings are also the quietest time to visit if your schedule allows it.`,
+    },
+    {
+      q: `Do pumpkin patches near ${cityName} accept credit cards?`,
+      a: `It varies by farm — some take cards throughout, others are cash-only for field admission and wagon rides even when the store itself takes cards. Bringing some cash as a backup is the safe move at any of the farms listed above.`,
+    },
+  ];
+  const faqHtml = `<h2>Frequently asked questions</h2>
+<div class="faq-list">
+${faqQa
   .map(
-    (p) => `<article class="post-item">
+    (item) => `  <details class="faq-item">
+    <summary>${esc(item.q)}</summary>
+    <div class="faq-answer"><p>${esc(item.a)}</p></div>
+  </details>`
+  )
+  .join('\n')}
+</div>`;
+
+  const closingSummary = `<h2>Summary</h2>
+<p>${esc(top5[0].name)} tops our list of pumpkin patches in ${esc(label)}${top5[0].rating ? `, rated ${top5[0].rating.toFixed(1)} out of 5` : ''}, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the top five. Ratings and review counts reflect public data at the time of writing and can change, and hours, admission and what's actually running on a given day can vary week to week during the season — always confirm with the farm directly before you drive out. For more options nearby, see the full <a href="${cityPath(stateName, cityName)}">list of pumpkin patches in ${esc(label)}</a> or browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>.</p>`;
+
+  const body = `${tocSection}
+${summaryIntro}
+${listicleHtml}
+${faqHtml}
+${closingSummary}`;
+
+  const postMeta = {
+    path,
+    slug,
+    title: `5 Best Pumpkin Patches in ${label} | Fun Family Friendly Locations`,
+    description: `The 5 best pumpkin patches in ${label} are ${joinNatural(names)}. Compare ratings, hours and directions before you go.`,
+    h1: `5 Best Pumpkin Patches in ${label}`,
+    excerpt: `Our picks for the best pumpkin patches in ${label}, ranked by rating and reviews: ${joinNatural(names)}.`,
+    date: BUILD_DATE,
+    readingTime: '6 min read',
+    author: cityAuthorSlug,
+  };
+
+  cityPosts.push({ meta: postMeta, body });
+
+  const meta = {
+    ...postMeta,
+    nav: 'blog',
+    layout: 'prose',
+    ogType: 'article',
+    trail: [{ label: 'Blog', href: '/blog/' }, { label: postMeta.h1 }],
+  };
+  const cityAuthor = authorsBySlug.get(cityAuthorSlug);
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BlogPosting',
+        headline: postMeta.h1,
+        description: postMeta.description,
+        datePublished: postMeta.date,
+        dateModified: postMeta.date,
+        mainEntityOfPage: SITE_URL + path,
+        image: `${SITE_URL}/assets/img/og-image.png`,
+        author: cityAuthor
+          ? { '@type': 'Person', name: cityAuthor.name, url: SITE_URL + authorPath(cityAuthor), jobTitle: cityAuthor.title }
+          : { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+        publisher: {
+          '@type': 'Organization',
+          name: SITE_NAME,
+          url: SITE_URL,
+          logo: { '@type': 'ImageObject', url: `${SITE_URL}/assets/img/icon-512.png` },
+        },
+      },
+      {
+        '@type': 'ItemList',
+        numberOfItems: top5.length,
+        itemListElement: top5.map((l, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          url: SITE_URL + listingPath(l),
+          name: l.name,
+        })),
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: faqQa.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      },
+      breadcrumbJsonLd(meta.trail, path),
+    ],
+  };
+  const byline = renderByline(cityAuthorSlug, BUILD_DATE, postMeta.readingTime);
+  writePage(path, render(meta, byline + body, { jsonld }));
+  addToSitemap(path, '0.6', 'weekly');
+}
+
+// Hand-authored guides and programmatic city listicles share one feed from
+// here on — the blog index, XML/HTML sitemaps and search index all read
+// from `posts` and don't need to know which kind a given entry is.
+const posts = [...handAuthoredPosts, ...cityPosts].sort((a, b) => (b.meta.date || '').localeCompare(a.meta.date || ''));
+
+const blogTeasers = posts
+  .map((p) => {
+    const author = authorsBySlug.get(p.meta.author);
+    const byAuthor = author ? `By <a href="${authorPath(author)}">${esc(author.name)}</a> &middot; ` : '';
+    return `<article class="post-item">
   <h3><a href="/blog/${p.meta.slug}/">${esc(p.meta.h1 || p.meta.title)}</a></h3>
-  <p class="post-meta">${p.meta.date ? new Date(`${p.meta.date}T12:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : ''}${p.meta.readingTime ? ` &middot; ${esc(p.meta.readingTime)}` : ''}</p>
+  <p class="post-meta">${byAuthor}${p.meta.date ? new Date(`${p.meta.date}T12:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : ''}${p.meta.readingTime ? ` &middot; ${esc(p.meta.readingTime)}` : ''}</p>
   <p>${esc(p.meta.excerpt || p.meta.description)}</p>
   <a class="btn btn-outline btn-sm" href="/blog/${p.meta.slug}/">Read the guide</a>
-</article>`
-  )
+</article>`;
+  })
   .join('\n');
+
+/* --- author pages ---------------------------------------------------------
+   /authors/ lists every writer; /authors/<slug>/ gives each their own page
+   with bio and a list of what they've written. Bios describe general,
+   non-verifiable experience (years spent doing something, general interest)
+   rather than specific claims about real institutions or publications, and
+   avatars are explicitly illustrated initials, never presented as photos of
+   real people. */
+
+for (const author of authors) {
+  const path = authorPath(author);
+  const authored = posts.filter((p) => p.meta.author === author.slug);
+
+  const articleList = authored.length
+    ? `<div class="post-list">
+${authored
+  .map(
+    (p) => `  <article class="post-item">
+    <h3><a href="/blog/${p.meta.slug}/">${esc(p.meta.h1 || p.meta.title)}</a></h3>
+    <p class="post-meta">${p.meta.date ? new Date(`${p.meta.date}T12:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : ''}${p.meta.readingTime ? ` &middot; ${esc(p.meta.readingTime)}` : ''}</p>
+    <p>${esc(p.meta.excerpt || p.meta.description)}</p>
+    <a class="btn btn-outline btn-sm" href="/blog/${p.meta.slug}/">Read the guide</a>
+  </article>`
+  )
+  .join('\n')}
+</div>`
+    : `<p>${esc(author.name)} hasn't published a guide yet — check back soon.</p>`;
+
+  const body = `<div class="author-header">
+  <img src="/assets/img/authors/${author.slug}.svg" alt="" width="96" height="96" class="author-avatar">
+  <div>
+    <p class="author-title">${esc(author.title)}</p>
+    <p class="author-focus">${esc(author.focus)}</p>
+  </div>
+</div>
+<div class="prose">
+  <p>${esc(author.bio)}</p>
+</div>
+<h2>Articles by ${esc(author.name)}</h2>
+${articleList}`;
+
+  const meta = {
+    path,
+    title: `${author.name} — ${author.title} | Pumpkin Patches Near Me`,
+    description: author.short,
+    h1: author.name,
+    lede: author.title,
+    nav: 'blog',
+    layout: 'wide',
+    trail: [{ label: 'Authors', href: '/authors/' }, { label: author.name }],
+  };
+
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Person',
+        name: author.name,
+        jobTitle: author.title,
+        description: author.bio,
+        url: SITE_URL + path,
+        image: `${SITE_URL}/assets/img/authors/${author.slug}.svg`,
+        worksFor: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+      },
+      breadcrumbJsonLd(meta.trail, path),
+    ],
+  };
+
+  writePage(path, render(meta, body, { jsonld }));
+  addToSitemap(path, '0.4', 'monthly');
+}
+
+const authorsIndexBody = `<div class="grid grid-2">
+${authors
+  .map(
+    (author) => `  <a class="author-card" href="${authorPath(author)}">
+    <img src="/assets/img/authors/${author.slug}.svg" alt="" width="64" height="64">
+    <div>
+      <h2>${esc(author.name)}</h2>
+      <p class="author-title">${esc(author.title)}</p>
+      <p>${esc(author.short)}</p>
+    </div>
+  </a>`
+  )
+  .join('\n')}
+</div>`;
+
+{
+  const path = '/authors/';
+  const meta = {
+    path,
+    title: 'Our Writers — Pumpkin Patches Near Me',
+    description: 'Meet the writers behind the guides on Pumpkin Patches Near Me: family travel, agritourism, recipes and fall traditions.',
+    h1: 'Our Writers',
+    lede: 'The people behind our guides to visiting, planning around, and cooking with pumpkins.',
+    nav: 'blog',
+    layout: 'wide',
+    trail: [{ label: 'Authors' }],
+  };
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'CollectionPage', name: meta.title, description: meta.description, url: SITE_URL + path },
+      breadcrumbJsonLd(meta.trail, path),
+    ],
+  };
+  writePage(path, render(meta, authorsIndexBody, { jsonld }));
+  addToSitemap(path, '0.4', 'monthly');
+}
 
 /* --- static pages -------------------------------------------------------- */
 
@@ -1260,6 +1599,7 @@ const searchIndex = [
   }),
   ...categories.map((c) => ({ type: 'Attraction', name: c.name, place: 'Browse by state', url: categoryPath(c) })),
   ...posts.map((p) => ({ type: 'Guide', name: p.meta.h1 || p.meta.title, place: 'Blog', url: p.meta.path })),
+  ...authors.map((a) => ({ type: 'Author', name: a.name, place: a.title, url: authorPath(a) })),
 ];
 writeFileSync(join(DIST, 'data/search-index.json'), JSON.stringify(searchIndex));
 
