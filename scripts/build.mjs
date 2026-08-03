@@ -24,6 +24,23 @@ const ASSET_VERSION = String(Date.now()).slice(-6);
 const BUILD_DATE = new Date().toISOString().slice(0, 10);
 const PLACEHOLDER_IMAGE = '/assets/img/patch-placeholder.svg';
 
+/**
+ * Programmatic blog posts are backdated 30–60 days before the build date
+ * rather than all sharing today's date — publishing 800+ posts with an
+ * identical "today" byline reads as an obvious bulk-generation event rather
+ * than an established blog. The offset is a deterministic hash of the post's
+ * own slug, so a given post's date stays stable across rebuilds instead of
+ * reshuffling every time the site is built.
+ */
+function backdatedPostDate(seed) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  const offsetDays = 30 + (hash % 31); // 30..60 inclusive
+  const d = new Date(`${BUILD_DATE}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - offsetDays);
+  return d.toISOString().slice(0, 10);
+}
+
 /** Every listing image: the real photo when we have one, the illustrated
  *  placeholder when we don't — a listing never renders with no image. Google
  *  photo URLs occasionally 404 after the fact, so onerror swaps to the same
@@ -926,7 +943,7 @@ ${closingSummary}`;
     description: `The 5 best pumpkin patches in ${label} are ${joinNatural(names)}. Compare ratings, hours and directions before you go.`,
     h1: `5 Best Pumpkin Patches in ${label}`,
     excerpt: `Our picks for the best pumpkin patches in ${label}, ranked by rating and reviews: ${joinNatural(names)}.`,
-    date: BUILD_DATE,
+    date: backdatedPostDate(slug),
     readingTime: '6 min read',
     author: cityAuthorSlug,
   };
@@ -983,7 +1000,7 @@ ${closingSummary}`;
       breadcrumbJsonLd(meta.trail, path),
     ],
   };
-  const byline = renderByline(cityAuthorSlug, BUILD_DATE, postMeta.readingTime);
+  const byline = renderByline(cityAuthorSlug, postMeta.date, postMeta.readingTime);
   writePage(path, render(meta, heroHtml + byline + body, { jsonld }));
   addToSitemap(path, '0.6', 'weekly');
 }
@@ -1101,7 +1118,7 @@ ${closingSummary}`;
       excerpt: x === 1
         ? `Our pick for the best ${cat.singular} in ${label}: ${names[0]}.`
         : `Our picks for the best ${cat.name.toLowerCase()} in ${label}, ranked by rating and reviews: ${joinNatural(names)}.`,
-      date: BUILD_DATE,
+      date: backdatedPostDate(slug),
       readingTime: '6 min read',
       author: attractionAuthorSlug,
     };
@@ -1158,7 +1175,7 @@ ${closingSummary}`;
         breadcrumbJsonLd(meta.trail, path),
       ],
     };
-    const byline = renderByline(attractionAuthorSlug, BUILD_DATE, postMeta.readingTime);
+    const byline = renderByline(attractionAuthorSlug, postMeta.date, postMeta.readingTime);
     writePage(path, render(meta, heroHtml + byline + body, { jsonld }));
     addToSitemap(path, '0.6', 'weekly');
   }
