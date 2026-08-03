@@ -139,6 +139,16 @@ attraction breakdown, or (on city pages) nearby towns in the same state — then
 the same planning content either way. A page with 10 or fewer listings is
 entirely "the ranked part" — no overflow grid.
 
+Both page types also carry a **List/Map toggle** (`src/assets/js/page-map.js`)
+above the listicle: click "Map" and the ranked list and overflow grid swap for
+a Leaflet map scoped to exactly the farms on that page, with a satellite
+toggle and a popup per marker linking to the listing. The farm data for the
+map is embedded inline as JSON right on the page (`renderScopedMap()` in
+`scripts/build.mjs`) rather than fetched, and Leaflet itself doesn't
+initialise until "Map" is actually clicked — so the toggle costs nothing for
+visitors who never use it. `?view=map` on either URL opens straight to the
+map view.
+
 Featured (paid) listings are flagged `"featured": true` in the dataset. They sort
 to the top of every state, town and category page they qualify for, get a
 highlighted card border and a "Featured farm" flag, and are collected on

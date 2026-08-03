@@ -326,6 +326,26 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
   letter-spacing: 0.06em; text-transform: uppercase; padding: 0.3rem 1.1rem;
 }
 
+.page-toggle-bar {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 0.75rem; margin-bottom: 1.5rem;
+}
+.page-toggle-label {
+  margin: 0; color: var(--muted); font-size: 0.92rem; font-weight: 500;
+}
+
+.page-map-wrap { position: relative; margin-bottom: 2rem; }
+.page-map {
+  height: 540px; border-radius: var(--r-md); overflow: hidden;
+  border: 1px solid var(--line); background: #dfe7e2;
+}
+@media (max-width: 640px) {
+  .page-map { height: 62vh; min-height: 360px; }
+  .page-toggle-bar { justify-content: stretch; }
+  .page-toggle-bar .control-group { width: 100%; }
+  .page-toggle-bar .toggle-btn { flex: 1 1 auto; justify-content: center; }
+}
+
 .listicle-toc {
   background: var(--orange-50); border: 1px solid var(--orange-100); border-radius: var(--r-md);
   padding: 0.85rem 1.2rem; font-size: 0.92rem; color: var(--ink-2); margin-bottom: 1.75rem;

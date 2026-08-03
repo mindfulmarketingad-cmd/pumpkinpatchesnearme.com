@@ -63,6 +63,11 @@ const statePath = (stateName) => `/${slugify(stateName)}/`;
 const cityPath = (stateName, cityName) => `/${slugify(stateName)}/${slugify(cityName)}/`;
 const categoryPath = (category) => `/${category.slug}/`;
 
+// Shared by every state and city page's List/Map toggle.
+const pageMapScripts = `<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css">
+<script src="/assets/vendor/leaflet/leaflet.js" defer></script>
+<script src="/assets/js/page-map.js?v=${ASSET_VERSION}" defer></script>`;
+
 /**
  * Individual listings live at /<state>/<city>/<business-name>/, nested under
  * the same state and city pages. Business-name slugs are de-duplicated within
@@ -268,6 +273,48 @@ ${cities
   })
   .join('\n')}
 </div>`;
+}
+
+/**
+ * Wraps a state or city page's farm listing content with a List/Map toggle.
+ * The map is scoped to exactly the farms passed in — not the whole
+ * dataset — and its data is embedded inline as JSON rather than fetched, so
+ * opening the map costs no extra request. Leaflet itself only initialises
+ * when a visitor actually clicks "Map".
+ */
+function renderScopedMap(items, listHtml) {
+  const mappable = items.filter((l) => Number.isFinite(l.lat) && Number.isFinite(l.lng));
+  if (!mappable.length) return listHtml;
+
+  const mapData = mappable.map((l) => ({
+    name: l.name,
+    url: l.url,
+    lat: l.lat,
+    lng: l.lng,
+    rating: l.rating,
+    reviews: l.reviews,
+    city: l.city,
+    stateCode: l.stateCode,
+  }));
+  // Inline JSON inside a <script> tag must not contain a literal "</" or a
+  // browser will parse it as the tag's own closing tag.
+  const json = JSON.stringify(mapData).replace(/</g, '\\u003c');
+
+  return `<div class="page-toggle-bar">
+  <p class="page-toggle-label">${mappable.length.toLocaleString('en-US')} pumpkin patch${mappable.length === 1 ? '' : 'es'} on this page</p>
+  <div class="control-group">
+    <button class="toggle-btn" type="button" id="page-view-list" aria-pressed="true">List</button>
+    <button class="toggle-btn" type="button" id="page-view-map" aria-pressed="false">Map</button>
+  </div>
+</div>
+<div id="page-list-view">
+${listHtml}
+</div>
+<div class="page-map-wrap" id="page-map-view" hidden>
+  <div class="page-map" id="page-map"></div>
+  <div class="map-tools"><button class="toggle-btn" type="button" id="page-map-satellite" aria-pressed="false">Satellite</button></div>
+</div>
+<script type="application/json" id="page-map-data">${json}</script>`;
 }
 
 function renderStateGrid() {
@@ -650,9 +697,8 @@ ${present.map(({ c, n }) => `  <a class="tag tag-link" href="${categoryPath(c)}"
 </div>`;
   })();
 
-  const body = `${rankedSection}
+  const body = `${renderScopedMap(items, `${rankedSection}${restSection ? `\n${restSection}` : ''}`)}
 <div class="section" style="padding-bottom:0">
-${restSection}
 ${citySection}
 ${catSection}
 <h2>Planning a ${esc(stateName)} pumpkin patch trip</h2>
@@ -684,7 +730,7 @@ ${catSection}
     ],
   };
 
-  writePage(path, render(meta, body, { jsonld }));
+  writePage(path, render(meta, body, { jsonld, scripts: items.length ? pageMapScripts : '' }));
   addToSitemap(path, '0.8', 'weekly');
 }
 
@@ -738,10 +784,9 @@ ${rest.map((l) => renderCard(l, { showState: false, showCity: false })).join('\n
 </div>`
     : '';
 
-  const body = `${rankedSection}
+  const body = `${renderScopedMap(items, `${rankedSection}${restSection ? `\n${restSection}` : ''}`)}
 
 <div class="section" style="padding-bottom:0">
-  ${restSection}
   ${featureCounts.length ? `<h2>What ${esc(cityName)} farms offer</h2>
   <div class="tag-row">
 ${featureCounts.map(({ c, n }) => `    <a class="tag tag-link" href="${categoryPath(c)}">${esc(c.name)} (${n})</a>`).join('\n')}
@@ -782,7 +827,7 @@ ${siblings
     ],
   };
 
-  writePage(path, render(meta, body, { jsonld }));
+  writePage(path, render(meta, body, { jsonld, scripts: pageMapScripts }));
   addToSitemap(path, '0.7', 'weekly');
 }
 
