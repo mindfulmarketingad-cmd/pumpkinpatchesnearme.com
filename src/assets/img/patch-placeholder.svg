@@ -86,7 +86,7 @@
 
   <!-- caption chip -->
   <g transform="translate(400,190)">
-    <rect x="-118" y="-24" width="236" height="48" rx="24" fill="#2B221C" opacity="0.55"/>
+    <rect x="-118" y="-24" width="236" height="48" fill="#2B221C" opacity="0.55"/>
     <text x="0" y="7" text-anchor="middle" font-family="'Fredoka','Trebuchet MS',system-ui,sans-serif" font-size="19" font-weight="600" fill="#FFFFFF">Photo not available</text>
   </g>
 </svg>
