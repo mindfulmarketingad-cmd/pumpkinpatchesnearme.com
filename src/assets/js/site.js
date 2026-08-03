@@ -20,13 +20,13 @@
     });
   }
 
-  // The contact form has no backend; it composes an email the visitor sends.
-  var form = document.getElementById('contact-form');
-  if (form) {
-    form.addEventListener('submit', function (event) {
+  // Neither form has a backend; each composes an email the visitor sends.
+  var contactForm = document.getElementById('contact-form');
+  if (contactForm) {
+    contactForm.addEventListener('submit', function (event) {
       event.preventDefault();
       var get = function (name) {
-        var field = form.elements[name];
+        var field = contactForm.elements[name];
         return field ? String(field.value || '').trim() : '';
       };
       var subject = get('topic') ? '[' + get('topic') + '] ' + get('subject') : get('subject');
@@ -36,10 +36,42 @@
         (get('listing') ? 'Listing or farm: ' + get('listing') + '\n' : '') +
         '\n' + get('message') + '\n';
       window.location.href =
-        'mailto:' + form.getAttribute('data-email') +
+        'mailto:' + contactForm.getAttribute('data-email') +
         '?subject=' + encodeURIComponent(subject || 'Website enquiry') +
         '&body=' + encodeURIComponent(body);
       var note = document.getElementById('contact-note');
+      if (note) note.hidden = false;
+    });
+  }
+
+  var listingForm = document.getElementById('listing-form');
+  if (listingForm) {
+    listingForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var get = function (name) {
+        var field = listingForm.elements[name];
+        return field ? String(field.value || '').trim() : '';
+      };
+      var features = Array.prototype.slice
+        .call(listingForm.querySelectorAll('input[name="features"]:checked'))
+        .map(function (el) { return el.value; })
+        .join(', ');
+      var body =
+        'Status: ' + get('status') + '\n' +
+        'Farm name: ' + get('farm_name') + '\n' +
+        'Address: ' + get('address') + '\n' +
+        'Phone: ' + get('phone') + '\n' +
+        'Website: ' + get('website') + '\n' +
+        'Season / hours: ' + get('season') + '\n' +
+        'Admission: ' + get('admission') + '\n' +
+        'Features: ' + (features || '(none selected)') + '\n' +
+        'Notes: ' + get('notes') + '\n' +
+        '\nSubmitted by: ' + get('your_name') + ' (' + get('your_email') + ')\n';
+      window.location.href =
+        'mailto:' + listingForm.getAttribute('data-email') +
+        '?subject=' + encodeURIComponent('New listing: ' + (get('farm_name') || 'Untitled farm')) +
+        '&body=' + encodeURIComponent(body);
+      var note = document.getElementById('listing-note');
       if (note) note.hidden = false;
     });
   }

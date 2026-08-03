@@ -82,6 +82,17 @@ const FEATURE_POOL = [
   ['Corn maze', 'Haunted attraction', 'Food and drinks', 'Fall festival'],
   ['Apple picking', 'Farm store', 'Hayrides', 'Sunflower field'],
 ];
+const PAYMENTS = [
+  ['Cash', 'Credit cards', 'Debit cards'],
+  ['Cash only'],
+  ['Cash', 'Credit cards', 'Mobile payments'],
+];
+const ADMISSIONS = [
+  'Free entry, pumpkins priced by the pound',
+  'Weekend admission $12 per person, under 3 free; weekdays free',
+  'Free entry, wristbands $18 for all attractions',
+  'Admission $8 weekdays, $15 weekends, includes corn maze and hayride',
+];
 const SEASONS = [
   'Late September through October 31',
   'Weekends from mid-September to Halloween',
@@ -146,6 +157,10 @@ ANCHORS.forEach(([code, city, zip, lat, lng, area], si) => {
       placeId: null,
       features,
       season: SEASONS[(si + i) % SEASONS.length],
+      admission: ADMISSIONS[(si + i) % ADMISSIONS.length],
+      payment: PAYMENTS[(si + i) % PAYMENTS.length],
+      directions: `Roughly ${5 + Math.floor(random() * 25)} minutes from downtown ${city}; look for the farm sign on ${STREETS[(si + i) % STREETS.length]}.`,
+      featured: (si * 3 + i) % 14 === 0,
       sample: true,
     });
   }

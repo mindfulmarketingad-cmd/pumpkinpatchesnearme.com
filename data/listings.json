@@ -1,6 +1,6 @@
 {
   "source": "sample",
-  "importedAt": "2026-08-03T16:33:09.483Z",
+  "importedAt": "2026-08-03T17:01:21.752Z",
   "count": 150,
   "sampleCount": 150,
   "listings": [
@@ -10,19 +10,19 @@
       "name": "Golden Acres Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Golden Acres Pumpkin Farm is a family-run fall destination near Huntsville, Alabama, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "5256 County Road 12",
+      "street": "8308 County Road 12",
       "city": "Huntsville",
       "state": "Alabama",
       "stateCode": "AL",
       "postalCode": "35801",
-      "fullAddress": "5256 County Road 12, Huntsville, AL 35801",
-      "lat": 35.10219,
-      "lng": -87.038,
+      "fullAddress": "8308 County Road 12, Huntsville, AL 35801",
+      "lat": 34.36018,
+      "lng": -87.01867,
       "phone": "(256) 555-0112",
       "website": null,
       "email": null,
-      "rating": 4,
-      "reviews": 885,
+      "rating": 4.9,
+      "reviews": 300,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -42,6 +42,12 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 12 minutes from downtown Huntsville; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -82,6 +88,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 18 minutes from downtown Huntsville; look for the farm sign on Orchard Lane.",
+      "featured": true,
       "sample": true
     },
     {
@@ -90,19 +104,19 @@
       "name": "Maple Ridge Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Maple Ridge Farm & Corn Maze is a family-run fall destination near Huntsville, Alabama, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "3312 Harvest Road",
+      "street": "6080 Harvest Road",
       "city": "Huntsville",
       "state": "Alabama",
       "stateCode": "AL",
       "postalCode": "35801",
-      "fullAddress": "3312 Harvest Road, Huntsville, AL 35801",
-      "lat": 34.55967,
-      "lng": -86.43739,
+      "fullAddress": "6080 Harvest Road, Huntsville, AL 35801",
+      "lat": 34.93889,
+      "lng": -86.91209,
       "phone": "(256) 555-0113",
       "website": null,
       "email": null,
-      "rating": 4.7,
-      "reviews": 223,
+      "rating": 4.5,
+      "reviews": 388,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -122,6 +136,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 11 minutes from downtown Huntsville; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -162,6 +184,12 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 23 minutes from downtown Anchorage; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -170,19 +198,19 @@
       "name": "Copper Kettle Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Copper Kettle Farm & Corn Maze is a family-run fall destination near Anchorage, Alaska, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "6933 Harvest Road",
+      "street": "3627 Harvest Road",
       "city": "Anchorage",
       "state": "Alaska",
       "stateCode": "AK",
       "postalCode": "99501",
-      "fullAddress": "6933 Harvest Road, Anchorage, AK 99501",
-      "lat": 61.06257,
-      "lng": -149.75679,
+      "fullAddress": "3627 Harvest Road, Anchorage, AK 99501",
+      "lat": 61.33417,
+      "lng": -150.3863,
       "phone": "(907) 555-0115",
       "website": null,
       "email": null,
-      "rating": 4,
-      "reviews": 758,
+      "rating": 4.8,
+      "reviews": 349,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -202,6 +230,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 8 minutes from downtown Anchorage; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -210,19 +246,19 @@
       "name": "Hilltop Family Farm",
       "category": "Pumpkin patch",
       "description": "Hilltop Family Farm is a family-run fall destination near Anchorage, Alaska, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "3747 Old Mill Road",
+      "street": "3269 Old Mill Road",
       "city": "Anchorage",
       "state": "Alaska",
       "stateCode": "AK",
       "postalCode": "99501",
-      "fullAddress": "3747 Old Mill Road, Anchorage, AK 99501",
-      "lat": 60.88844,
-      "lng": -150.13792,
+      "fullAddress": "3269 Old Mill Road, Anchorage, AK 99501",
+      "lat": 61.21629,
+      "lng": -149.73096,
       "phone": "(907) 555-0116",
       "website": null,
       "email": null,
       "rating": 4.4,
-      "reviews": 628,
+      "reviews": 148,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -242,6 +278,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 12 minutes from downtown Anchorage; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -250,19 +294,19 @@
       "name": "Rolling Hills Family Farm",
       "category": "Pumpkin patch",
       "description": "Rolling Hills Family Farm is a family-run fall destination near Phoenix, Arizona, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "6605 Old Mill Road",
+      "street": "6085 Old Mill Road",
       "city": "Phoenix",
       "state": "Arizona",
       "stateCode": "AZ",
       "postalCode": "85004",
-      "fullAddress": "6605 Old Mill Road, Phoenix, AZ 85004",
-      "lat": 33.57017,
-      "lng": -112.3688,
+      "fullAddress": "6085 Old Mill Road, Phoenix, AZ 85004",
+      "lat": 33.2068,
+      "lng": -111.79435,
       "phone": "(602) 555-0118",
       "website": null,
       "email": null,
-      "rating": 4.7,
-      "reviews": 905,
+      "rating": 5,
+      "reviews": 890,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -282,6 +326,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 19 minutes from downtown Phoenix; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -322,6 +374,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 22 minutes from downtown Phoenix; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -330,19 +390,19 @@
       "name": "Whispering Pines Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Whispering Pines Orchard & Pumpkins is a family-run fall destination near Phoenix, Arizona, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "8557 Meadow View Drive",
+      "street": "4468 Meadow View Drive",
       "city": "Phoenix",
       "state": "Arizona",
       "stateCode": "AZ",
       "postalCode": "85004",
-      "fullAddress": "8557 Meadow View Drive, Phoenix, AZ 85004",
-      "lat": 33.5175,
-      "lng": -112.14702,
+      "fullAddress": "4468 Meadow View Drive, Phoenix, AZ 85004",
+      "lat": 33.1642,
+      "lng": -112.27878,
       "phone": "(602) 555-0119",
       "website": null,
       "email": null,
-      "rating": 4.1,
-      "reviews": 322,
+      "rating": 4.4,
+      "reviews": 558,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -362,6 +422,12 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 10 minutes from downtown Phoenix; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -402,6 +468,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 9 minutes from downtown Little Rock; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -410,19 +484,19 @@
       "name": "Cedar Bend Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Cedar Bend Orchard & Pumpkins is a family-run fall destination near Little Rock, Arkansas, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "2596 Meadow View Drive",
+      "street": "3680 Meadow View Drive",
       "city": "Little Rock",
       "state": "Arkansas",
       "stateCode": "AR",
       "postalCode": "72201",
-      "fullAddress": "2596 Meadow View Drive, Little Rock, AR 72201",
-      "lat": 34.59753,
-      "lng": -92.41181,
+      "fullAddress": "3680 Meadow View Drive, Little Rock, AR 72201",
+      "lat": 34.64552,
+      "lng": -91.9073,
       "phone": "(501) 555-0121",
       "website": null,
       "email": null,
-      "rating": 4.8,
-      "reviews": 632,
+      "rating": 4.6,
+      "reviews": 262,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -442,6 +516,12 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 17 minutes from downtown Little Rock; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -450,19 +530,19 @@
       "name": "Stone Barn Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Stone Barn Pumpkin Patch is a family-run fall destination near Little Rock, Arkansas, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "2974 Pumpkin Hill Road",
+      "street": "2705 Pumpkin Hill Road",
       "city": "Little Rock",
       "state": "Arkansas",
       "stateCode": "AR",
       "postalCode": "72201",
-      "fullAddress": "2974 Pumpkin Hill Road, Little Rock, AR 72201",
-      "lat": 34.74315,
-      "lng": -92.60447,
+      "fullAddress": "2705 Pumpkin Hill Road, Little Rock, AR 72201",
+      "lat": 34.95929,
+      "lng": -91.94486,
       "phone": "(501) 555-0122",
       "website": null,
       "email": null,
       "rating": 4.7,
-      "reviews": 771,
+      "reviews": 98,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -482,6 +562,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 8 minutes from downtown Little Rock; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -490,19 +578,19 @@
       "name": "Frost Hollow Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Frost Hollow Pumpkin Patch is a family-run fall destination near Sacramento, California, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "3966 Pumpkin Hill Road",
+      "street": "4682 Pumpkin Hill Road",
       "city": "Sacramento",
       "state": "California",
       "stateCode": "CA",
       "postalCode": "95814",
-      "fullAddress": "3966 Pumpkin Hill Road, Sacramento, CA 95814",
-      "lat": 38.54627,
-      "lng": -121.29186,
+      "fullAddress": "4682 Pumpkin Hill Road, Sacramento, CA 95814",
+      "lat": 38.74738,
+      "lng": -121.12041,
       "phone": "(916) 555-0124",
       "website": null,
       "email": null,
       "rating": 4.8,
-      "reviews": 762,
+      "reviews": 377,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -522,6 +610,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 5 minutes from downtown Sacramento; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -530,19 +626,19 @@
       "name": "Lantern Hill Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Lantern Hill Pumpkin Farm is a family-run fall destination near Sacramento, California, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "3996 Orchard Lane",
+      "street": "7973 Orchard Lane",
       "city": "Sacramento",
       "state": "California",
       "stateCode": "CA",
       "postalCode": "95814",
-      "fullAddress": "3996 Orchard Lane, Sacramento, CA 95814",
-      "lat": 38.14568,
-      "lng": -121.08518,
+      "fullAddress": "7973 Orchard Lane, Sacramento, CA 95814",
+      "lat": 38.35249,
+      "lng": -121.88072,
       "phone": "(916) 555-0125",
       "website": null,
       "email": null,
-      "rating": 4.2,
-      "reviews": 173,
+      "rating": 4.1,
+      "reviews": 451,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -562,6 +658,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 29 minutes from downtown Sacramento; look for the farm sign on Orchard Lane.",
+      "featured": true,
       "sample": true
     },
     {
@@ -602,6 +706,12 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 14 minutes from downtown Sacramento; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -610,19 +720,19 @@
       "name": "Golden Acres Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Golden Acres Pumpkin Farm is a family-run fall destination near Denver, Colorado, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "5068 Orchard Lane",
+      "street": "7039 Orchard Lane",
       "city": "Denver",
       "state": "Colorado",
       "stateCode": "CO",
       "postalCode": "80202",
-      "fullAddress": "5068 Orchard Lane, Denver, CO 80202",
-      "lat": 39.96846,
-      "lng": -104.8834,
+      "fullAddress": "7039 Orchard Lane, Denver, CO 80202",
+      "lat": 39.82622,
+      "lng": -104.46395,
       "phone": "(303) 555-0127",
       "website": null,
       "email": null,
-      "rating": 5,
-      "reviews": 450,
+      "rating": 4.4,
+      "reviews": 780,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -642,6 +752,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 28 minutes from downtown Denver; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -682,6 +800,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 17 minutes from downtown Denver; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -690,19 +816,19 @@
       "name": "Maple Ridge Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Maple Ridge Farm & Corn Maze is a family-run fall destination near Denver, Colorado, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "7581 County Road 12",
+      "street": "3889 County Road 12",
       "city": "Denver",
       "state": "Colorado",
       "stateCode": "CO",
       "postalCode": "80202",
-      "fullAddress": "7581 County Road 12, Denver, CO 80202",
-      "lat": 40.15026,
-      "lng": -105.14263,
+      "fullAddress": "3889 County Road 12, Denver, CO 80202",
+      "lat": 39.72832,
+      "lng": -105.19644,
       "phone": "(303) 555-0128",
       "website": null,
       "email": null,
-      "rating": 4.4,
-      "reviews": 321,
+      "rating": 4.9,
+      "reviews": 235,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -722,6 +848,12 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 6 minutes from downtown Denver; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -762,6 +894,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 10 minutes from downtown Hartford; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -770,19 +910,19 @@
       "name": "Copper Kettle Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Copper Kettle Farm & Corn Maze is a family-run fall destination near Hartford, Connecticut, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "2764 County Road 12",
+      "street": "3645 County Road 12",
       "city": "Hartford",
       "state": "Connecticut",
       "stateCode": "CT",
       "postalCode": "06103",
-      "fullAddress": "2764 County Road 12, Hartford, CT 06103",
-      "lat": 41.61163,
-      "lng": -72.14587,
+      "fullAddress": "3645 County Road 12, Hartford, CT 06103",
+      "lat": 42.20511,
+      "lng": -73.18363,
       "phone": "(860) 555-0130",
       "website": null,
       "email": null,
-      "rating": 4,
-      "reviews": 554,
+      "rating": 4.5,
+      "reviews": 619,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -802,6 +942,12 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 28 minutes from downtown Hartford; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -810,19 +956,19 @@
       "name": "Hilltop Family Farm",
       "category": "Pumpkin patch",
       "description": "Hilltop Family Farm is a family-run fall destination near Hartford, Connecticut, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "6155 Harvest Road",
+      "street": "5194 Harvest Road",
       "city": "Hartford",
       "state": "Connecticut",
       "stateCode": "CT",
       "postalCode": "06103",
-      "fullAddress": "6155 Harvest Road, Hartford, CT 06103",
-      "lat": 42.14656,
-      "lng": -72.6582,
+      "fullAddress": "5194 Harvest Road, Hartford, CT 06103",
+      "lat": 41.32334,
+      "lng": -72.83852,
       "phone": "(860) 555-0131",
       "website": null,
       "email": null,
-      "rating": 3.9,
-      "reviews": 364,
+      "rating": 4.2,
+      "reviews": 136,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -842,6 +988,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 20 minutes from downtown Hartford; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -850,19 +1004,19 @@
       "name": "Rolling Hills Family Farm",
       "category": "Pumpkin patch",
       "description": "Rolling Hills Family Farm is a family-run fall destination near Dover, Delaware, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "4173 Harvest Road",
+      "street": "8768 Harvest Road",
       "city": "Dover",
       "state": "Delaware",
       "stateCode": "DE",
       "postalCode": "19901",
-      "fullAddress": "4173 Harvest Road, Dover, DE 19901",
-      "lat": 39.58197,
-      "lng": -75.23473,
+      "fullAddress": "8768 Harvest Road, Dover, DE 19901",
+      "lat": 39.39467,
+      "lng": -75.1985,
       "phone": "(302) 555-0133",
       "website": null,
       "email": null,
-      "rating": 4.8,
-      "reviews": 594,
+      "rating": 4.6,
+      "reviews": 583,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -882,6 +1036,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 12 minutes from downtown Dover; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -922,6 +1084,12 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 14 minutes from downtown Dover; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -930,19 +1098,19 @@
       "name": "Whispering Pines Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Whispering Pines Orchard & Pumpkins is a family-run fall destination near Dover, Delaware, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "5834 Old Mill Road",
+      "street": "3498 Old Mill Road",
       "city": "Dover",
       "state": "Delaware",
       "stateCode": "DE",
       "postalCode": "19901",
-      "fullAddress": "5834 Old Mill Road, Dover, DE 19901",
-      "lat": 38.97344,
-      "lng": -75.73041,
+      "fullAddress": "3498 Old Mill Road, Dover, DE 19901",
+      "lat": 39.08642,
+      "lng": -75.31622,
       "phone": "(302) 555-0134",
       "website": null,
       "email": null,
-      "rating": 4.4,
-      "reviews": 660,
+      "rating": 4.8,
+      "reviews": 778,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -962,6 +1130,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 12 minutes from downtown Dover; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1002,6 +1178,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 19 minutes from downtown Orlando; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1010,19 +1194,19 @@
       "name": "Cedar Bend Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Cedar Bend Orchard & Pumpkins is a family-run fall destination near Orlando, Florida, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "5596 Old Mill Road",
+      "street": "7148 Old Mill Road",
       "city": "Orlando",
       "state": "Florida",
       "stateCode": "FL",
       "postalCode": "32801",
-      "fullAddress": "5596 Old Mill Road, Orlando, FL 32801",
-      "lat": 28.77972,
-      "lng": -80.83083,
+      "fullAddress": "7148 Old Mill Road, Orlando, FL 32801",
+      "lat": 28.9865,
+      "lng": -80.93527,
       "phone": "(407) 555-0136",
       "website": null,
       "email": null,
-      "rating": 4.9,
-      "reviews": 257,
+      "rating": 4.2,
+      "reviews": 838,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -1042,6 +1226,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 19 minutes from downtown Orlando; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1050,19 +1242,19 @@
       "name": "Stone Barn Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Stone Barn Pumpkin Patch is a family-run fall destination near Orlando, Florida, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "8096 Meadow View Drive",
+      "street": "2290 Meadow View Drive",
       "city": "Orlando",
       "state": "Florida",
       "stateCode": "FL",
       "postalCode": "32801",
-      "fullAddress": "8096 Meadow View Drive, Orlando, FL 32801",
-      "lat": 28.61166,
-      "lng": -81.75157,
+      "fullAddress": "2290 Meadow View Drive, Orlando, FL 32801",
+      "lat": 28.27605,
+      "lng": -81.00043,
       "phone": "(407) 555-0137",
       "website": null,
       "email": null,
-      "rating": 4.1,
-      "reviews": 799,
+      "rating": 4.4,
+      "reviews": 448,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -1082,6 +1274,12 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 14 minutes from downtown Orlando; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1090,19 +1288,19 @@
       "name": "Frost Hollow Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Frost Hollow Pumpkin Patch is a family-run fall destination near Atlanta, Georgia, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "3779 Meadow View Drive",
+      "street": "4315 Meadow View Drive",
       "city": "Atlanta",
       "state": "Georgia",
       "stateCode": "GA",
       "postalCode": "30303",
-      "fullAddress": "3779 Meadow View Drive, Atlanta, GA 30303",
-      "lat": 33.67195,
-      "lng": -84.10056,
+      "fullAddress": "4315 Meadow View Drive, Atlanta, GA 30303",
+      "lat": 33.98418,
+      "lng": -84.07648,
       "phone": "(404) 555-0139",
       "website": null,
       "email": null,
-      "rating": 4.8,
-      "reviews": 436,
+      "rating": 4.4,
+      "reviews": 725,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -1122,6 +1320,12 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 20 minutes from downtown Atlanta; look for the farm sign on Meadow View Drive.",
+      "featured": true,
       "sample": true
     },
     {
@@ -1130,19 +1334,19 @@
       "name": "Lantern Hill Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Lantern Hill Pumpkin Farm is a family-run fall destination near Atlanta, Georgia, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "7091 Pumpkin Hill Road",
+      "street": "7680 Pumpkin Hill Road",
       "city": "Atlanta",
       "state": "Georgia",
       "stateCode": "GA",
       "postalCode": "30303",
-      "fullAddress": "7091 Pumpkin Hill Road, Atlanta, GA 30303",
-      "lat": 33.85117,
-      "lng": -84.01936,
+      "fullAddress": "7680 Pumpkin Hill Road, Atlanta, GA 30303",
+      "lat": 33.44618,
+      "lng": -84.93204,
       "phone": "(404) 555-0140",
       "website": null,
       "email": null,
-      "rating": 4.1,
-      "reviews": 44,
+      "rating": 4.2,
+      "reviews": 226,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -1162,6 +1366,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 13 minutes from downtown Atlanta; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1202,6 +1414,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 13 minutes from downtown Atlanta; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1210,19 +1430,19 @@
       "name": "Golden Acres Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Golden Acres Pumpkin Farm is a family-run fall destination near Honolulu, Hawaii, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "5131 Pumpkin Hill Road",
+      "street": "4939 Pumpkin Hill Road",
       "city": "Honolulu",
       "state": "Hawaii",
       "stateCode": "HI",
       "postalCode": "96813",
-      "fullAddress": "5131 Pumpkin Hill Road, Honolulu, HI 96813",
-      "lat": 21.30017,
-      "lng": -157.9371,
+      "fullAddress": "4939 Pumpkin Hill Road, Honolulu, HI 96813",
+      "lat": 21.24228,
+      "lng": -157.98319,
       "phone": "(808) 555-0142",
       "website": null,
       "email": null,
-      "rating": 4.3,
-      "reviews": 323,
+      "rating": 4.2,
+      "reviews": 867,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -1242,6 +1462,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 29 minutes from downtown Honolulu; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1282,6 +1510,12 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 17 minutes from downtown Honolulu; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1290,19 +1524,19 @@
       "name": "Maple Ridge Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Maple Ridge Farm & Corn Maze is a family-run fall destination near Honolulu, Hawaii, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "8356 Orchard Lane",
+      "street": "2690 Orchard Lane",
       "city": "Honolulu",
       "state": "Hawaii",
       "stateCode": "HI",
       "postalCode": "96813",
-      "fullAddress": "8356 Orchard Lane, Honolulu, HI 96813",
-      "lat": 21.72458,
-      "lng": -158.17551,
+      "fullAddress": "2690 Orchard Lane, Honolulu, HI 96813",
+      "lat": 21.5623,
+      "lng": -157.56109,
       "phone": "(808) 555-0143",
       "website": null,
       "email": null,
-      "rating": 4.8,
-      "reviews": 732,
+      "rating": 4,
+      "reviews": 479,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -1322,6 +1556,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 23 minutes from downtown Honolulu; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1362,6 +1604,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 11 minutes from downtown Boise; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1370,19 +1620,19 @@
       "name": "Copper Kettle Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Copper Kettle Farm & Corn Maze is a family-run fall destination near Boise, Idaho, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "3152 Orchard Lane",
+      "street": "4239 Orchard Lane",
       "city": "Boise",
       "state": "Idaho",
       "stateCode": "ID",
       "postalCode": "83702",
-      "fullAddress": "3152 Orchard Lane, Boise, ID 83702",
-      "lat": 43.5295,
-      "lng": -115.86287,
+      "fullAddress": "4239 Orchard Lane, Boise, ID 83702",
+      "lat": 43.89247,
+      "lng": -116.34209,
       "phone": "(208) 555-0145",
       "website": null,
       "email": null,
       "rating": 4.3,
-      "reviews": 376,
+      "reviews": 805,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -1402,6 +1652,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 13 minutes from downtown Boise; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1410,19 +1668,19 @@
       "name": "Hilltop Family Farm",
       "category": "Pumpkin patch",
       "description": "Hilltop Family Farm is a family-run fall destination near Boise, Idaho, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "7800 County Road 12",
+      "street": "5410 County Road 12",
       "city": "Boise",
       "state": "Idaho",
       "stateCode": "ID",
       "postalCode": "83702",
-      "fullAddress": "7800 County Road 12, Boise, ID 83702",
-      "lat": 43.481,
-      "lng": -116.14561,
+      "fullAddress": "5410 County Road 12, Boise, ID 83702",
+      "lat": 43.81945,
+      "lng": -116.56465,
       "phone": "(208) 555-0146",
       "website": null,
       "email": null,
-      "rating": 4.7,
-      "reviews": 193,
+      "rating": 4.5,
+      "reviews": 882,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -1442,6 +1700,12 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 10 minutes from downtown Boise; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1450,19 +1714,19 @@
       "name": "Rolling Hills Family Farm",
       "category": "Pumpkin patch",
       "description": "Rolling Hills Family Farm is a family-run fall destination near Springfield, Illinois, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "6623 County Road 12",
+      "street": "8192 County Road 12",
       "city": "Springfield",
       "state": "Illinois",
       "stateCode": "IL",
       "postalCode": "62701",
-      "fullAddress": "6623 County Road 12, Springfield, IL 62701",
-      "lat": 40.15717,
-      "lng": -89.6592,
+      "fullAddress": "8192 County Road 12, Springfield, IL 62701",
+      "lat": 39.78556,
+      "lng": -89.29369,
       "phone": "(217) 555-0148",
       "website": null,
       "email": null,
-      "rating": 4.8,
-      "reviews": 643,
+      "rating": 4.6,
+      "reviews": 330,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -1482,6 +1746,12 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 10 minutes from downtown Springfield; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1522,6 +1792,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 22 minutes from downtown Springfield; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1530,19 +1808,19 @@
       "name": "Whispering Pines Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Whispering Pines Orchard & Pumpkins is a family-run fall destination near Springfield, Illinois, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "3586 Harvest Road",
+      "street": "6227 Harvest Road",
       "city": "Springfield",
       "state": "Illinois",
       "stateCode": "IL",
       "postalCode": "62701",
-      "fullAddress": "3586 Harvest Road, Springfield, IL 62701",
-      "lat": 39.55064,
-      "lng": -89.47516,
+      "fullAddress": "6227 Harvest Road, Springfield, IL 62701",
+      "lat": 40.1315,
+      "lng": -89.10728,
       "phone": "(217) 555-0149",
       "website": null,
       "email": null,
-      "rating": 4.9,
-      "reviews": 929,
+      "rating": 4.6,
+      "reviews": 872,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -1562,6 +1840,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 27 minutes from downtown Springfield; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1602,6 +1888,12 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 8 minutes from downtown Indianapolis; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1610,19 +1902,19 @@
       "name": "Cedar Bend Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Cedar Bend Orchard & Pumpkins is a family-run fall destination near Indianapolis, Indiana, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "2164 Harvest Road",
+      "street": "6895 Harvest Road",
       "city": "Indianapolis",
       "state": "Indiana",
       "stateCode": "IN",
       "postalCode": "46204",
-      "fullAddress": "2164 Harvest Road, Indianapolis, IN 46204",
-      "lat": 39.98129,
-      "lng": -85.67542,
+      "fullAddress": "6895 Harvest Road, Indianapolis, IN 46204",
+      "lat": 40.16284,
+      "lng": -85.97079,
       "phone": "(317) 555-0151",
       "website": null,
       "email": null,
-      "rating": 4.6,
-      "reviews": 473,
+      "rating": 4.4,
+      "reviews": 762,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -1642,6 +1934,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 29 minutes from downtown Indianapolis; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1650,19 +1950,19 @@
       "name": "Stone Barn Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Stone Barn Pumpkin Patch is a family-run fall destination near Indianapolis, Indiana, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "7421 Old Mill Road",
+      "street": "2350 Old Mill Road",
       "city": "Indianapolis",
       "state": "Indiana",
       "stateCode": "IN",
       "postalCode": "46204",
-      "fullAddress": "7421 Old Mill Road, Indianapolis, IN 46204",
-      "lat": 40.18332,
-      "lng": -86.52226,
+      "fullAddress": "2350 Old Mill Road, Indianapolis, IN 46204",
+      "lat": 39.99486,
+      "lng": -86.63767,
       "phone": "(317) 555-0152",
       "website": null,
       "email": null,
-      "rating": 4.7,
-      "reviews": 97,
+      "rating": 4.3,
+      "reviews": 649,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -1682,6 +1982,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 19 minutes from downtown Indianapolis; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1690,19 +1998,19 @@
       "name": "Frost Hollow Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Frost Hollow Pumpkin Patch is a family-run fall destination near Des Moines, Iowa, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "4743 Old Mill Road",
+      "street": "6772 Old Mill Road",
       "city": "Des Moines",
       "state": "Iowa",
       "stateCode": "IA",
       "postalCode": "50309",
-      "fullAddress": "4743 Old Mill Road, Des Moines, IA 50309",
-      "lat": 41.78542,
-      "lng": -93.44405,
+      "fullAddress": "6772 Old Mill Road, Des Moines, IA 50309",
+      "lat": 41.73405,
+      "lng": -93.70854,
       "phone": "(515) 555-0154",
       "website": null,
       "email": null,
       "rating": 4.4,
-      "reviews": 487,
+      "reviews": 303,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -1722,6 +2030,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 10 minutes from downtown Des Moines; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1730,19 +2046,19 @@
       "name": "Lantern Hill Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Lantern Hill Pumpkin Farm is a family-run fall destination near Des Moines, Iowa, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "3338 Meadow View Drive",
+      "street": "3706 Meadow View Drive",
       "city": "Des Moines",
       "state": "Iowa",
       "stateCode": "IA",
       "postalCode": "50309",
-      "fullAddress": "3338 Meadow View Drive, Des Moines, IA 50309",
-      "lat": 41.33138,
-      "lng": -93.8028,
+      "fullAddress": "3706 Meadow View Drive, Des Moines, IA 50309",
+      "lat": 41.44387,
+      "lng": -93.40614,
       "phone": "(515) 555-0155",
       "website": null,
       "email": null,
-      "rating": 4.3,
-      "reviews": 669,
+      "rating": 4.9,
+      "reviews": 905,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -1762,6 +2078,12 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 10 minutes from downtown Des Moines; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1802,6 +2124,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 16 minutes from downtown Des Moines; look for the farm sign on Harvest Road.",
+      "featured": true,
       "sample": true
     },
     {
@@ -1810,19 +2140,19 @@
       "name": "Golden Acres Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Golden Acres Pumpkin Farm is a family-run fall destination near Topeka, Kansas, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "6197 Meadow View Drive",
+      "street": "4113 Meadow View Drive",
       "city": "Topeka",
       "state": "Kansas",
       "stateCode": "KS",
       "postalCode": "66603",
-      "fullAddress": "6197 Meadow View Drive, Topeka, KS 66603",
-      "lat": 38.94832,
-      "lng": -95.36547,
+      "fullAddress": "4113 Meadow View Drive, Topeka, KS 66603",
+      "lat": 39.30371,
+      "lng": -95.74406,
       "phone": "(785) 555-0157",
       "website": null,
       "email": null,
-      "rating": 4.4,
-      "reviews": 558,
+      "rating": 4.5,
+      "reviews": 113,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -1842,6 +2172,12 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 24 minutes from downtown Topeka; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1882,6 +2218,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 21 minutes from downtown Topeka; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1890,19 +2234,19 @@
       "name": "Maple Ridge Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Maple Ridge Farm & Corn Maze is a family-run fall destination near Topeka, Kansas, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "1652 Pumpkin Hill Road",
+      "street": "2299 Pumpkin Hill Road",
       "city": "Topeka",
       "state": "Kansas",
       "stateCode": "KS",
       "postalCode": "66603",
-      "fullAddress": "1652 Pumpkin Hill Road, Topeka, KS 66603",
-      "lat": 39.31681,
-      "lng": -96.04933,
+      "fullAddress": "2299 Pumpkin Hill Road, Topeka, KS 66603",
+      "lat": 38.66638,
+      "lng": -95.61234,
       "phone": "(785) 555-0158",
       "website": null,
       "email": null,
-      "rating": 4,
-      "reviews": 543,
+      "rating": 4.9,
+      "reviews": 388,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -1922,6 +2266,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 12 minutes from downtown Topeka; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1962,6 +2314,12 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 7 minutes from downtown Lexington; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -1970,19 +2328,19 @@
       "name": "Copper Kettle Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Copper Kettle Farm & Corn Maze is a family-run fall destination near Lexington, Kentucky, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "1738 Pumpkin Hill Road",
+      "street": "8112 Pumpkin Hill Road",
       "city": "Lexington",
       "state": "Kentucky",
       "stateCode": "KY",
       "postalCode": "40507",
-      "fullAddress": "1738 Pumpkin Hill Road, Lexington, KY 40507",
-      "lat": 38.39019,
-      "lng": -84.4728,
+      "fullAddress": "8112 Pumpkin Hill Road, Lexington, KY 40507",
+      "lat": 38.06471,
+      "lng": -84.96977,
       "phone": "(859) 555-0160",
       "website": null,
       "email": null,
-      "rating": 4,
-      "reviews": 659,
+      "rating": 4.7,
+      "reviews": 809,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -2002,6 +2360,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 12 minutes from downtown Lexington; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2010,19 +2376,19 @@
       "name": "Hilltop Family Farm",
       "category": "Pumpkin patch",
       "description": "Hilltop Family Farm is a family-run fall destination near Lexington, Kentucky, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "7841 Orchard Lane",
+      "street": "6918 Orchard Lane",
       "city": "Lexington",
       "state": "Kentucky",
       "stateCode": "KY",
       "postalCode": "40507",
-      "fullAddress": "7841 Orchard Lane, Lexington, KY 40507",
-      "lat": 37.8702,
-      "lng": -84.23917,
+      "fullAddress": "6918 Orchard Lane, Lexington, KY 40507",
+      "lat": 37.7423,
+      "lng": -84.6891,
       "phone": "(859) 555-0161",
       "website": null,
       "email": null,
-      "rating": 4.1,
-      "reviews": 337,
+      "rating": 4.8,
+      "reviews": 628,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -2042,6 +2408,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 26 minutes from downtown Lexington; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2050,19 +2424,19 @@
       "name": "Rolling Hills Family Farm",
       "category": "Pumpkin patch",
       "description": "Rolling Hills Family Farm is a family-run fall destination near Baton Rouge, Louisiana, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "1776 Orchard Lane",
+      "street": "8729 Orchard Lane",
       "city": "Baton Rouge",
       "state": "Louisiana",
       "stateCode": "LA",
       "postalCode": "70802",
-      "fullAddress": "1776 Orchard Lane, Baton Rouge, LA 70802",
-      "lat": 30.87054,
-      "lng": -91.54438,
+      "fullAddress": "8729 Orchard Lane, Baton Rouge, LA 70802",
+      "lat": 30.1586,
+      "lng": -90.95814,
       "phone": "(225) 555-0163",
       "website": null,
       "email": null,
-      "rating": 4.7,
-      "reviews": 535,
+      "rating": 4.5,
+      "reviews": 585,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -2082,6 +2456,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 8 minutes from downtown Baton Rouge; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2122,6 +2504,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 7 minutes from downtown Baton Rouge; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2130,19 +2520,19 @@
       "name": "Whispering Pines Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Whispering Pines Orchard & Pumpkins is a family-run fall destination near Baton Rouge, Louisiana, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "5845 County Road 12",
+      "street": "1503 County Road 12",
       "city": "Baton Rouge",
       "state": "Louisiana",
       "stateCode": "LA",
       "postalCode": "70802",
-      "fullAddress": "5845 County Road 12, Baton Rouge, LA 70802",
-      "lat": 30.12932,
-      "lng": -91.66773,
+      "fullAddress": "1503 County Road 12, Baton Rouge, LA 70802",
+      "lat": 30.10251,
+      "lng": -90.76573,
       "phone": "(225) 555-0164",
       "website": null,
       "email": null,
-      "rating": 4,
-      "reviews": 834,
+      "rating": 4.3,
+      "reviews": 299,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -2162,6 +2552,12 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 8 minutes from downtown Baton Rouge; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2202,6 +2598,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 12 minutes from downtown Portland; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2210,19 +2614,19 @@
       "name": "Cedar Bend Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Cedar Bend Orchard & Pumpkins is a family-run fall destination near Portland, Maine, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "3454 County Road 12",
+      "street": "4048 County Road 12",
       "city": "Portland",
       "state": "Maine",
       "stateCode": "ME",
       "postalCode": "04101",
-      "fullAddress": "3454 County Road 12, Portland, ME 04101",
-      "lat": 43.55192,
-      "lng": -69.89521,
+      "fullAddress": "4048 County Road 12, Portland, ME 04101",
+      "lat": 43.95501,
+      "lng": -70.55507,
       "phone": "(207) 555-0166",
       "website": null,
       "email": null,
-      "rating": 4.2,
-      "reviews": 473,
+      "rating": 4.4,
+      "reviews": 640,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -2242,6 +2646,12 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 19 minutes from downtown Portland; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2250,19 +2660,19 @@
       "name": "Stone Barn Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Stone Barn Pumpkin Patch is a family-run fall destination near Portland, Maine, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "6341 Harvest Road",
+      "street": "6780 Harvest Road",
       "city": "Portland",
       "state": "Maine",
       "stateCode": "ME",
       "postalCode": "04101",
-      "fullAddress": "6341 Harvest Road, Portland, ME 04101",
-      "lat": 43.72583,
-      "lng": -70.01219,
+      "fullAddress": "6780 Harvest Road, Portland, ME 04101",
+      "lat": 44.06221,
+      "lng": -70.78047,
       "phone": "(207) 555-0167",
       "website": null,
       "email": null,
-      "rating": 4.9,
-      "reviews": 61,
+      "rating": 4.3,
+      "reviews": 901,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -2282,6 +2692,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 14 minutes from downtown Portland; look for the farm sign on Harvest Road.",
+      "featured": true,
       "sample": true
     },
     {
@@ -2290,19 +2708,19 @@
       "name": "Frost Hollow Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Frost Hollow Pumpkin Patch is a family-run fall destination near Frederick, Maryland, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "3269 Harvest Road",
+      "street": "4884 Harvest Road",
       "city": "Frederick",
       "state": "Maryland",
       "stateCode": "MD",
       "postalCode": "21701",
-      "fullAddress": "3269 Harvest Road, Frederick, MD 21701",
-      "lat": 39.40096,
-      "lng": -76.95282,
+      "fullAddress": "4884 Harvest Road, Frederick, MD 21701",
+      "lat": 39.78806,
+      "lng": -77.09974,
       "phone": "(301) 555-0169",
       "website": null,
       "email": null,
-      "rating": 4.8,
-      "reviews": 331,
+      "rating": 4.3,
+      "reviews": 48,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -2322,6 +2740,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 18 minutes from downtown Frederick; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2330,19 +2756,19 @@
       "name": "Lantern Hill Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Lantern Hill Pumpkin Farm is a family-run fall destination near Frederick, Maryland, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "1077 Old Mill Road",
+      "street": "6802 Old Mill Road",
       "city": "Frederick",
       "state": "Maryland",
       "stateCode": "MD",
       "postalCode": "21701",
-      "fullAddress": "1077 Old Mill Road, Frederick, MD 21701",
-      "lat": 39.46627,
-      "lng": -77.16222,
+      "fullAddress": "6802 Old Mill Road, Frederick, MD 21701",
+      "lat": 39.25849,
+      "lng": -76.9789,
       "phone": "(301) 555-0170",
       "website": null,
       "email": null,
-      "rating": 4.3,
-      "reviews": 842,
+      "rating": 4.9,
+      "reviews": 652,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -2362,6 +2788,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 24 minutes from downtown Frederick; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2402,6 +2836,12 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 12 minutes from downtown Frederick; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2410,19 +2850,19 @@
       "name": "Golden Acres Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Golden Acres Pumpkin Farm is a family-run fall destination near Worcester, Massachusetts, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "5332 Old Mill Road",
+      "street": "4264 Old Mill Road",
       "city": "Worcester",
       "state": "Massachusetts",
       "stateCode": "MA",
       "postalCode": "01608",
-      "fullAddress": "5332 Old Mill Road, Worcester, MA 01608",
-      "lat": 42.1803,
-      "lng": -71.64645,
+      "fullAddress": "4264 Old Mill Road, Worcester, MA 01608",
+      "lat": 42.39027,
+      "lng": -72.33663,
       "phone": "(508) 555-0172",
       "website": null,
       "email": null,
-      "rating": 3.9,
-      "reviews": 444,
+      "rating": 4.4,
+      "reviews": 710,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -2442,6 +2882,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 6 minutes from downtown Worcester; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2482,6 +2930,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 18 minutes from downtown Worcester; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2490,19 +2946,19 @@
       "name": "Maple Ridge Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Maple Ridge Farm & Corn Maze is a family-run fall destination near Worcester, Massachusetts, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "6962 Meadow View Drive",
+      "street": "8657 Meadow View Drive",
       "city": "Worcester",
       "state": "Massachusetts",
       "stateCode": "MA",
       "postalCode": "01608",
-      "fullAddress": "6962 Meadow View Drive, Worcester, MA 01608",
-      "lat": 41.85236,
-      "lng": -71.29904,
+      "fullAddress": "8657 Meadow View Drive, Worcester, MA 01608",
+      "lat": 41.94115,
+      "lng": -71.97271,
       "phone": "(508) 555-0173",
       "website": null,
       "email": null,
-      "rating": 4.1,
-      "reviews": 350,
+      "rating": 4.9,
+      "reviews": 451,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -2522,6 +2978,12 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 12 minutes from downtown Worcester; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2562,6 +3024,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 14 minutes from downtown Grand Rapids; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2570,19 +3040,19 @@
       "name": "Copper Kettle Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Copper Kettle Farm & Corn Maze is a family-run fall destination near Grand Rapids, Michigan, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "3929 Meadow View Drive",
+      "street": "5428 Meadow View Drive",
       "city": "Grand Rapids",
       "state": "Michigan",
       "stateCode": "MI",
       "postalCode": "49503",
-      "fullAddress": "3929 Meadow View Drive, Grand Rapids, MI 49503",
-      "lat": 43.01124,
-      "lng": -85.97676,
+      "fullAddress": "5428 Meadow View Drive, Grand Rapids, MI 49503",
+      "lat": 42.71037,
+      "lng": -85.24443,
       "phone": "(616) 555-0175",
       "website": null,
       "email": null,
-      "rating": 4.9,
-      "reviews": 689,
+      "rating": 4.7,
+      "reviews": 40,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -2602,6 +3072,12 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 19 minutes from downtown Grand Rapids; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2610,19 +3086,19 @@
       "name": "Hilltop Family Farm",
       "category": "Pumpkin patch",
       "description": "Hilltop Family Farm is a family-run fall destination near Grand Rapids, Michigan, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "1003 Pumpkin Hill Road",
+      "street": "6993 Pumpkin Hill Road",
       "city": "Grand Rapids",
       "state": "Michigan",
       "stateCode": "MI",
       "postalCode": "49503",
-      "fullAddress": "1003 Pumpkin Hill Road, Grand Rapids, MI 49503",
-      "lat": 43.04972,
-      "lng": -85.39395,
+      "fullAddress": "6993 Pumpkin Hill Road, Grand Rapids, MI 49503",
+      "lat": 42.56851,
+      "lng": -85.70469,
       "phone": "(616) 555-0176",
       "website": null,
       "email": null,
-      "rating": 4,
-      "reviews": 459,
+      "rating": 4.3,
+      "reviews": 226,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -2642,6 +3118,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 27 minutes from downtown Grand Rapids; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2650,19 +3134,19 @@
       "name": "Rolling Hills Family Farm",
       "category": "Pumpkin patch",
       "description": "Rolling Hills Family Farm is a family-run fall destination near Minneapolis, Minnesota, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "6873 Pumpkin Hill Road",
+      "street": "7528 Pumpkin Hill Road",
       "city": "Minneapolis",
       "state": "Minnesota",
       "stateCode": "MN",
       "postalCode": "55401",
-      "fullAddress": "6873 Pumpkin Hill Road, Minneapolis, MN 55401",
-      "lat": 45.26245,
-      "lng": -93.69183,
+      "fullAddress": "7528 Pumpkin Hill Road, Minneapolis, MN 55401",
+      "lat": 44.62878,
+      "lng": -92.80778,
       "phone": "(612) 555-0178",
       "website": null,
       "email": null,
-      "rating": 4.9,
-      "reviews": 508,
+      "rating": 4.5,
+      "reviews": 53,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -2682,6 +3166,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 8 minutes from downtown Minneapolis; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2722,6 +3214,12 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 23 minutes from downtown Minneapolis; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2730,19 +3228,19 @@
       "name": "Whispering Pines Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Whispering Pines Orchard & Pumpkins is a family-run fall destination near Minneapolis, Minnesota, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "1121 Orchard Lane",
+      "street": "7844 Orchard Lane",
       "city": "Minneapolis",
       "state": "Minnesota",
       "stateCode": "MN",
       "postalCode": "55401",
-      "fullAddress": "1121 Orchard Lane, Minneapolis, MN 55401",
-      "lat": 44.66011,
-      "lng": -92.87385,
+      "fullAddress": "7844 Orchard Lane, Minneapolis, MN 55401",
+      "lat": 45.35892,
+      "lng": -93.50449,
       "phone": "(612) 555-0179",
       "website": null,
       "email": null,
-      "rating": 4.9,
-      "reviews": 294,
+      "rating": 4.7,
+      "reviews": 201,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -2762,6 +3260,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 5 minutes from downtown Minneapolis; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2802,6 +3308,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 13 minutes from downtown Jackson; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2810,19 +3324,19 @@
       "name": "Cedar Bend Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Cedar Bend Orchard & Pumpkins is a family-run fall destination near Jackson, Mississippi, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "3843 Orchard Lane",
+      "street": "4642 Orchard Lane",
       "city": "Jackson",
       "state": "Mississippi",
       "stateCode": "MS",
       "postalCode": "39201",
-      "fullAddress": "3843 Orchard Lane, Jackson, MS 39201",
-      "lat": 32.25879,
-      "lng": -90.14716,
+      "fullAddress": "4642 Orchard Lane, Jackson, MS 39201",
+      "lat": 32.32996,
+      "lng": -89.65124,
       "phone": "(601) 555-0181",
       "website": null,
       "email": null,
-      "rating": 5,
-      "reviews": 230,
+      "rating": 4.1,
+      "reviews": 616,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -2842,6 +3356,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 22 minutes from downtown Jackson; look for the farm sign on Orchard Lane.",
+      "featured": true,
       "sample": true
     },
     {
@@ -2850,19 +3372,19 @@
       "name": "Stone Barn Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Stone Barn Pumpkin Patch is a family-run fall destination near Jackson, Mississippi, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "6122 County Road 12",
+      "street": "3360 County Road 12",
       "city": "Jackson",
       "state": "Mississippi",
       "stateCode": "MS",
       "postalCode": "39201",
-      "fullAddress": "6122 County Road 12, Jackson, MS 39201",
-      "lat": 32.46993,
-      "lng": -90.41042,
+      "fullAddress": "3360 County Road 12, Jackson, MS 39201",
+      "lat": 32.08892,
+      "lng": -89.71167,
       "phone": "(601) 555-0182",
       "website": null,
       "email": null,
       "rating": 4.2,
-      "reviews": 877,
+      "reviews": 501,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -2882,6 +3404,12 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 15 minutes from downtown Jackson; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2890,19 +3418,19 @@
       "name": "Frost Hollow Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Frost Hollow Pumpkin Patch is a family-run fall destination near Columbia, Missouri, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "4944 County Road 12",
+      "street": "6098 County Road 12",
       "city": "Columbia",
       "state": "Missouri",
       "stateCode": "MO",
       "postalCode": "65201",
-      "fullAddress": "4944 County Road 12, Columbia, MO 65201",
-      "lat": 39.07456,
-      "lng": -91.9184,
+      "fullAddress": "6098 County Road 12, Columbia, MO 65201",
+      "lat": 39.29103,
+      "lng": -92.82698,
       "phone": "(573) 555-0184",
       "website": null,
       "email": null,
-      "rating": 4,
-      "reviews": 608,
+      "rating": 4.6,
+      "reviews": 245,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -2922,6 +3450,12 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 5 minutes from downtown Columbia; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -2930,19 +3464,19 @@
       "name": "Lantern Hill Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Lantern Hill Pumpkin Farm is a family-run fall destination near Columbia, Missouri, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "2831 Harvest Road",
+      "street": "7889 Harvest Road",
       "city": "Columbia",
       "state": "Missouri",
       "stateCode": "MO",
       "postalCode": "65201",
-      "fullAddress": "2831 Harvest Road, Columbia, MO 65201",
-      "lat": 38.51869,
-      "lng": -91.9367,
+      "fullAddress": "7889 Harvest Road, Columbia, MO 65201",
+      "lat": 38.9489,
+      "lng": -92.11662,
       "phone": "(573) 555-0185",
       "website": null,
       "email": null,
-      "rating": 4.4,
-      "reviews": 667,
+      "rating": 4.9,
+      "reviews": 324,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -2962,6 +3496,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 9 minutes from downtown Columbia; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3002,6 +3544,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 17 minutes from downtown Columbia; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3010,19 +3560,19 @@
       "name": "Golden Acres Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Golden Acres Pumpkin Farm is a family-run fall destination near Bozeman, Montana, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "2640 Harvest Road",
+      "street": "2704 Harvest Road",
       "city": "Bozeman",
       "state": "Montana",
       "stateCode": "MT",
       "postalCode": "59715",
-      "fullAddress": "2640 Harvest Road, Bozeman, MT 59715",
-      "lat": 45.42173,
-      "lng": -111.28987,
+      "fullAddress": "2704 Harvest Road, Bozeman, MT 59715",
+      "lat": 45.47392,
+      "lng": -110.60357,
       "phone": "(406) 555-0187",
       "website": null,
       "email": null,
-      "rating": 4.9,
-      "reviews": 383,
+      "rating": 4.3,
+      "reviews": 527,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -3042,6 +3592,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 24 minutes from downtown Bozeman; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3082,6 +3640,12 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 10 minutes from downtown Bozeman; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3090,19 +3654,19 @@
       "name": "Maple Ridge Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Maple Ridge Farm & Corn Maze is a family-run fall destination near Bozeman, Montana, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "5334 Old Mill Road",
+      "street": "4217 Old Mill Road",
       "city": "Bozeman",
       "state": "Montana",
       "stateCode": "MT",
       "postalCode": "59715",
-      "fullAddress": "5334 Old Mill Road, Bozeman, MT 59715",
-      "lat": 45.939,
-      "lng": -111.14562,
+      "fullAddress": "4217 Old Mill Road, Bozeman, MT 59715",
+      "lat": 45.48002,
+      "lng": -110.58295,
       "phone": "(406) 555-0188",
       "website": null,
       "email": null,
       "rating": 4.2,
-      "reviews": 862,
+      "reviews": 469,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -3122,6 +3686,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 20 minutes from downtown Bozeman; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3162,6 +3734,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 19 minutes from downtown Lincoln; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3170,19 +3750,19 @@
       "name": "Copper Kettle Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Copper Kettle Farm & Corn Maze is a family-run fall destination near Lincoln, Nebraska, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "5584 Old Mill Road",
+      "street": "4803 Old Mill Road",
       "city": "Lincoln",
       "state": "Nebraska",
       "stateCode": "NE",
       "postalCode": "68508",
-      "fullAddress": "5584 Old Mill Road, Lincoln, NE 68508",
-      "lat": 40.79094,
-      "lng": -96.95399,
+      "fullAddress": "4803 Old Mill Road, Lincoln, NE 68508",
+      "lat": 40.61174,
+      "lng": -96.46532,
       "phone": "(402) 555-0190",
       "website": null,
       "email": null,
-      "rating": 4.7,
-      "reviews": 596,
+      "rating": 4.6,
+      "reviews": 105,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -3202,6 +3782,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 8 minutes from downtown Lincoln; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3210,19 +3798,19 @@
       "name": "Hilltop Family Farm",
       "category": "Pumpkin patch",
       "description": "Hilltop Family Farm is a family-run fall destination near Lincoln, Nebraska, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "1583 Meadow View Drive",
+      "street": "6244 Meadow View Drive",
       "city": "Lincoln",
       "state": "Nebraska",
       "stateCode": "NE",
       "postalCode": "68508",
-      "fullAddress": "1583 Meadow View Drive, Lincoln, NE 68508",
-      "lat": 40.49412,
-      "lng": -96.53685,
+      "fullAddress": "6244 Meadow View Drive, Lincoln, NE 68508",
+      "lat": 40.67306,
+      "lng": -96.30079,
       "phone": "(402) 555-0191",
       "website": null,
       "email": null,
-      "rating": 4.3,
-      "reviews": 823,
+      "rating": 4.5,
+      "reviews": 64,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -3242,6 +3830,12 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 11 minutes from downtown Lincoln; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3250,19 +3844,19 @@
       "name": "Rolling Hills Family Farm",
       "category": "Pumpkin patch",
       "description": "Rolling Hills Family Farm is a family-run fall destination near Reno, Nevada, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "2553 Meadow View Drive",
+      "street": "1016 Meadow View Drive",
       "city": "Reno",
       "state": "Nevada",
       "stateCode": "NV",
       "postalCode": "89501",
-      "fullAddress": "2553 Meadow View Drive, Reno, NV 89501",
-      "lat": 39.08187,
-      "lng": -119.36993,
+      "fullAddress": "1016 Meadow View Drive, Reno, NV 89501",
+      "lat": 39.89333,
+      "lng": -119.656,
       "phone": "(775) 555-0193",
       "website": null,
       "email": null,
-      "rating": 4.6,
-      "reviews": 441,
+      "rating": 4.4,
+      "reviews": 840,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -3282,6 +3876,12 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 22 minutes from downtown Reno; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3322,6 +3922,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 9 minutes from downtown Reno; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3330,19 +3938,19 @@
       "name": "Whispering Pines Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Whispering Pines Orchard & Pumpkins is a family-run fall destination near Reno, Nevada, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "8115 Pumpkin Hill Road",
+      "street": "4994 Pumpkin Hill Road",
       "city": "Reno",
       "state": "Nevada",
       "stateCode": "NV",
       "postalCode": "89501",
-      "fullAddress": "8115 Pumpkin Hill Road, Reno, NV 89501",
-      "lat": 39.70725,
-      "lng": -119.81475,
+      "fullAddress": "4994 Pumpkin Hill Road, Reno, NV 89501",
+      "lat": 39.58144,
+      "lng": -119.47434,
       "phone": "(775) 555-0194",
       "website": null,
       "email": null,
-      "rating": 4.5,
-      "reviews": 767,
+      "rating": 4.2,
+      "reviews": 593,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -3362,6 +3970,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 5 minutes from downtown Reno; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3402,6 +4018,12 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 15 minutes from downtown Concord; look for the farm sign on Meadow View Drive.",
+      "featured": true,
       "sample": true
     },
     {
@@ -3410,19 +4032,19 @@
       "name": "Cedar Bend Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Cedar Bend Orchard & Pumpkins is a family-run fall destination near Concord, New Hampshire, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "4231 Pumpkin Hill Road",
+      "street": "5236 Pumpkin Hill Road",
       "city": "Concord",
       "state": "New Hampshire",
       "stateCode": "NH",
       "postalCode": "03301",
-      "fullAddress": "4231 Pumpkin Hill Road, Concord, NH 03301",
-      "lat": 43.23465,
-      "lng": -71.82411,
+      "fullAddress": "5236 Pumpkin Hill Road, Concord, NH 03301",
+      "lat": 42.97391,
+      "lng": -71.27241,
       "phone": "(603) 555-0196",
       "website": null,
       "email": null,
-      "rating": 4.7,
-      "reviews": 786,
+      "rating": 4.8,
+      "reviews": 877,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -3442,6 +4064,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 14 minutes from downtown Concord; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3450,19 +4080,19 @@
       "name": "Stone Barn Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Stone Barn Pumpkin Patch is a family-run fall destination near Concord, New Hampshire, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "8445 Orchard Lane",
+      "street": "6617 Orchard Lane",
       "city": "Concord",
       "state": "New Hampshire",
       "stateCode": "NH",
       "postalCode": "03301",
-      "fullAddress": "8445 Orchard Lane, Concord, NH 03301",
-      "lat": 43.10831,
-      "lng": -71.31562,
+      "fullAddress": "6617 Orchard Lane, Concord, NH 03301",
+      "lat": 43.02673,
+      "lng": -71.84608,
       "phone": "(603) 555-0197",
       "website": null,
       "email": null,
-      "rating": 4.2,
-      "reviews": 237,
+      "rating": 4.3,
+      "reviews": 493,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -3482,6 +4112,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 20 minutes from downtown Concord; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3490,19 +4128,19 @@
       "name": "Frost Hollow Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Frost Hollow Pumpkin Patch is a family-run fall destination near Trenton, New Jersey, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "5041 Orchard Lane",
+      "street": "5212 Orchard Lane",
       "city": "Trenton",
       "state": "New Jersey",
       "stateCode": "NJ",
       "postalCode": "08608",
-      "fullAddress": "5041 Orchard Lane, Trenton, NJ 08608",
-      "lat": 40.24089,
-      "lng": -74.57721,
+      "fullAddress": "5212 Orchard Lane, Trenton, NJ 08608",
+      "lat": 40.35265,
+      "lng": -74.50304,
       "phone": "(609) 555-0199",
       "website": null,
       "email": null,
-      "rating": 4.7,
-      "reviews": 651,
+      "rating": 4.6,
+      "reviews": 170,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -3522,6 +4160,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 17 minutes from downtown Trenton; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3530,19 +4176,19 @@
       "name": "Lantern Hill Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Lantern Hill Pumpkin Farm is a family-run fall destination near Trenton, New Jersey, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "2160 County Road 12",
+      "street": "8655 County Road 12",
       "city": "Trenton",
       "state": "New Jersey",
       "stateCode": "NJ",
       "postalCode": "08608",
-      "fullAddress": "2160 County Road 12, Trenton, NJ 08608",
-      "lat": 40.20082,
-      "lng": -74.24039,
+      "fullAddress": "8655 County Road 12, Trenton, NJ 08608",
+      "lat": 40.21415,
+      "lng": -74.80949,
       "phone": "(609) 555-0110",
       "website": null,
       "email": null,
-      "rating": 4.4,
-      "reviews": 435,
+      "rating": 3.9,
+      "reviews": 545,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -3562,6 +4208,12 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 11 minutes from downtown Trenton; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3602,6 +4254,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 17 minutes from downtown Trenton; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3610,19 +4270,19 @@
       "name": "Golden Acres Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Golden Acres Pumpkin Farm is a family-run fall destination near Albuquerque, New Mexico, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "1807 County Road 12",
+      "street": "6624 County Road 12",
       "city": "Albuquerque",
       "state": "New Mexico",
       "stateCode": "NM",
       "postalCode": "87102",
-      "fullAddress": "1807 County Road 12, Albuquerque, NM 87102",
-      "lat": 35.26678,
-      "lng": -106.53229,
+      "fullAddress": "6624 County Road 12, Albuquerque, NM 87102",
+      "lat": 35.18113,
+      "lng": -106.44707,
       "phone": "(505) 555-0112",
       "website": null,
       "email": null,
-      "rating": 4.7,
-      "reviews": 787,
+      "rating": 4.8,
+      "reviews": 54,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -3642,6 +4302,12 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 18 minutes from downtown Albuquerque; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3682,6 +4348,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 7 minutes from downtown Albuquerque; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3690,19 +4364,19 @@
       "name": "Maple Ridge Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Maple Ridge Farm & Corn Maze is a family-run fall destination near Albuquerque, New Mexico, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "1132 Harvest Road",
+      "street": "1714 Harvest Road",
       "city": "Albuquerque",
       "state": "New Mexico",
       "stateCode": "NM",
       "postalCode": "87102",
-      "fullAddress": "1132 Harvest Road, Albuquerque, NM 87102",
-      "lat": 35.11191,
-      "lng": -107.10272,
+      "fullAddress": "1714 Harvest Road, Albuquerque, NM 87102",
+      "lat": 35.18497,
+      "lng": -106.51774,
       "phone": "(505) 555-0113",
       "website": null,
       "email": null,
-      "rating": 4.6,
-      "reviews": 599,
+      "rating": 4.1,
+      "reviews": 76,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -3722,6 +4396,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 12 minutes from downtown Albuquerque; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3762,6 +4444,12 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 5 minutes from downtown Rochester; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3770,19 +4458,19 @@
       "name": "Copper Kettle Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Copper Kettle Farm & Corn Maze is a family-run fall destination near Rochester, New York, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "1264 Harvest Road",
+      "street": "6292 Harvest Road",
       "city": "Rochester",
       "state": "New York",
       "stateCode": "NY",
       "postalCode": "14604",
-      "fullAddress": "1264 Harvest Road, Rochester, NY 14604",
-      "lat": 43.30636,
-      "lng": -78.08609,
+      "fullAddress": "6292 Harvest Road, Rochester, NY 14604",
+      "lat": 42.77229,
+      "lng": -77.13473,
       "phone": "(585) 555-0115",
       "website": null,
       "email": null,
-      "rating": 4.9,
-      "reviews": 904,
+      "rating": 5,
+      "reviews": 369,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -3802,6 +4490,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 13 minutes from downtown Rochester; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3810,19 +4506,19 @@
       "name": "Hilltop Family Farm",
       "category": "Pumpkin patch",
       "description": "Hilltop Family Farm is a family-run fall destination near Rochester, New York, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "3924 Old Mill Road",
+      "street": "6670 Old Mill Road",
       "city": "Rochester",
       "state": "New York",
       "stateCode": "NY",
       "postalCode": "14604",
-      "fullAddress": "3924 Old Mill Road, Rochester, NY 14604",
-      "lat": 43.03063,
-      "lng": -77.38129,
+      "fullAddress": "6670 Old Mill Road, Rochester, NY 14604",
+      "lat": 43.60326,
+      "lng": -77.81472,
       "phone": "(585) 555-0116",
       "website": null,
       "email": null,
-      "rating": 5,
-      "reviews": 323,
+      "rating": 4.3,
+      "reviews": 71,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -3842,6 +4538,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 11 minutes from downtown Rochester; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3850,19 +4554,19 @@
       "name": "Rolling Hills Family Farm",
       "category": "Pumpkin patch",
       "description": "Rolling Hills Family Farm is a family-run fall destination near Raleigh, North Carolina, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "1154 Old Mill Road",
+      "street": "7891 Old Mill Road",
       "city": "Raleigh",
       "state": "North Carolina",
       "stateCode": "NC",
       "postalCode": "27601",
-      "fullAddress": "1154 Old Mill Road, Raleigh, NC 27601",
-      "lat": 36.10433,
-      "lng": -78.40695,
+      "fullAddress": "7891 Old Mill Road, Raleigh, NC 27601",
+      "lat": 35.96804,
+      "lng": -78.14279,
       "phone": "(919) 555-0118",
       "website": null,
       "email": null,
-      "rating": 4.9,
-      "reviews": 307,
+      "rating": 4.2,
+      "reviews": 852,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -3882,6 +4586,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 29 minutes from downtown Raleigh; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3922,6 +4634,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 5 minutes from downtown Raleigh; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -3930,19 +4650,19 @@
       "name": "Whispering Pines Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Whispering Pines Orchard & Pumpkins is a family-run fall destination near Raleigh, North Carolina, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "8226 Meadow View Drive",
+      "street": "5549 Meadow View Drive",
       "city": "Raleigh",
       "state": "North Carolina",
       "stateCode": "NC",
       "postalCode": "27601",
-      "fullAddress": "8226 Meadow View Drive, Raleigh, NC 27601",
-      "lat": 36.19557,
-      "lng": -78.56241,
+      "fullAddress": "5549 Meadow View Drive, Raleigh, NC 27601",
+      "lat": 35.80594,
+      "lng": -78.32292,
       "phone": "(919) 555-0119",
       "website": null,
       "email": null,
       "rating": 4.5,
-      "reviews": 747,
+      "reviews": 705,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -3962,6 +4682,12 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 5 minutes from downtown Raleigh; look for the farm sign on Meadow View Drive.",
+      "featured": true,
       "sample": true
     },
     {
@@ -4002,6 +4728,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 29 minutes from downtown Fargo; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4010,19 +4744,19 @@
       "name": "Cedar Bend Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Cedar Bend Orchard & Pumpkins is a family-run fall destination near Fargo, North Dakota, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "8893 Meadow View Drive",
+      "street": "2668 Meadow View Drive",
       "city": "Fargo",
       "state": "North Dakota",
       "stateCode": "ND",
       "postalCode": "58102",
-      "fullAddress": "8893 Meadow View Drive, Fargo, ND 58102",
-      "lat": 46.61469,
-      "lng": -97.14528,
+      "fullAddress": "2668 Meadow View Drive, Fargo, ND 58102",
+      "lat": 46.5855,
+      "lng": -96.53319,
       "phone": "(701) 555-0121",
       "website": null,
       "email": null,
-      "rating": 4.7,
-      "reviews": 521,
+      "rating": 4.5,
+      "reviews": 767,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -4042,6 +4776,12 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 8 minutes from downtown Fargo; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4050,19 +4790,19 @@
       "name": "Stone Barn Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Stone Barn Pumpkin Patch is a family-run fall destination near Fargo, North Dakota, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "7466 Pumpkin Hill Road",
+      "street": "1456 Pumpkin Hill Road",
       "city": "Fargo",
       "state": "North Dakota",
       "stateCode": "ND",
       "postalCode": "58102",
-      "fullAddress": "7466 Pumpkin Hill Road, Fargo, ND 58102",
-      "lat": 46.55959,
-      "lng": -97.27623,
+      "fullAddress": "1456 Pumpkin Hill Road, Fargo, ND 58102",
+      "lat": 47.02841,
+      "lng": -96.68761,
       "phone": "(701) 555-0122",
       "website": null,
       "email": null,
-      "rating": 4.6,
-      "reviews": 572,
+      "rating": 4.2,
+      "reviews": 684,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -4082,6 +4822,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 10 minutes from downtown Fargo; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4090,19 +4838,19 @@
       "name": "Frost Hollow Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Frost Hollow Pumpkin Patch is a family-run fall destination near Columbus, Ohio, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "4914 Pumpkin Hill Road",
+      "street": "8889 Pumpkin Hill Road",
       "city": "Columbus",
       "state": "Ohio",
       "stateCode": "OH",
       "postalCode": "43215",
-      "fullAddress": "4914 Pumpkin Hill Road, Columbus, OH 43215",
-      "lat": 40.39862,
-      "lng": -83.27806,
+      "fullAddress": "8889 Pumpkin Hill Road, Columbus, OH 43215",
+      "lat": 39.73268,
+      "lng": -82.77421,
       "phone": "(614) 555-0124",
       "website": null,
       "email": null,
-      "rating": 4.7,
-      "reviews": 843,
+      "rating": 4.9,
+      "reviews": 932,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -4122,6 +4870,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 10 minutes from downtown Columbus; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4130,19 +4886,19 @@
       "name": "Lantern Hill Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Lantern Hill Pumpkin Farm is a family-run fall destination near Columbus, Ohio, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "8934 Orchard Lane",
+      "street": "1088 Orchard Lane",
       "city": "Columbus",
       "state": "Ohio",
       "stateCode": "OH",
       "postalCode": "43215",
-      "fullAddress": "8934 Orchard Lane, Columbus, OH 43215",
-      "lat": 39.72166,
-      "lng": -83.5368,
+      "fullAddress": "1088 Orchard Lane, Columbus, OH 43215",
+      "lat": 39.5491,
+      "lng": -82.55674,
       "phone": "(614) 555-0125",
       "website": null,
       "email": null,
-      "rating": 3.9,
-      "reviews": 851,
+      "rating": 4.5,
+      "reviews": 810,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -4162,6 +4918,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 15 minutes from downtown Columbus; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4202,6 +4966,12 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 17 minutes from downtown Columbus; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4210,19 +4980,19 @@
       "name": "Golden Acres Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Golden Acres Pumpkin Farm is a family-run fall destination near Oklahoma City, Oklahoma, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "8522 Orchard Lane",
+      "street": "6143 Orchard Lane",
       "city": "Oklahoma City",
       "state": "Oklahoma",
       "stateCode": "OK",
       "postalCode": "73102",
-      "fullAddress": "8522 Orchard Lane, Oklahoma City, OK 73102",
-      "lat": 35.59561,
-      "lng": -97.52808,
+      "fullAddress": "6143 Orchard Lane, Oklahoma City, OK 73102",
+      "lat": 35.45712,
+      "lng": -97.96117,
       "phone": "(405) 555-0127",
       "website": null,
       "email": null,
-      "rating": 4,
-      "reviews": 473,
+      "rating": 4.4,
+      "reviews": 230,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -4242,6 +5012,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 12 minutes from downtown Oklahoma City; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4282,6 +5060,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 28 minutes from downtown Oklahoma City; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4290,19 +5076,19 @@
       "name": "Maple Ridge Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Maple Ridge Farm & Corn Maze is a family-run fall destination near Oklahoma City, Oklahoma, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "2696 County Road 12",
+      "street": "5116 County Road 12",
       "city": "Oklahoma City",
       "state": "Oklahoma",
       "stateCode": "OK",
       "postalCode": "73102",
-      "fullAddress": "2696 County Road 12, Oklahoma City, OK 73102",
-      "lat": 35.27046,
-      "lng": -97.50002,
+      "fullAddress": "5116 County Road 12, Oklahoma City, OK 73102",
+      "lat": 35.40117,
+      "lng": -97.94893,
       "phone": "(405) 555-0128",
       "website": null,
       "email": null,
-      "rating": 4.4,
-      "reviews": 135,
+      "rating": 4,
+      "reviews": 694,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -4322,6 +5108,12 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 5 minutes from downtown Oklahoma City; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4362,6 +5154,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 11 minutes from downtown Portland; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4370,19 +5170,19 @@
       "name": "Copper Kettle Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Copper Kettle Farm & Corn Maze is a family-run fall destination near Portland, Oregon, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "3020 County Road 12",
+      "street": "6891 County Road 12",
       "city": "Portland",
       "state": "Oregon",
       "stateCode": "OR",
       "postalCode": "97204",
-      "fullAddress": "3020 County Road 12, Portland, OR 97204",
-      "lat": 45.72781,
-      "lng": -123.11494,
+      "fullAddress": "6891 County Road 12, Portland, OR 97204",
+      "lat": 45.1575,
+      "lng": -122.28057,
       "phone": "(503) 555-0130",
       "website": null,
       "email": null,
-      "rating": 4.8,
-      "reviews": 43,
+      "rating": 3.9,
+      "reviews": 868,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -4402,6 +5202,12 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 13 minutes from downtown Portland; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4410,19 +5216,19 @@
       "name": "Hilltop Family Farm",
       "category": "Pumpkin patch",
       "description": "Hilltop Family Farm is a family-run fall destination near Portland, Oregon, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "8365 Harvest Road",
+      "street": "4777 Harvest Road",
       "city": "Portland",
       "state": "Oregon",
       "stateCode": "OR",
       "postalCode": "97204",
-      "fullAddress": "8365 Harvest Road, Portland, OR 97204",
-      "lat": 45.37806,
-      "lng": -122.70857,
+      "fullAddress": "4777 Harvest Road, Portland, OR 97204",
+      "lat": 45.57449,
+      "lng": -123.06536,
       "phone": "(503) 555-0131",
       "website": null,
       "email": null,
-      "rating": 4.5,
-      "reviews": 173,
+      "rating": 4.2,
+      "reviews": 840,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -4442,6 +5248,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 7 minutes from downtown Portland; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4450,19 +5264,19 @@
       "name": "Rolling Hills Family Farm",
       "category": "Pumpkin patch",
       "description": "Rolling Hills Family Farm is a family-run fall destination near Lancaster, Pennsylvania, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "7137 Harvest Road",
+      "street": "5655 Harvest Road",
       "city": "Lancaster",
       "state": "Pennsylvania",
       "stateCode": "PA",
       "postalCode": "17602",
-      "fullAddress": "7137 Harvest Road, Lancaster, PA 17602",
-      "lat": 40.11171,
-      "lng": -76.05617,
+      "fullAddress": "5655 Harvest Road, Lancaster, PA 17602",
+      "lat": 40.24159,
+      "lng": -76.82926,
       "phone": "(717) 555-0133",
       "website": null,
       "email": null,
-      "rating": 3.9,
-      "reviews": 814,
+      "rating": 4.8,
+      "reviews": 269,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -4482,6 +5296,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 16 minutes from downtown Lancaster; look for the farm sign on Harvest Road.",
+      "featured": true,
       "sample": true
     },
     {
@@ -4522,6 +5344,12 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 24 minutes from downtown Lancaster; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4530,19 +5358,19 @@
       "name": "Whispering Pines Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Whispering Pines Orchard & Pumpkins is a family-run fall destination near Lancaster, Pennsylvania, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "3036 Old Mill Road",
+      "street": "2732 Old Mill Road",
       "city": "Lancaster",
       "state": "Pennsylvania",
       "stateCode": "PA",
       "postalCode": "17602",
-      "fullAddress": "3036 Old Mill Road, Lancaster, PA 17602",
-      "lat": 40.0025,
-      "lng": -76.61674,
+      "fullAddress": "2732 Old Mill Road, Lancaster, PA 17602",
+      "lat": 40.39977,
+      "lng": -75.94965,
       "phone": "(717) 555-0134",
       "website": null,
       "email": null,
-      "rating": 4.9,
-      "reviews": 780,
+      "rating": 4.5,
+      "reviews": 849,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -4562,6 +5390,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 28 minutes from downtown Lancaster; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4602,6 +5438,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 29 minutes from downtown Providence; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4610,19 +5454,19 @@
       "name": "Cedar Bend Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Cedar Bend Orchard & Pumpkins is a family-run fall destination near Providence, Rhode Island, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "8856 Old Mill Road",
+      "street": "7028 Old Mill Road",
       "city": "Providence",
       "state": "Rhode Island",
       "stateCode": "RI",
       "postalCode": "02903",
-      "fullAddress": "8856 Old Mill Road, Providence, RI 02903",
-      "lat": 42.05219,
-      "lng": -71.83212,
+      "fullAddress": "7028 Old Mill Road, Providence, RI 02903",
+      "lat": 41.48108,
+      "lng": -71.22477,
       "phone": "(401) 555-0136",
       "website": null,
       "email": null,
-      "rating": 4.6,
-      "reviews": 839,
+      "rating": 4.9,
+      "reviews": 158,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -4642,6 +5486,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 20 minutes from downtown Providence; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4650,19 +5502,19 @@
       "name": "Stone Barn Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Stone Barn Pumpkin Patch is a family-run fall destination near Providence, Rhode Island, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "2049 Meadow View Drive",
+      "street": "7941 Meadow View Drive",
       "city": "Providence",
       "state": "Rhode Island",
       "stateCode": "RI",
       "postalCode": "02903",
-      "fullAddress": "2049 Meadow View Drive, Providence, RI 02903",
-      "lat": 41.94341,
-      "lng": -71.00853,
+      "fullAddress": "7941 Meadow View Drive, Providence, RI 02903",
+      "lat": 42.05523,
+      "lng": -71.48001,
       "phone": "(401) 555-0137",
       "website": null,
       "email": null,
-      "rating": 4.7,
-      "reviews": 435,
+      "rating": 4.8,
+      "reviews": 843,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -4682,6 +5534,12 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 9 minutes from downtown Providence; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4690,19 +5548,19 @@
       "name": "Frost Hollow Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Frost Hollow Pumpkin Patch is a family-run fall destination near Columbia, South Carolina, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "6441 Meadow View Drive",
+      "street": "2392 Meadow View Drive",
       "city": "Columbia",
       "state": "South Carolina",
       "stateCode": "SC",
       "postalCode": "29201",
-      "fullAddress": "6441 Meadow View Drive, Columbia, SC 29201",
-      "lat": 33.70763,
-      "lng": -80.84335,
+      "fullAddress": "2392 Meadow View Drive, Columbia, SC 29201",
+      "lat": 34.1578,
+      "lng": -80.60498,
       "phone": "(803) 555-0139",
       "website": null,
       "email": null,
-      "rating": 4.9,
-      "reviews": 466,
+      "rating": 4.4,
+      "reviews": 206,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -4722,6 +5580,12 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 23 minutes from downtown Columbia; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4730,19 +5594,19 @@
       "name": "Lantern Hill Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Lantern Hill Pumpkin Farm is a family-run fall destination near Columbia, South Carolina, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "2483 Pumpkin Hill Road",
+      "street": "2429 Pumpkin Hill Road",
       "city": "Columbia",
       "state": "South Carolina",
       "stateCode": "SC",
       "postalCode": "29201",
-      "fullAddress": "2483 Pumpkin Hill Road, Columbia, SC 29201",
-      "lat": 34.20701,
-      "lng": -81.38844,
+      "fullAddress": "2429 Pumpkin Hill Road, Columbia, SC 29201",
+      "lat": 34.29819,
+      "lng": -80.67488,
       "phone": "(803) 555-0140",
       "website": null,
       "email": null,
-      "rating": 4.8,
-      "reviews": 784,
+      "rating": 4.7,
+      "reviews": 268,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -4762,6 +5626,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 5 minutes from downtown Columbia; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4802,6 +5674,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 22 minutes from downtown Columbia; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4810,19 +5690,19 @@
       "name": "Golden Acres Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Golden Acres Pumpkin Farm is a family-run fall destination near Sioux Falls, South Dakota, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "4637 Pumpkin Hill Road",
+      "street": "1900 Pumpkin Hill Road",
       "city": "Sioux Falls",
       "state": "South Dakota",
       "stateCode": "SD",
       "postalCode": "57104",
-      "fullAddress": "4637 Pumpkin Hill Road, Sioux Falls, SD 57104",
-      "lat": 43.19731,
-      "lng": -96.22081,
+      "fullAddress": "1900 Pumpkin Hill Road, Sioux Falls, SD 57104",
+      "lat": 43.96343,
+      "lng": -96.85062,
       "phone": "(605) 555-0142",
       "website": null,
       "email": null,
-      "rating": 4.3,
-      "reviews": 925,
+      "rating": 5,
+      "reviews": 42,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -4842,6 +5722,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 22 minutes from downtown Sioux Falls; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4882,6 +5770,12 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 16 minutes from downtown Sioux Falls; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4890,19 +5784,19 @@
       "name": "Maple Ridge Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Maple Ridge Farm & Corn Maze is a family-run fall destination near Sioux Falls, South Dakota, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "1020 Orchard Lane",
+      "street": "4195 Orchard Lane",
       "city": "Sioux Falls",
       "state": "South Dakota",
       "stateCode": "SD",
       "postalCode": "57104",
-      "fullAddress": "1020 Orchard Lane, Sioux Falls, SD 57104",
-      "lat": 43.71909,
-      "lng": -96.84157,
+      "fullAddress": "4195 Orchard Lane, Sioux Falls, SD 57104",
+      "lat": 43.4069,
+      "lng": -97.10121,
       "phone": "(605) 555-0143",
       "website": null,
       "email": null,
-      "rating": 4.3,
-      "reviews": 187,
+      "rating": 4.1,
+      "reviews": 59,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -4922,6 +5816,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 13 minutes from downtown Sioux Falls; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4962,6 +5864,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 29 minutes from downtown Nashville; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -4970,19 +5880,19 @@
       "name": "Copper Kettle Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Copper Kettle Farm & Corn Maze is a family-run fall destination near Nashville, Tennessee, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "8970 Orchard Lane",
+      "street": "4041 Orchard Lane",
       "city": "Nashville",
       "state": "Tennessee",
       "stateCode": "TN",
       "postalCode": "37203",
-      "fullAddress": "8970 Orchard Lane, Nashville, TN 37203",
-      "lat": 36.05816,
-      "lng": -87.03126,
+      "fullAddress": "4041 Orchard Lane, Nashville, TN 37203",
+      "lat": 35.9637,
+      "lng": -86.58931,
       "phone": "(615) 555-0145",
       "website": null,
       "email": null,
-      "rating": 4.6,
-      "reviews": 789,
+      "rating": 4.8,
+      "reviews": 746,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -5002,6 +5912,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 9 minutes from downtown Nashville; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5010,19 +5928,19 @@
       "name": "Hilltop Family Farm",
       "category": "Pumpkin patch",
       "description": "Hilltop Family Farm is a family-run fall destination near Nashville, Tennessee, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "7283 County Road 12",
+      "street": "2782 County Road 12",
       "city": "Nashville",
       "state": "Tennessee",
       "stateCode": "TN",
       "postalCode": "37203",
-      "fullAddress": "7283 County Road 12, Nashville, TN 37203",
-      "lat": 35.88173,
-      "lng": -87.08893,
+      "fullAddress": "2782 County Road 12, Nashville, TN 37203",
+      "lat": 36.37441,
+      "lng": -86.35601,
       "phone": "(615) 555-0146",
       "website": null,
       "email": null,
-      "rating": 4.7,
-      "reviews": 840,
+      "rating": 3.9,
+      "reviews": 418,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -5042,6 +5960,12 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 5 minutes from downtown Nashville; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5050,19 +5974,19 @@
       "name": "Rolling Hills Family Farm",
       "category": "Pumpkin patch",
       "description": "Rolling Hills Family Farm is a family-run fall destination near Fredericksburg, Texas, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "7567 County Road 12",
+      "street": "4303 County Road 12",
       "city": "Fredericksburg",
       "state": "Texas",
       "stateCode": "TX",
       "postalCode": "78624",
-      "fullAddress": "7567 County Road 12, Fredericksburg, TX 78624",
-      "lat": 30.19668,
-      "lng": -98.61448,
+      "fullAddress": "4303 County Road 12, Fredericksburg, TX 78624",
+      "lat": 30.4857,
+      "lng": -99.19568,
       "phone": "(830) 555-0148",
       "website": null,
       "email": null,
-      "rating": 4.1,
-      "reviews": 42,
+      "rating": 3.9,
+      "reviews": 62,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -5082,6 +6006,12 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 29 minutes from downtown Fredericksburg; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5122,6 +6052,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 25 minutes from downtown Fredericksburg; look for the farm sign on Orchard Lane.",
+      "featured": true,
       "sample": true
     },
     {
@@ -5130,19 +6068,19 @@
       "name": "Whispering Pines Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Whispering Pines Orchard & Pumpkins is a family-run fall destination near Fredericksburg, Texas, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "1204 Harvest Road",
+      "street": "2480 Harvest Road",
       "city": "Fredericksburg",
       "state": "Texas",
       "stateCode": "TX",
       "postalCode": "78624",
-      "fullAddress": "1204 Harvest Road, Fredericksburg, TX 78624",
-      "lat": 30.70647,
-      "lng": -99.2184,
+      "fullAddress": "2480 Harvest Road, Fredericksburg, TX 78624",
+      "lat": 29.9312,
+      "lng": -98.77618,
       "phone": "(830) 555-0149",
       "website": null,
       "email": null,
-      "rating": 4,
-      "reviews": 568,
+      "rating": 4.6,
+      "reviews": 679,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -5162,6 +6100,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 14 minutes from downtown Fredericksburg; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5202,6 +6148,12 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 18 minutes from downtown Salt Lake City; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5210,19 +6162,19 @@
       "name": "Cedar Bend Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Cedar Bend Orchard & Pumpkins is a family-run fall destination near Salt Lake City, Utah, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "5226 Harvest Road",
+      "street": "7237 Harvest Road",
       "city": "Salt Lake City",
       "state": "Utah",
       "stateCode": "UT",
       "postalCode": "84101",
-      "fullAddress": "5226 Harvest Road, Salt Lake City, UT 84101",
-      "lat": 41.01267,
-      "lng": -111.47283,
+      "fullAddress": "7237 Harvest Road, Salt Lake City, UT 84101",
+      "lat": 41.10314,
+      "lng": -111.84477,
       "phone": "(801) 555-0151",
       "website": null,
       "email": null,
       "rating": 4.5,
-      "reviews": 526,
+      "reviews": 366,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -5242,6 +6194,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 22 minutes from downtown Salt Lake City; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5250,19 +6210,19 @@
       "name": "Stone Barn Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Stone Barn Pumpkin Patch is a family-run fall destination near Salt Lake City, Utah, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "3906 Old Mill Road",
+      "street": "4202 Old Mill Road",
       "city": "Salt Lake City",
       "state": "Utah",
       "stateCode": "UT",
       "postalCode": "84101",
-      "fullAddress": "3906 Old Mill Road, Salt Lake City, UT 84101",
-      "lat": 40.95341,
-      "lng": -112.00071,
+      "fullAddress": "4202 Old Mill Road, Salt Lake City, UT 84101",
+      "lat": 40.52311,
+      "lng": -112.04461,
       "phone": "(801) 555-0152",
       "website": null,
       "email": null,
-      "rating": 4.2,
-      "reviews": 364,
+      "rating": 4.8,
+      "reviews": 232,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -5282,6 +6242,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 15 minutes from downtown Salt Lake City; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5290,19 +6258,19 @@
       "name": "Frost Hollow Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Frost Hollow Pumpkin Patch is a family-run fall destination near Burlington, Vermont, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "6579 Old Mill Road",
+      "street": "7861 Old Mill Road",
       "city": "Burlington",
       "state": "Vermont",
       "stateCode": "VT",
       "postalCode": "05401",
-      "fullAddress": "6579 Old Mill Road, Burlington, VT 05401",
-      "lat": 44.79789,
-      "lng": -73.16037,
+      "fullAddress": "7861 Old Mill Road, Burlington, VT 05401",
+      "lat": 44.51824,
+      "lng": -73.60247,
       "phone": "(802) 555-0154",
       "website": null,
       "email": null,
-      "rating": 4.1,
-      "reviews": 413,
+      "rating": 4.4,
+      "reviews": 407,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -5322,6 +6290,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 17 minutes from downtown Burlington; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5330,19 +6306,19 @@
       "name": "Lantern Hill Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Lantern Hill Pumpkin Farm is a family-run fall destination near Burlington, Vermont, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "4270 Meadow View Drive",
+      "street": "6635 Meadow View Drive",
       "city": "Burlington",
       "state": "Vermont",
       "stateCode": "VT",
       "postalCode": "05401",
-      "fullAddress": "4270 Meadow View Drive, Burlington, VT 05401",
-      "lat": 44.47106,
-      "lng": -72.98706,
+      "fullAddress": "6635 Meadow View Drive, Burlington, VT 05401",
+      "lat": 44.58663,
+      "lng": -73.71817,
       "phone": "(802) 555-0155",
       "website": null,
       "email": null,
-      "rating": 4.6,
-      "reviews": 75,
+      "rating": 4.4,
+      "reviews": 753,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -5362,6 +6338,12 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 6 minutes from downtown Burlington; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5402,6 +6384,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 22 minutes from downtown Burlington; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5410,19 +6400,19 @@
       "name": "Golden Acres Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Golden Acres Pumpkin Farm is a family-run fall destination near Charlottesville, Virginia, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "1158 Meadow View Drive",
+      "street": "7737 Meadow View Drive",
       "city": "Charlottesville",
       "state": "Virginia",
       "stateCode": "VA",
       "postalCode": "22902",
-      "fullAddress": "1158 Meadow View Drive, Charlottesville, VA 22902",
-      "lat": 38.33802,
-      "lng": -77.99891,
+      "fullAddress": "7737 Meadow View Drive, Charlottesville, VA 22902",
+      "lat": 38.4228,
+      "lng": -78.98872,
       "phone": "(434) 555-0157",
       "website": null,
       "email": null,
-      "rating": 3.9,
-      "reviews": 397,
+      "rating": 4.3,
+      "reviews": 899,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -5442,6 +6432,12 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 5 minutes from downtown Charlottesville; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5482,6 +6478,14 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 5 minutes from downtown Charlottesville; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5490,19 +6494,19 @@
       "name": "Maple Ridge Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Maple Ridge Farm & Corn Maze is a family-run fall destination near Charlottesville, Virginia, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "8640 Pumpkin Hill Road",
+      "street": "3502 Pumpkin Hill Road",
       "city": "Charlottesville",
       "state": "Virginia",
       "stateCode": "VA",
       "postalCode": "22902",
-      "fullAddress": "8640 Pumpkin Hill Road, Charlottesville, VA 22902",
-      "lat": 37.60116,
-      "lng": -78.68494,
+      "fullAddress": "3502 Pumpkin Hill Road, Charlottesville, VA 22902",
+      "lat": 38.37732,
+      "lng": -78.35488,
       "phone": "(434) 555-0158",
       "website": null,
       "email": null,
-      "rating": 4.9,
-      "reviews": 591,
+      "rating": 4.5,
+      "reviews": 668,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -5522,6 +6526,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 16 minutes from downtown Charlottesville; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5562,6 +6574,12 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 7 minutes from downtown Spokane; look for the farm sign on Meadow View Drive.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5570,19 +6588,19 @@
       "name": "Copper Kettle Farm & Corn Maze",
       "category": "Pumpkin patch",
       "description": "Copper Kettle Farm & Corn Maze is a family-run fall destination near Spokane, Washington, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "1833 Pumpkin Hill Road",
+      "street": "6469 Pumpkin Hill Road",
       "city": "Spokane",
       "state": "Washington",
       "stateCode": "WA",
       "postalCode": "99201",
-      "fullAddress": "1833 Pumpkin Hill Road, Spokane, WA 99201",
-      "lat": 47.82427,
-      "lng": -117.67224,
+      "fullAddress": "6469 Pumpkin Hill Road, Spokane, WA 99201",
+      "lat": 47.45753,
+      "lng": -117.52689,
       "phone": "(509) 555-0160",
       "website": null,
       "email": null,
       "rating": 4.3,
-      "reviews": 404,
+      "reviews": 770,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -5602,6 +6620,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 15 minutes from downtown Spokane; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5610,19 +6636,19 @@
       "name": "Hilltop Family Farm",
       "category": "Pumpkin patch",
       "description": "Hilltop Family Farm is a family-run fall destination near Spokane, Washington, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "7491 Orchard Lane",
+      "street": "7678 Orchard Lane",
       "city": "Spokane",
       "state": "Washington",
       "stateCode": "WA",
       "postalCode": "99201",
-      "fullAddress": "7491 Orchard Lane, Spokane, WA 99201",
-      "lat": 47.58387,
-      "lng": -117.05772,
+      "fullAddress": "7678 Orchard Lane, Spokane, WA 99201",
+      "lat": 47.67736,
+      "lng": -117.45854,
       "phone": "(509) 555-0161",
       "website": null,
       "email": null,
-      "rating": 4.5,
-      "reviews": 463,
+      "rating": 4.9,
+      "reviews": 848,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -5642,6 +6668,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 5 minutes from downtown Spokane; look for the farm sign on Orchard Lane.",
+      "featured": true,
       "sample": true
     },
     {
@@ -5650,19 +6684,19 @@
       "name": "Rolling Hills Family Farm",
       "category": "Pumpkin patch",
       "description": "Rolling Hills Family Farm is a family-run fall destination near Charleston, West Virginia, with corn maze, hayrides, u-pick pumpkins and pick-your-own pumpkins through the harvest season.",
-      "street": "6152 Orchard Lane",
+      "street": "4683 Orchard Lane",
       "city": "Charleston",
       "state": "West Virginia",
       "stateCode": "WV",
       "postalCode": "25301",
-      "fullAddress": "6152 Orchard Lane, Charleston, WV 25301",
-      "lat": 38.31444,
-      "lng": -81.23113,
+      "fullAddress": "4683 Orchard Lane, Charleston, WV 25301",
+      "lat": 38.67881,
+      "lng": -81.55801,
       "phone": "(304) 555-0163",
       "website": null,
       "email": null,
       "rating": 4.5,
-      "reviews": 553,
+      "reviews": 424,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -5682,6 +6716,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 11 minutes from downtown Charleston; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5722,6 +6764,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 21 minutes from downtown Charleston; look for the farm sign on Pumpkin Hill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5730,19 +6780,19 @@
       "name": "Whispering Pines Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Whispering Pines Orchard & Pumpkins is a family-run fall destination near Charleston, West Virginia, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "4413 County Road 12",
+      "street": "1023 County Road 12",
       "city": "Charleston",
       "state": "West Virginia",
       "stateCode": "WV",
       "postalCode": "25301",
-      "fullAddress": "4413 County Road 12, Charleston, WV 25301",
-      "lat": 38.13617,
-      "lng": -82.17982,
+      "fullAddress": "1023 County Road 12, Charleston, WV 25301",
+      "lat": 38.59524,
+      "lng": -81.1643,
       "phone": "(304) 555-0164",
       "website": null,
       "email": null,
-      "rating": 4.7,
-      "reviews": 873,
+      "rating": 4.1,
+      "reviews": 517,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -5762,6 +6812,12 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 23 minutes from downtown Charleston; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5802,6 +6858,14 @@
         "Kids play area"
       ],
       "season": "Late September through October 31",
+      "admission": "Free entry, pumpkins priced by the pound",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 21 minutes from downtown Madison; look for the farm sign on Orchard Lane.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5810,19 +6874,19 @@
       "name": "Cedar Bend Orchard & Pumpkins",
       "category": "Pumpkin patch",
       "description": "Cedar Bend Orchard & Pumpkins is a family-run fall destination near Madison, Wisconsin, with u-pick pumpkins, petting zoo, cider and donuts and pick-your-own pumpkins through the harvest season.",
-      "street": "6191 County Road 12",
+      "street": "1694 County Road 12",
       "city": "Madison",
       "state": "Wisconsin",
       "stateCode": "WI",
       "postalCode": "53703",
-      "fullAddress": "6191 County Road 12, Madison, WI 53703",
-      "lat": 42.70114,
-      "lng": -89.08933,
+      "fullAddress": "1694 County Road 12, Madison, WI 53703",
+      "lat": 43.32801,
+      "lng": -89.87378,
       "phone": "(608) 555-0166",
       "website": null,
       "email": null,
-      "rating": 4,
-      "reviews": 64,
+      "rating": 3.9,
+      "reviews": 678,
       "hours": {
         "monday": "10AM-6PM",
         "tuesday": "10AM-6PM",
@@ -5842,6 +6906,12 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 9 minutes from downtown Madison; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5850,19 +6920,19 @@
       "name": "Stone Barn Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Stone Barn Pumpkin Patch is a family-run fall destination near Madison, Wisconsin, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "6675 Harvest Road",
+      "street": "7172 Harvest Road",
       "city": "Madison",
       "state": "Wisconsin",
       "stateCode": "WI",
       "postalCode": "53703",
-      "fullAddress": "6675 Harvest Road, Madison, WI 53703",
-      "lat": 42.78361,
-      "lng": -89.10231,
+      "fullAddress": "7172 Harvest Road, Madison, WI 53703",
+      "lat": 42.85975,
+      "lng": -89.30564,
       "phone": "(608) 555-0167",
       "website": null,
       "email": null,
       "rating": 4.2,
-      "reviews": 568,
+      "reviews": 760,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -5882,6 +6952,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 7 minutes from downtown Madison; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5890,19 +6968,19 @@
       "name": "Frost Hollow Pumpkin Patch",
       "category": "Pumpkin patch",
       "description": "Frost Hollow Pumpkin Patch is a family-run fall destination near Cheyenne, Wyoming, with corn maze, haunted attraction, food and drinks and pick-your-own pumpkins through the harvest season.",
-      "street": "7869 Harvest Road",
+      "street": "5013 Harvest Road",
       "city": "Cheyenne",
       "state": "Wyoming",
       "stateCode": "WY",
       "postalCode": "82001",
-      "fullAddress": "7869 Harvest Road, Cheyenne, WY 82001",
-      "lat": 41.14151,
-      "lng": -105.01312,
+      "fullAddress": "5013 Harvest Road, Cheyenne, WY 82001",
+      "lat": 40.982,
+      "lng": -105.22246,
       "phone": "(307) 555-0169",
       "website": null,
       "email": null,
-      "rating": 4,
-      "reviews": 348,
+      "rating": 4.3,
+      "reviews": 178,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -5922,6 +7000,14 @@
         "Fall festival"
       ],
       "season": "Daily from October 1 through November 2",
+      "admission": "Free entry, wristbands $18 for all attractions",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Mobile payments"
+      ],
+      "directions": "Roughly 16 minutes from downtown Cheyenne; look for the farm sign on Harvest Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -5930,19 +7016,19 @@
       "name": "Lantern Hill Pumpkin Farm",
       "category": "Pumpkin patch",
       "description": "Lantern Hill Pumpkin Farm is a family-run fall destination near Cheyenne, Wyoming, with apple picking, farm store, hayrides and pick-your-own pumpkins through the harvest season.",
-      "street": "2228 Old Mill Road",
+      "street": "3662 Old Mill Road",
       "city": "Cheyenne",
       "state": "Wyoming",
       "stateCode": "WY",
       "postalCode": "82001",
-      "fullAddress": "2228 Old Mill Road, Cheyenne, WY 82001",
-      "lat": 41.12141,
-      "lng": -105.00385,
+      "fullAddress": "3662 Old Mill Road, Cheyenne, WY 82001",
+      "lat": 40.83023,
+      "lng": -104.99357,
       "phone": "(307) 555-0170",
       "website": null,
       "email": null,
-      "rating": 4.1,
-      "reviews": 347,
+      "rating": 4.4,
+      "reviews": 354,
       "hours": {
         "monday": "Closed",
         "tuesday": "Closed",
@@ -5962,6 +7048,14 @@
         "Sunflower field"
       ],
       "season": "Saturdays and Sundays, late September to early November",
+      "admission": "Admission $8 weekdays, $15 weekends, includes corn maze and hayride",
+      "payment": [
+        "Cash",
+        "Credit cards",
+        "Debit cards"
+      ],
+      "directions": "Roughly 17 minutes from downtown Cheyenne; look for the farm sign on Old Mill Road.",
+      "featured": false,
       "sample": true
     },
     {
@@ -6002,6 +7096,12 @@
         "Photo spots"
       ],
       "season": "Weekends from mid-September to Halloween",
+      "admission": "Weekend admission $12 per person, under 3 free; weekdays free",
+      "payment": [
+        "Cash only"
+      ],
+      "directions": "Roughly 26 minutes from downtown Cheyenne; look for the farm sign on County Road 12.",
+      "featured": false,
       "sample": true
     }
   ]

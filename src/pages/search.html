@@ -1,0 +1,21 @@
+<!--meta
+{
+  "path": "/search/",
+  "title": "Search Pumpkin Patches Near Me",
+  "description": "Search pumpkin patches, corn mazes, farms and guides by name, city or state.",
+  "h1": "Search the Directory",
+  "lede": "Search by farm name, town or state.",
+  "nav": "find",
+  "layout": "wide",
+  "bodyClass": "search-page",
+  "trail": [{ "label": "Search" }]
+}
+-->
+<div class="wrap-narrow">
+  <div class="search-page-field">
+    <label class="visually-hidden" for="site-search-input">Search farms, towns and states</label>
+    <input id="site-search-input" type="text" placeholder="Search by farm name, town or state..." autocomplete="off">
+  </div>
+  <p id="site-search-status" style="color:var(--muted);font-size:0.92rem;margin-top:-0.75rem;margin-bottom:1.25rem">Start typing to search {{STAT_LISTINGS}} pumpkin patches.</p>
+  <div class="search-results" id="site-search-results"></div>
+</div>

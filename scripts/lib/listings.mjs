@@ -112,6 +112,30 @@ export function deriveFeatures(...texts) {
   return [...found];
 }
 
+/**
+ * Outscraper puts structured attributes in an `about` column as nested JSON,
+ * e.g. {"Payments":{"Credit cards":true,"Cash only":false}}. Pull out the
+ * accepted payment methods so listings can show them the way visitors ask.
+ */
+export function parsePayments(value) {
+  if (!value) return null;
+  let obj = value;
+  if (typeof value === 'string') {
+    try {
+      obj = JSON.parse(value.replace(/'/g, '"'));
+    } catch {
+      return null;
+    }
+  }
+  if (!obj || typeof obj !== 'object') return null;
+  const group = obj.Payments || obj.payments;
+  if (!group || typeof group !== 'object') return null;
+  const accepted = Object.entries(group)
+    .filter(([, on]) => on === true)
+    .map(([label]) => label.trim());
+  return accepted.length ? accepted : null;
+}
+
 /** Final shape consumed by the site build and the front-end map. */
 export function normaliseListing(input, taken) {
   const stateCode = resolveStateCode(input.state, input.us_state);
@@ -139,6 +163,7 @@ export function normaliseListing(input, taken) {
     description: String(input.description || '').trim() || null,
     street: String(input.street || '').trim() || null,
     city: city || null,
+    county: String(input.county || input.borough || '').trim() || null,
     state: STATES[stateCode] || String(input.state || '').trim() || null,
     stateCode: stateCode || null,
     postalCode: String(input.postal_code || input.postalCode || '').trim() || null,
@@ -158,6 +183,13 @@ export function normaliseListing(input, taken) {
       Array.isArray(input.features) && input.features.length
         ? input.features
         : deriveFeatures(name, input.description, input.subtypes, input.category, input.type),
+    // Owner-supplied extras. Outscraper rarely carries these, so they stay null
+    // until a farm sends them in; the listing page hides whatever is missing.
+    season: String(input.season || '').trim() || null,
+    admission: String(input.admission || '').trim() || null,
+    directions: String(input.directions || '').trim() || null,
+    payment: Array.isArray(input.payment) ? input.payment : parsePayments(input.about),
+    featured: Boolean(input.featured),
     sample: Boolean(input.sample),
   };
 }

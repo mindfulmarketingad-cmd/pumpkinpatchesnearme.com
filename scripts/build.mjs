@@ -28,7 +28,9 @@ const BUILD_DATE = new Date().toISOString().slice(0, 10);
 const data = JSON.parse(readFileSync(join(ROOT, 'data/listings.json'), 'utf8'));
 const listings = data.listings || [];
 const faqs = JSON.parse(readFileSync(join(SRC, 'data/faqs.json'), 'utf8'));
+const categories = JSON.parse(readFileSync(join(SRC, 'data/categories.json'), 'utf8'));
 const template = readFileSync(join(SRC, 'templates/base.html'), 'utf8');
+const SEASON_YEAR = new Date().getFullYear();
 
 const hasRealData = listings.some((l) => !l.sample);
 const sampleOnly = listings.length > 0 && !hasRealData;
@@ -58,7 +60,20 @@ function stars(rating) {
 }
 
 const statePath = (stateName) => `/pumpkin-patches/${slugify(stateName)}/`;
+const cityPath = (stateName, cityName) => `/pumpkin-patches/${slugify(stateName)}/${slugify(cityName)}/`;
+const categoryPath = (category) => `/${category.slug}/`;
 const listingPath = (listing) => `/patch/${listing.slug}/`;
+
+/** Featured (paid placement) listings float to the top of every collection. */
+function rankListings(items) {
+  return [...items].sort(
+    (a, b) =>
+      Number(Boolean(b.featured)) - Number(Boolean(a.featured)) ||
+      (b.rating || 0) - (a.rating || 0) ||
+      (b.reviews || 0) - (a.reviews || 0) ||
+      a.name.localeCompare(b.name)
+  );
+}
 
 /* -------------------------------------------------------- data aggregates */
 
@@ -68,14 +83,36 @@ for (const l of listings) {
   if (!byState.has(l.state)) byState.set(l.state, []);
   byState.get(l.state).push(l);
 }
-for (const [, arr] of byState) {
-  arr.sort((a, b) => (b.rating || 0) - (a.rating || 0) || a.name.localeCompare(b.name));
-}
+for (const [key, arr] of byState) byState.set(key, rankListings(arr));
+
 const stateNames = [...new Set(Object.values(STATES))]
   .filter((s) => s !== 'District of Columbia')
   .sort();
 
-const cityCount = new Set(listings.map((l) => `${l.city}|${l.stateCode}`).filter((k) => !k.startsWith('null'))).size;
+// Cities keyed as "State|City" so identically named towns in different states
+// stay separate (Portland ME and Portland OR both exist in the data).
+const byCity = new Map();
+for (const l of listings) {
+  if (!l.state || !l.city) continue;
+  const key = `${l.state}|${l.city}`;
+  if (!byCity.has(key)) byCity.set(key, []);
+  byCity.get(key).push(l);
+}
+for (const [key, arr] of byCity) byCity.set(key, rankListings(arr));
+
+const citiesInState = (stateName) =>
+  [...byCity.keys()]
+    .filter((k) => k.startsWith(`${stateName}|`))
+    .map((k) => k.split('|')[1])
+    .sort();
+
+const byCategory = new Map();
+for (const cat of categories) {
+  byCategory.set(cat.slug, rankListings(listings.filter((l) => (l.features || []).includes(cat.feature))));
+}
+
+const featuredListings = rankListings(listings.filter((l) => l.featured));
+const cityCount = byCity.size;
 
 const stats = {
   listings: listings.length,
@@ -85,10 +122,11 @@ const stats = {
 
 /* ------------------------------------------------------- shared fragments */
 
-function renderCard(l, { showState = true } = {}) {
-  const place = [l.city, showState ? l.stateCode : null].filter(Boolean).join(', ');
+function renderCard(l, { showState = true, showCity = true } = {}) {
+  const place = [showCity ? l.city : null, showState ? l.stateCode : null].filter(Boolean).join(', ');
   const tags = (l.features || []).slice(0, 3);
-  return `<article class="listing-card">
+  return `<article class="listing-card${l.featured ? ' is-featured' : ''}">
+  ${l.featured ? '<p class="featured-flag">Featured farm</p>' : ''}
   <div class="listing-card-body">
     <h3><a href="${listingPath(l)}">${esc(l.name)}</a></h3>
     <div class="listing-meta">
@@ -116,6 +154,33 @@ ${items
     <div class="faq-answer">${f.answer}</div>
   </details>`
   )
+  .join('\n')}
+</div>`;
+}
+
+function renderCategoryGrid() {
+  return `<div class="grid grid-4">
+${categories
+  .map((c) => {
+    const count = (byCategory.get(c.slug) || []).length;
+    return `  <a class="category-card" href="${categoryPath(c)}">
+    <h3>${esc(c.name)}</h3>
+    <p>${count.toLocaleString('en-US')} farm${count === 1 ? '' : 's'}</p>
+  </a>`;
+  })
+  .join('\n')}
+</div>`;
+}
+
+function renderCityLinks(stateName) {
+  const cities = citiesInState(stateName);
+  if (!cities.length) return '';
+  return `<div class="state-grid">
+${cities
+  .map((city) => {
+    const count = (byCity.get(`${stateName}|${city}`) || []).length;
+    return `  <a class="state-link" href="${cityPath(stateName, city)}">${esc(city)} <span>${count}</span></a>`;
+  })
   .join('\n')}
 </div>`;
 }
@@ -338,6 +403,18 @@ const tokens = {
   '{{SITEMAP_POSTS}}': posts
     .map((p) => `<li><a href="/blog/${p.meta.slug}/">${esc(p.meta.h1 || p.meta.title)}</a></li>`)
     .join('\n'),
+  '{{CATEGORY_GRID}}': renderCategoryGrid(),
+  '{{SITEMAP_CATEGORIES}}': categories
+    .map((c) => `<li><a href="${categoryPath(c)}">${esc(c.name)} near me</a></li>`)
+    .join('\n'),
+  '{{FEATURED_FARM_CARDS}}': featuredListings.length
+    ? `<div class="grid grid-3">\n${featuredListings.map((l) => renderCard(l)).join('\n')}\n</div>`
+    : `<div class="empty-state">
+  <h3>No featured farms yet this season</h3>
+  <p>Featured placement opens ahead of each fall season. If you run a pumpkin patch and want the top of your state and metro results, we would like to hear from you.</p>
+  <a class="btn btn-primary" href="/contact/">Request featured pricing</a>
+</div>`,
+  '{{SEASON_YEAR}}': String(SEASON_YEAR),
 };
 
 function expandTokens(html) {
@@ -393,6 +470,10 @@ for (const page of staticPages) {
 <script src="/assets/js/map.js?v=${ASSET_VERSION}" defer></script>`;
   }
 
+  if (meta.path === '/search/') {
+    scripts = `<script src="/assets/js/search.js?v=${ASSET_VERSION}" defer></script>`;
+  }
+
   if (meta.trail) {
     const crumbs = breadcrumbJsonLd(meta.trail, meta.path);
     jsonld = jsonld || {
@@ -442,17 +523,30 @@ ${items.map((l) => renderCard(l, { showState: false })).join('\n')}
     : `<div class="empty-state">
   <h3>No ${esc(stateName)} listings yet</h3>
   <p>Our ${esc(stateName)} data is on the way. If you run or love a pumpkin patch here, tell us about it and we will get it listed.</p>
-  <a class="btn btn-primary" href="/contact/">Submit a pumpkin patch</a>
+  <a class="btn btn-primary" href="/add-a-listing/">Submit a pumpkin patch</a>
 </div>`;
 
   const citySection = cities.length
-    ? `<h2>Towns with pumpkin patches in ${esc(stateName)}</h2>
-<p>${cities.map((c) => esc(c)).join(' &middot; ')}</p>`
+    ? `<h2>Pumpkin patches by town in ${esc(stateName)}</h2>
+<p>Pick a town to see just the farms there.</p>
+${renderCityLinks(stateName)}`
     : '';
+
+  const catSection = (() => {
+    const present = categories
+      .map((c) => ({ c, n: items.filter((l) => (l.features || []).includes(c.feature)).length }))
+      .filter((x) => x.n > 0);
+    if (!present.length) return '';
+    return `<h2>${esc(stateName)} farms by attraction</h2>
+<div class="tag-row">
+${present.map(({ c, n }) => `  <a class="tag tag-link" href="${categoryPath(c)}">${esc(c.name)} (${n})</a>`).join('\n')}
+</div>`;
+  })();
 
   const body = `${listSection}
 <div class="section" style="padding-bottom:0">
 ${citySection}
+${catSection}
 <h2>Planning a ${esc(stateName)} pumpkin patch trip</h2>
 <p>Pumpkin patch season in ${esc(stateName)} generally runs from mid-September through the first weekend of November, with the busiest weekends falling in mid-October. Weekday mornings are the quietest time to visit, and many farms charge admission only on weekends when the corn maze, hayrides and food stands are all running.</p>
 <p>Bring cash — plenty of family farms still run cash-only gates or wagon rides — and check whether the patch charges by the pumpkin, by the pound or as a flat admission. Call ahead after heavy rain, since field access is the first thing farms close.</p>
@@ -486,6 +580,156 @@ ${citySection}
   addToSitemap(path, '0.8', 'weekly');
 }
 
+/* --- city pages ---------------------------------------------------------- */
+
+for (const [key, items] of byCity) {
+  const [stateName, cityName] = key.split('|');
+  const path = cityPath(stateName, cityName);
+  const stateCode = items[0].stateCode || '';
+  const label = `${cityName}, ${stateCode}`;
+  const featureCounts = categories
+    .map((c) => ({ c, n: items.filter((l) => (l.features || []).includes(c.feature)).length }))
+    .filter((x) => x.n > 0);
+
+  const meta = {
+    path,
+    title: `Pumpkin Patches in ${label} — ${items.length} Near You`,
+    description: `Find pumpkin patches near ${label}. ${items.length} farm${items.length === 1 ? '' : 's'} with addresses, hours, ratings and directions, updated for the ${SEASON_YEAR} fall season.`,
+    h1: `Pumpkin Patches in ${cityName}, ${stateCode}`,
+    lede: `${items.length} pumpkin patch${items.length === 1 ? '' : 'es'} in and around ${cityName}. Updated for the ${SEASON_YEAR} season — always confirm hours with the farm before you drive out.`,
+    nav: 'find',
+    layout: 'wide',
+    trail: [
+      { label: 'Find', href: '/find/' },
+      { label: stateName, href: statePath(stateName) },
+      { label: cityName },
+    ],
+  };
+
+  const siblings = citiesInState(stateName).filter((c) => c !== cityName);
+
+  const body = `<div class="grid grid-3">
+${items.map((l) => renderCard(l, { showState: false, showCity: false })).join('\n')}
+</div>
+
+<div class="section" style="padding-bottom:0">
+  ${featureCounts.length ? `<h2>What ${esc(cityName)} farms offer</h2>
+  <div class="tag-row">
+${featureCounts.map(({ c, n }) => `    <a class="tag tag-link" href="${categoryPath(c)}">${esc(c.name)} (${n})</a>`).join('\n')}
+  </div>` : ''}
+
+  <h2>Visiting a pumpkin patch near ${esc(cityName)}</h2>
+  <p>Farms around ${esc(cityName)} follow the same rhythm as the rest of ${esc(stateName)}: gates open in the second half of September, the busiest weekends fall in mid-October, and most patches close within a few days of Halloween. Weekday mornings are consistently the quietest time to go.</p>
+  <p>Call ahead if it has rained recently. Field access and wagon rides are the first things a farm closes when the ground is soft, and that decision is usually made the morning of.</p>
+
+  ${siblings.length ? `<h2>Nearby towns in ${esc(stateName)}</h2>
+  <div class="state-grid">
+${siblings
+  .map((c) => `    <a class="state-link" href="${cityPath(stateName, c)}">${esc(c)} <span>${(byCity.get(`${stateName}|${c}`) || []).length}</span></a>`)
+  .join('\n')}
+  </div>` : ''}
+
+  <p style="margin-top:1.5rem">
+    <a class="btn btn-primary" href="/">Search the map by ZIP code</a>
+    <a class="btn btn-outline" href="${statePath(stateName)}">All ${esc(stateName)} pumpkin patches</a>
+  </p>
+</div>`;
+
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'CollectionPage', name: meta.title, description: meta.description, url: SITE_URL + path },
+      {
+        '@type': 'ItemList',
+        numberOfItems: items.length,
+        itemListElement: items.slice(0, 25).map((l, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          url: SITE_URL + listingPath(l),
+          name: l.name,
+        })),
+      },
+      breadcrumbJsonLd(meta.trail, path),
+    ],
+  };
+
+  writePage(path, render(meta, body, { jsonld }));
+  addToSitemap(path, '0.7', 'weekly');
+}
+
+/* --- attraction category pages ------------------------------------------- */
+
+for (const cat of categories) {
+  const items = byCategory.get(cat.slug) || [];
+  const path = categoryPath(cat);
+  const statesWith = [...new Set(items.map((l) => l.state).filter(Boolean))].sort();
+
+  const meta = {
+    path,
+    title: cat.title,
+    description: cat.description,
+    h1: `${cat.name} Near Me`,
+    lede: cat.lede,
+    nav: 'find',
+    layout: 'wide',
+    trail: [{ label: 'Find', href: '/find/' }, { label: cat.name }],
+  };
+
+  const topItems = items.slice(0, 24);
+
+  const body = `${cat.intro}
+
+${items.length ? `<h2>Top-rated farms with a ${esc(cat.singular)}</h2>
+<div class="grid grid-3">
+${topItems.map((l) => renderCard(l)).join('\n')}
+</div>
+${items.length > topItems.length ? `<p style="color:var(--muted)">Showing ${topItems.length} of ${items.length.toLocaleString('en-US')} farms. <a href="/">Search the map</a> and filter by ${esc(cat.name.toLowerCase())} to see them all near you.</p>` : ''}` : `<div class="empty-state">
+  <h3>No ${esc(cat.name.toLowerCase())} listed yet</h3>
+  <p>We are still building out this category. If you know a farm that should be here, send it to us.</p>
+  <a class="btn btn-primary" href="/add-a-listing/">Submit a farm</a>
+</div>`}
+
+<div class="section" style="padding-bottom:0">
+  ${statesWith.length ? `<h2>${esc(cat.name)} by state</h2>
+  <div class="state-grid">
+${statesWith
+  .map((s) => {
+    const n = items.filter((l) => l.state === s).length;
+    return `    <a class="state-link" href="${statePath(s)}">${esc(s)} <span>${n}</span></a>`;
+  })
+  .join('\n')}
+  </div>` : ''}
+
+  <h2>Find a ${esc(cat.singular)} near you</h2>
+  <p>The fastest way to find a farm with a ${esc(cat.singular)} nearby is the map: enter your ZIP code, then set the feature filter to ${esc(cat.name.toLowerCase())}. Results re-sort by distance from your location.</p>
+  <p>
+    <a class="btn btn-primary" href="/">Search the map</a>
+    <a class="btn btn-outline" href="/find/">Browse all attractions</a>
+  </p>
+</div>`;
+
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'CollectionPage', name: cat.title, description: cat.description, url: SITE_URL + path },
+      {
+        '@type': 'ItemList',
+        numberOfItems: items.length,
+        itemListElement: topItems.map((l, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          url: SITE_URL + listingPath(l),
+          name: l.name,
+        })),
+      },
+      breadcrumbJsonLd(meta.trail, path),
+    ],
+  };
+
+  writePage(path, render(meta, body, { jsonld }));
+  addToSitemap(path, '0.8', 'weekly');
+}
+
 /* --- listing detail pages ------------------------------------------------ */
 
 for (const l of listings) {
@@ -505,9 +749,13 @@ for (const l of listings) {
     trail: [
       { label: 'Find', href: '/find/' },
       ...(l.state ? [{ label: l.state, href: statePath(l.state) }] : []),
+      ...(l.state && l.city ? [{ label: l.city, href: cityPath(l.state, l.city) }] : []),
       { label: l.name },
     ],
   };
+
+  // Other farms in the same town, so every listing page has somewhere to go next.
+  const nearby = (byCity.get(`${l.state}|${l.city}`) || []).filter((o) => o.slug !== l.slug).slice(0, 3);
 
   const address = l.fullAddress || [l.street, place, l.postalCode].filter(Boolean).join(', ');
   const hoursRows = l.hours
@@ -530,8 +778,16 @@ for (const l of listings) {
     <h2>Visiting ${esc(l.name)}</h2>
     <p>Pumpkin patch hours change week to week during the fall, and many farms open only on weekends outside of October. Confirm hours, admission and pumpkin pricing with the farm directly before you drive out.</p>
     ${l.season ? `<p><strong>Typical season:</strong> ${esc(l.season)}</p>` : ''}
+    ${l.admission ? `<p><strong>Admission:</strong> ${esc(l.admission)}</p>` : ''}
+    ${l.payment && l.payment.length ? `<p><strong>Payment accepted:</strong> ${l.payment.map((p) => esc(p)).join(', ')}</p>` : ''}
     <h2>Hours</h2>
     ${hoursRows ? `<table class="hours-table"><tbody>${hoursRows}</tbody></table>` : '<p>Hours are not listed for this location. Contact the farm to confirm before visiting.</p>'}
+    ${l.directions ? `<h2>Directions</h2>\n    <p>${esc(l.directions)}</p>` : ''}
+    ${nearby.length ? `<h2>Other pumpkin patches near ${esc(l.city)}</h2>
+    <div class="grid grid-2">
+${nearby.map((o) => renderCard(o, { showState: false, showCity: false })).join('\n')}
+    </div>
+    <p><a href="${cityPath(l.state, l.city)}">All pumpkin patches in ${esc(l.city)}, ${esc(l.stateCode || '')}</a></p>` : ''}
   </div>
   <aside>
     <div class="card">
@@ -540,6 +796,9 @@ for (const l of listings) {
         ${address ? `<li><b>Address</b><span>${esc(address)}</span></li>` : ''}
         ${l.phone ? `<li><b>Phone</b><span><a href="tel:${attr(l.phone.replace(/[^\d+]/g, ''))}">${esc(l.phone)}</a></span></li>` : ''}
         ${l.website ? `<li><b>Website</b><span><a href="${attr(l.website)}" target="_blank" rel="noopener nofollow">Visit site</a></span></li>` : ''}
+        ${l.email ? `<li><b>Email</b><span><a href="mailto:${attr(l.email)}">${esc(l.email)}</a></span></li>` : ''}
+        ${l.county ? `<li><b>County</b><span>${esc(l.county)}</span></li>` : ''}
+        ${l.city && l.state ? `<li><b>Town</b><span><a href="${cityPath(l.state, l.city)}">${esc(l.city)}</a></span></li>` : ''}
         ${l.state ? `<li><b>State</b><span><a href="${statePath(l.state)}">${esc(l.state)}</a></span></li>` : ''}
       </ul>
       <p style="margin:1rem 0 0">
@@ -547,7 +806,16 @@ for (const l of listings) {
       </p>
     </div>
     <div class="detail-map" id="detail-map" data-lat="${l.lat}" data-lng="${l.lng}" data-name="${attr(l.name)}" style="margin-top:1.25rem"></div>
-    <p style="font-size:0.85rem;color:var(--muted);margin-top:0.75rem">Listing details come from public business data and may be out of date. <a href="/contact/">Report a correction</a>.</p>
+    ${(l.features || []).length ? `<div class="card" style="margin-top:1.25rem">
+      <h3>At this farm</h3>
+      <ul class="fact-list">
+${categories
+  .filter((c) => (l.features || []).includes(c.feature))
+  .map((c) => `        <li><a href="${categoryPath(c)}">${esc(c.name)} near me</a></li>`)
+  .join('\n')}
+      </ul>
+    </div>` : ''}
+    <p style="font-size:0.85rem;color:var(--muted);margin-top:0.75rem">Listing details come from public business data and may be out of date. <a href="/contact/">Report a correction</a> or <a href="/add-a-listing/">claim this listing</a>.</p>
   </aside>
 </div>`;
 
@@ -590,6 +858,36 @@ for (const l of listings) {
 cpSync(join(SRC, 'assets'), join(DIST, 'assets'), { recursive: true });
 mkdirSync(join(DIST, 'data'), { recursive: true });
 writeFileSync(join(DIST, 'data/listings.json'), JSON.stringify({ ...data, listings }, null, 0));
+
+/* Lightweight index for the /search/ page: farms, states, attractions, guides. */
+const searchIndex = [
+  // The homepage map shows sample rows too (tagged), so search stays consistent
+  // with it rather than with the sitemap, which excludes them from indexing.
+  ...listings.map((l) => ({
+    type: l.sample ? 'Farm (sample)' : 'Farm',
+    name: l.name,
+    place: [l.city, l.stateCode].filter(Boolean).join(', '),
+    url: listingPath(l),
+  })),
+  ...stateNames.map((s) => ({
+    type: 'State',
+    name: s,
+    place: `${(byState.get(s) || []).length} listings`,
+    url: statePath(s),
+  })),
+  ...[...byCity.keys()].map((key) => {
+    const [stateName, cityName] = key.split('|');
+    return {
+      type: 'Town',
+      name: cityName,
+      place: stateName,
+      url: cityPath(stateName, cityName),
+    };
+  }),
+  ...categories.map((c) => ({ type: 'Attraction', name: c.name, place: 'Browse by state', url: categoryPath(c) })),
+  ...posts.map((p) => ({ type: 'Guide', name: p.meta.h1 || p.meta.title, place: 'Blog', url: p.meta.path })),
+];
+writeFileSync(join(DIST, 'data/search-index.json'), JSON.stringify(searchIndex));
 
 if (existsSync(join(SRC, 'static'))) {
   cpSync(join(SRC, 'static'), DIST, { recursive: true });
@@ -646,6 +944,9 @@ writeFileSync(
 );
 
 console.log(`Built ${sitemapEntries.length} indexable pages`);
-console.log(`  static: ${staticPages.length}, posts: ${posts.length}, states: ${stateNames.length}, listings: ${listings.length}`);
+console.log(
+  `  static: ${staticPages.length}, posts: ${posts.length}, states: ${stateNames.length}, ` +
+    `cities: ${byCity.size}, categories: ${categories.length}, listings: ${listings.length}`
+);
 if (sampleOnly) console.log('  note: dataset is sample-only — listing pages are noindex and excluded from sitemap.xml');
 console.log(`Output: ${DIST}`);

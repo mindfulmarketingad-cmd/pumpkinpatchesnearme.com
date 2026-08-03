@@ -1,0 +1,108 @@
+<!--meta
+{
+  "path": "/add-a-listing/",
+  "title": "Add a Pumpkin Patch — Submit Your Farm for Free",
+  "description": "Add your pumpkin patch, corn maze or fall farm to the directory for free. Owners can also claim and correct an existing listing.",
+  "h1": "Add Your Pumpkin Patch",
+  "lede": "Free, always. Tell us about your farm and we will get it on the map.",
+  "nav": "find",
+  "layout": "prose",
+  "trail": [{ "label": "Add a Listing" }]
+}
+-->
+<div class="notice">
+  <p><strong>This form composes an email</strong> in your own mail app — nothing is stored on this site until we add your listing. Prefer to just email us? Send everything below to <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>.</p>
+</div>
+
+<form id="listing-form" data-email="{{CONTACT_EMAIL}}" data-kind="listing" novalidate>
+  <div class="form-grid">
+    <div class="form-row">
+      <div>
+        <label for="lf-name">Farm name</label>
+        <input id="lf-name" name="farm_name" type="text" required>
+      </div>
+      <div>
+        <label for="lf-status">Is this your farm?</label>
+        <select id="lf-status" name="status">
+          <option value="I am the owner or manager">I am the owner or manager</option>
+          <option value="I am a visitor recommending it">I am a visitor recommending it</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label for="lf-address">Full address</label>
+      <input id="lf-address" name="address" type="text" placeholder="Street, city, state, ZIP" required>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label for="lf-phone">Phone number</label>
+        <input id="lf-phone" name="phone" type="tel">
+      </div>
+      <div>
+        <label for="lf-website">Website</label>
+        <input id="lf-website" name="website" type="url" placeholder="https://">
+      </div>
+    </div>
+
+    <div>
+      <label for="lf-season">Season dates and hours</label>
+      <input id="lf-season" name="season" type="text" placeholder="e.g. Sept 20 – Nov 2, Fri–Sun 9am–6pm">
+    </div>
+
+    <div>
+      <label for="lf-admission">Admission and pricing</label>
+      <input id="lf-admission" name="admission" type="text" placeholder="e.g. Free entry, pumpkins $6 each; corn maze $8/person">
+    </div>
+
+    <div>
+      <span class="hint" style="display:block;margin-bottom:0.5rem;font-weight:600;color:var(--ink)">What does the farm offer?</span>
+      <div class="checkbox-grid">
+        <label><input type="checkbox" name="features" value="U-pick pumpkins"> U-pick pumpkins</label>
+        <label><input type="checkbox" name="features" value="Corn maze"> Corn maze</label>
+        <label><input type="checkbox" name="features" value="Hayrides"> Hayrides</label>
+        <label><input type="checkbox" name="features" value="Petting zoo"> Petting zoo</label>
+        <label><input type="checkbox" name="features" value="Apple picking"> Apple picking</label>
+        <label><input type="checkbox" name="features" value="Sunflower field"> Sunflower field</label>
+        <label><input type="checkbox" name="features" value="Haunted attraction"> Haunted attraction</label>
+        <label><input type="checkbox" name="features" value="Fall festival"> Fall festival</label>
+        <label><input type="checkbox" name="features" value="Cider and donuts"> Cider and donuts</label>
+        <label><input type="checkbox" name="features" value="Farm store"> Farm store</label>
+        <label><input type="checkbox" name="features" value="Kids play area"> Kids play area</label>
+        <label><input type="checkbox" name="features" value="Food and drinks"> Food and drinks</label>
+      </div>
+    </div>
+
+    <div>
+      <label for="lf-notes">Anything else visitors should know</label>
+      <textarea id="lf-notes" name="notes" rows="4" placeholder="Cash-only gate, stroller access, dog policy, parking..."></textarea>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label for="lf-your-name">Your name</label>
+        <input id="lf-your-name" name="your_name" type="text" required>
+      </div>
+      <div>
+        <label for="lf-your-email">Your email</label>
+        <input id="lf-your-email" name="your_email" type="email" required>
+      </div>
+    </div>
+
+    <div><button class="btn btn-primary" type="submit">Open email to submit</button></div>
+    <p id="listing-note" hidden style="color:var(--muted);font-size:0.92rem">
+      Your email app should have opened with the details ready to send. If nothing happened, email
+      <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a> directly with the same information.
+    </p>
+  </div>
+</form>
+
+<h2>What happens next</h2>
+<p>We review new submissions and add them to the appropriate state and town pages, usually within a few business days outside of peak season. During October, turnaround can run longer — we prioritise corrections to existing listings first, since those affect people already planning a visit.</p>
+
+<h2>Already listed and need a change?</h2>
+<p>Use this same form, or email us directly, with the farm name and what needs to change. Corrections from confirmed owners always take priority over our aggregated data, and there is never a charge.</p>
+
+<h2>Want to stand out?</h2>
+<p>Free listings get the same fair placement as everyone else — sorted by rating and distance, never buried. If you want top placement in your state and metro regardless of rating, see <a href="/featured/">featured placement</a>.</p>
