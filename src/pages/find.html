@@ -1,41 +1,72 @@
 <!--meta
 {
   "path": "/find/",
-  "title": "Find a Pumpkin Patch Near You — Browse All 50 States",
-  "description": "Browse pumpkin patches by state, or search the live map by ZIP code. Addresses, hours, ratings and directions for pumpkin patches, corn mazes and fall farms nationwide.",
+  "title": "Find a Pumpkin Patch Near You — Search by City, State, ZIP or Attraction",
+  "description": "Search pumpkin patches by business name, city, state, ZIP code or attraction. Filter by feature and sort by distance, rating or reviews to find the right farm near you.",
   "h1": "Find a Pumpkin Patch Near You",
-  "lede": "Search the map by ZIP code, or start with your state and work down to a town. Every listing includes an address, hours where available, ratings and one-tap directions.",
+  "lede": "Search by name, city, state or ZIP code, filter by what you want, and sort by distance or rating.",
   "nav": "find",
   "layout": "wide",
   "trail": [{ "label": "Find" }]
 }
 -->
-<div class="grid grid-3" style="margin-bottom:2.5rem">
-  <div class="card">
-    <span class="card-num">1</span>
-    <h3>Search by ZIP code</h3>
-    <p>The fastest route. Enter a ZIP on the map and results re-sort by distance from that point.</p>
-    <p><a class="btn btn-primary btn-sm" href="/">Open the map</a></p>
+<div class="find-tool" id="find-tool">
+  <form class="search-form" id="find-form" role="search">
+    <label class="visually-hidden" for="find-query">Search by business name, city, state or ZIP code</label>
+    <div class="search-field">
+      <input id="find-query" type="text" placeholder="Search by name, city, state or ZIP code..." autocomplete="off">
+      <button class="btn btn-primary" type="submit">Search</button>
+    </div>
+    <button class="toggle-btn" type="button" id="find-geo-btn">Use my location</button>
+  </form>
+
+  <div class="control-group">
+    <label class="control">
+      <span class="control-label">Attraction</span>
+      <select id="find-filter-feature" aria-label="Filter by attraction">
+        <option value="">All</option>
+      </select>
+    </label>
+    <label class="control">
+      <span class="control-label">State</span>
+      <select id="find-filter-state" aria-label="Filter by state">
+        <option value="">All states</option>
+      </select>
+    </label>
+    <label class="control">
+      <span class="control-label">Rating</span>
+      <select id="find-filter-rating" aria-label="Filter by minimum rating">
+        <option value="">Any</option>
+        <option value="4.5">4.5+</option>
+        <option value="4">4.0+</option>
+        <option value="3.5">3.5+</option>
+      </select>
+    </label>
+    <label class="control">
+      <span class="control-label">Sort</span>
+      <select id="find-sort" aria-label="Sort results">
+        <option value="best">Best match</option>
+        <option value="distance">Closest / nearest</option>
+        <option value="rating">Top rated</option>
+        <option value="reviews">Most reviewed</option>
+        <option value="name">Name A-Z</option>
+      </select>
+    </label>
+    <button class="toggle-btn" type="button" id="find-reset-btn">Reset</button>
   </div>
-  <div class="card">
-    <span class="card-num">2</span>
-    <h3>Browse by state</h3>
-    <p>Better for planning a trip or a weekend away. Every state page lists the patches we track there.</p>
-    <p><a class="btn btn-outline btn-sm" href="#states">Jump to states</a></p>
+
+  <div class="results-head" style="padding:0.85rem 0 0.5rem;background:transparent;border:0">
+    <p class="results-count" id="find-results-count">Loading pumpkin patches…</p>
+    <p class="results-scope" id="find-results-scope">across the United States</p>
   </div>
-  <div class="card">
-    <span class="card-num">3</span>
-    <h3>Filter by feature</h3>
-    <p>Corn maze, hayrides, u-pick, petting zoo, apple picking. Narrow the map to the farms that have what you want.</p>
-    <p><a class="btn btn-outline btn-sm" href="#attractions">Browse attractions</a></p>
-  </div>
+
+  <div class="grid grid-3" id="find-results"></div>
+  <p style="text-align:center;margin-top:1.5rem">
+    <button class="btn btn-outline" type="button" id="find-more-btn" hidden>Show more results</button>
+  </p>
 </div>
 
-<p style="margin-bottom:2.5rem">
-  Know exactly what you are looking for? <a href="/search/">Search the directory</a> by farm name, town or state.
-</p>
-
-<h2 id="attractions">Browse by attraction</h2>
+<h2 id="attractions" style="margin-top:3rem">Browse by attraction</h2>
 <p>Looking for something specific? Start with the attraction and see every farm that has it.</p>
 {{CATEGORY_GRID}}
 
@@ -60,5 +91,5 @@
   <h3>Go at the right time</h3>
   <p>Weekday mornings are quietest. The two weekends either side of mid-October are the busiest days of the entire season at most farms in the country. Late-season visits in the last days of October mean thinner pumpkin selection but far shorter lines, and some farms discount heavily to clear the field.</p>
 
-  <p><a class="btn btn-primary" href="/">Search the pumpkin patch map</a></p>
+  <p><a class="btn btn-primary" href="/">Open the full map</a></p>
 </div>

@@ -779,6 +779,10 @@ for (const page of staticPages) {
     scripts = `<script src="/assets/js/search.js?v=${ASSET_VERSION}" defer></script>`;
   }
 
+  if (meta.path === '/find/') {
+    scripts = `<script src="/assets/js/find.js?v=${ASSET_VERSION}" defer></script>`;
+  }
+
   if (meta.trail) {
     const crumbs = breadcrumbJsonLd(meta.trail, meta.path);
     jsonld = jsonld || {
