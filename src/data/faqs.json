@@ -1,0 +1,22 @@
+[
+  {
+    "question": "How do I find a pumpkin patch near me?",
+    "answer": "<p>Type your ZIP code into the search bar above the map, or press <strong>Use my location</strong> to let your browser find you. The map recentres on your area and the cards on the left re-sort by driving distance, closest first. From there you can filter by feature — corn maze, hayrides, u-pick pumpkins, petting zoo — and sort by rating to see the best-reviewed patches near you.</p>"
+  },
+  {
+    "question": "When does pumpkin patch season start and end?",
+    "answer": "<p>Most US pumpkin patches open in the third or fourth week of September and close on or shortly after Halloween. A minority stay open into the second week of November for late-season pumpkins and fall photos. The peak weekends are the two either side of mid-October, when corn mazes, hayrides and festivals are all running at once — arrive before 11am on those days if you want a parking space and a short wagon line.</p>"
+  },
+  {
+    "question": "How much does it cost to visit a pumpkin patch?",
+    "answer": "<p>It varies more than most visitors expect. Many small family farms are free to enter and charge only for the pumpkins you pick, priced either per pumpkin or by the pound. Larger agritourism farms typically charge weekend admission of roughly $10 to $25 per person, which bundles the corn maze, hayride and play areas, with pumpkins sold separately. Weekday admission is often cheaper or free. Bring cash — a surprising number of farms still run cash-only gates.</p>"
+  },
+  {
+    "question": "What is the best time of day to visit a pumpkin patch?",
+    "answer": "<p>Weekday mornings are the quietest by a wide margin. If you can only go on a weekend, aim for the first hour after opening or the last two hours before closing, when the light is better for photos and the crowds have thinned. Avoid the hours right after rain: soft fields are the first thing farms close off, and many patches restrict wagon rides when the ground is saturated.</p>"
+  },
+  {
+    "question": "Are the hours and prices on this site guaranteed to be accurate?",
+    "answer": "<p>No. We aggregate listing data from public business sources and refresh it regularly, but pumpkin patches change hours week to week during the season and close early for weather, private events or a sold-out field. Always confirm directly with the farm by phone or on their own website before you travel. If you spot something out of date, <a href=\"/contact/\">send us a correction</a> and we will fix it.</p>"
+  }
+]

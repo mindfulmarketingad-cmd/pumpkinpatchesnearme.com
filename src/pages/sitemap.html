@@ -1,0 +1,53 @@
+<!--meta
+{
+  "path": "/sitemap/",
+  "title": "Sitemap — Pumpkin Patches Near Me",
+  "description": "Every page on PumpkinPatchesNearMe.com: the search map, state directories, guides and site information.",
+  "h1": "Sitemap",
+  "lede": "Every section of the directory in one place. Looking for the machine-readable version? It lives at /sitemap.xml.",
+  "nav": "about",
+  "layout": "wide",
+  "trail": [{ "label": "Sitemap" }]
+}
+-->
+<div class="grid grid-3">
+  <div class="card">
+    <h3>Main pages</h3>
+    <ul>
+      <li><a href="/">Home — pumpkin patch search map</a></li>
+      <li><a href="/find/">Find a pumpkin patch near you</a></li>
+      <li><a href="/blog/">Blog and guides</a></li>
+      <li><a href="/about/">About us</a></li>
+      <li><a href="/partners/">Partner with us</a></li>
+      <li><a href="/contact/">Contact</a></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Site information</h3>
+    <ul>
+      <li><a href="/disclaimer/">Disclaimer</a></li>
+      <li><a href="/privacy/">Privacy Policy</a></li>
+      <li><a href="/terms/">Terms of Service</a></li>
+      <li><a href="/sitemap/">Sitemap (this page)</a></li>
+      <li><a href="/sitemap.xml">XML sitemap</a></li>
+      <li><a href="/robots.txt">robots.txt</a></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Guides</h3>
+    <ul>
+{{SITEMAP_POSTS}}
+    </ul>
+  </div>
+</div>
+
+<h2 style="margin-top:2.5rem">Pumpkin patches by state</h2>
+<div class="state-grid">
+{{STATE_GRID}}
+</div>
+
+<div class="prose" style="margin-top:2.5rem">
+  <h2>Individual pumpkin patch pages</h2>
+  <p>Every farm in the directory has its own page with an address, hours, ratings, a map and directions. Those pages are reached from the <a href="/">search map</a> or from a <a href="/find/">state page</a>, and all of them are listed in the <a href="/sitemap.xml">XML sitemap</a> for search engines.</p>
+  <p>Currently tracking <strong>{{STAT_LISTINGS}}</strong> pumpkin patches across <strong>{{STAT_STATES}}</strong> states and <strong>{{STAT_CITIES}}</strong> towns.</p>
+</div>

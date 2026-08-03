@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<meta name="description" content="{{DESCRIPTION}}">
+<link rel="canonical" href="{{CANONICAL}}">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="theme-color" content="#F26A21">
+
+<meta property="og:type" content="{{OG_TYPE}}">
+<meta property="og:site_name" content="Pumpkin Patches Near Me">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESCRIPTION}}">
+<meta property="og:url" content="{{CANONICAL}}">
+<meta property="og:image" content="{{SITE_URL}}/assets/img/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{TITLE}}">
+<meta name="twitter:description" content="{{DESCRIPTION}}">
+<meta name="twitter:image" content="{{SITE_URL}}/assets/img/og-image.png">
+
+<link rel="icon" href="/assets/img/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/assets/img/favicon-16.png">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/css/style.css?v={{ASSET_VERSION}}">
+{{HEAD_EXTRA}}
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9332749804326149" crossorigin="anonymous"></script>
+<script type="application/ld+json">{{JSONLD}}</script>
+</head>
+<body class="{{BODY_CLASS}}">
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <img src="/assets/img/logo-mark.svg" alt="" width="38" height="38">
+      <span class="brand-text"><b>Pumpkin Patches</b><span>Near Me</span></span>
+    </a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button>
+    <nav class="main-nav" id="main-nav" aria-label="Main">
+      <ul>
+        <li><a href="/"{{NAV_HOME}}>Home</a></li>
+        <li><a href="/blog/"{{NAV_BLOG}}>Blog</a></li>
+        <li><a href="/about/"{{NAV_ABOUT}}>About</a></li>
+        <li class="nav-cta"><a href="/find/"{{NAV_FIND}}>Find</a></li>
+        <li><a href="/partners/"{{NAV_PARTNERS}}>Partners</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+{{CONTENT}}
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <img src="/assets/img/logo-mark.svg" alt="" width="34" height="34">
+        <b>Pumpkin Patches Near Me</b>
+      </div>
+      <p class="footer-tagline">The independent directory of pumpkin patches, corn mazes and fall farms across all 50 states.</p>
+    </div>
+    <nav class="footer-nav" aria-label="Footer">
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/about/">About</a></li>
+        <li><a href="/contact/">Contact</a></li>
+        <li><a href="/disclaimer/">Disclaimer</a></li>
+        <li><a href="/privacy/">Privacy</a></li>
+        <li><a href="/terms/">Terms</a></li>
+        <li><a href="/sitemap/">Sitemap</a></li>
+      </ul>
+    </nav>
+    <div class="footer-legal">
+      <p>&copy; {{YEAR}} PumpkinPatchesNearMe.com. All rights reserved.</p>
+      <p>Hours, pricing and availability change often — always confirm with the farm before you travel.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="/assets/js/site.js?v={{ASSET_VERSION}}" defer></script>
+{{SCRIPTS}}
+</body>
+</html>

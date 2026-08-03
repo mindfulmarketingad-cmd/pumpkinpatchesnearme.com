@@ -1,0 +1,84 @@
+<!--meta
+{
+  "path": "/contact/",
+  "title": "Contact Pumpkin Patches Near Me — Submit or Correct a Listing",
+  "description": "Add a missing pumpkin patch, correct outdated hours, claim your farm's listing, or ask about advertising and partnerships.",
+  "h1": "Contact Us",
+  "lede": "Missing patch, wrong hours, closed farm, partnership question — it all comes to the same inbox, and a person reads it.",
+  "nav": "about",
+  "layout": "prose",
+  "trail": [{ "label": "Contact" }]
+}
+-->
+<div class="notice">
+  <p><strong>Fastest route:</strong> email <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a>. We aim to reply within two business days. During October, expect a little longer — that is the six weeks the whole industry runs on.</p>
+</div>
+
+<h2>Send us a message</h2>
+<p>The form below opens a pre-filled email in your own mail app, so nothing you type is stored on this website.</p>
+
+<form id="contact-form" data-email="{{CONTACT_EMAIL}}" novalidate>
+  <p>
+    <label for="cf-topic"><strong>What is this about?</strong></label><br>
+    <select id="cf-topic" name="topic" style="width:100%;padding:0.7rem;border:2px solid var(--line);border-radius:8px;font:inherit">
+      <option value="Add a listing">Add a missing pumpkin patch</option>
+      <option value="Correction">Correct an existing listing</option>
+      <option value="Claim listing">Claim my farm's listing</option>
+      <option value="Closed">Report a closed or seasonal-only farm</option>
+      <option value="Partnership">Advertising or partnership</option>
+      <option value="Other">Something else</option>
+    </select>
+  </p>
+  <p>
+    <label for="cf-name"><strong>Your name</strong></label><br>
+    <input id="cf-name" name="name" type="text" autocomplete="name"
+           style="width:100%;padding:0.7rem;border:2px solid var(--line);border-radius:8px;font:inherit">
+  </p>
+  <p>
+    <label for="cf-email"><strong>Your email</strong></label><br>
+    <input id="cf-email" name="email" type="email" autocomplete="email"
+           style="width:100%;padding:0.7rem;border:2px solid var(--line);border-radius:8px;font:inherit">
+  </p>
+  <p>
+    <label for="cf-listing"><strong>Farm or listing name</strong> <span style="color:var(--muted)">(if applicable)</span></label><br>
+    <input id="cf-listing" name="listing" type="text"
+           style="width:100%;padding:0.7rem;border:2px solid var(--line);border-radius:8px;font:inherit">
+  </p>
+  <p>
+    <label for="cf-subject"><strong>Subject</strong></label><br>
+    <input id="cf-subject" name="subject" type="text"
+           style="width:100%;padding:0.7rem;border:2px solid var(--line);border-radius:8px;font:inherit">
+  </p>
+  <p>
+    <label for="cf-message"><strong>Message</strong></label><br>
+    <textarea id="cf-message" name="message" rows="6"
+              style="width:100%;padding:0.7rem;border:2px solid var(--line);border-radius:8px;font:inherit"></textarea>
+  </p>
+  <p><button class="btn btn-primary" type="submit">Open email</button></p>
+  <p id="contact-note" hidden style="color:var(--muted);font-size:0.92rem">
+    Your email app should have opened with the message ready to send. If nothing happened, email
+    <a href="mailto:{{CONTACT_EMAIL}}">{{CONTACT_EMAIL}}</a> directly.
+  </p>
+</form>
+
+<h2>Adding a pumpkin patch</h2>
+<p>Listings are free. To get a farm added quickly, include:</p>
+<ul>
+  <li>Farm name and full street address, including ZIP code</li>
+  <li>Public phone number and website</li>
+  <li>Season dates and opening hours</li>
+  <li>What is on offer: u-pick pumpkins, corn maze, hayrides, petting zoo, apple picking, food, haunted attractions</li>
+  <li>Admission and pumpkin pricing</li>
+</ul>
+
+<h2>Correcting a listing</h2>
+<p>Tell us the listing name and what is wrong — hours, address, phone number, or a farm that has closed. Corrections are free and are not conditional on any paid placement. Owner-supplied hours take priority over our aggregated data.</p>
+
+<h2>Removal requests</h2>
+<p>If you own a listed business and want the listing removed, email us from an address associated with the business and we will remove it. We do not require a reason.</p>
+
+<h2>Press and partnerships</h2>
+<p>For advertising, sponsorship or featured placement, see the <a href="/partners/">partners page</a> first, then get in touch with your farm or brand details and target region.</p>
+
+<h2>What we cannot help with</h2>
+<p>We are an independent directory, not the farms themselves. We cannot book tickets, check whether a specific farm is open today, process refunds, or resolve a complaint about a visit. For any of those, contact the farm directly using the phone number on its listing page.</p>

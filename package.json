@@ -1,0 +1,22 @@
+{
+  "name": "pumpkinpatchesnearme",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Directory of pumpkin patches, corn mazes and fall farms across all 50 US states.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs && node scripts/serve.mjs",
+    "serve": "node scripts/serve.mjs",
+    "icons": "node scripts/make-icons.mjs",
+    "sample-data": "node scripts/make-sample-data.mjs",
+    "import": "node scripts/import-outscraper.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "leaflet": "^1.9.4",
+    "leaflet.markercluster": "^1.5.3"
+  }
+}

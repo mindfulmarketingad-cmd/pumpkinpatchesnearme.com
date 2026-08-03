@@ -1,0 +1,172 @@
+<!--meta
+{
+  "path": "/",
+  "title": "Best Pumpkin Patch Near Me — Find Top-Rated Pumpkin Patches Near You",
+  "description": "Find a pumpkin patch near me with our live map of pumpkin patches, corn mazes and fall farms across all 50 states. Search by ZIP code, compare ratings, hours and directions.",
+  "nav": "home",
+  "layout": "raw",
+  "bodyClass": "home"
+}
+-->
+<section class="hero-app" id="search-app" data-view="map" aria-label="Pumpkin patch search map">
+  <div class="hero-bar">
+    <h1 class="hero-title">Find Pumpkin Patches <span class="accent">Near Me</span></h1>
+
+    <form class="search-form" id="zip-form" role="search">
+      <label class="visually-hidden" for="zip-input">Search pumpkin patches by ZIP code</label>
+      <div class="search-field">
+        <input id="zip-input" name="zip" type="text" inputmode="numeric" pattern="[0-9]{5}"
+               maxlength="5" placeholder="Enter your ZIP code" autocomplete="postal-code">
+        <button class="btn btn-primary" type="submit">Search</button>
+      </div>
+      <button class="toggle-btn" type="button" id="geo-btn">Use my location</button>
+    </form>
+
+    <div class="control-group">
+      <label class="control">
+        <span class="control-label">Feature</span>
+        <select id="filter-feature" aria-label="Filter by feature">
+          <option value="">All</option>
+        </select>
+      </label>
+      <label class="control">
+        <span class="control-label">State</span>
+        <select id="filter-state" aria-label="Filter by state">
+          <option value="">All states</option>
+        </select>
+      </label>
+      <label class="control">
+        <span class="control-label">Rating</span>
+        <select id="filter-rating" aria-label="Filter by minimum rating">
+          <option value="">Any</option>
+          <option value="4.5">4.5+</option>
+          <option value="4">4.0+</option>
+          <option value="3.5">3.5+</option>
+        </select>
+      </label>
+      <label class="control">
+        <span class="control-label">Sort</span>
+        <select id="sort-select" aria-label="Sort results">
+          <option value="distance">Closest</option>
+          <option value="rating">Highest rated</option>
+          <option value="reviews">Most reviewed</option>
+          <option value="name">Name A-Z</option>
+        </select>
+      </label>
+      <button class="toggle-btn" type="button" id="reset-btn">Reset</button>
+      <button class="toggle-btn view-switch" type="button" id="view-list" aria-pressed="false">List</button>
+      <button class="toggle-btn view-switch" type="button" id="view-map" aria-pressed="true">Map</button>
+    </div>
+  </div>
+
+  <div class="hero-split">
+    <div class="results-panel">
+      <div class="results-head">
+        <p class="results-count" id="results-count">Loading pumpkin patches…</p>
+        <p class="results-scope" id="results-scope">across the United States</p>
+      </div>
+      <div class="results-list" id="results-list"></div>
+    </div>
+    <div class="map-panel">
+      <div id="map" role="application" aria-label="Map of pumpkin patches in the United States"></div>
+      <div class="map-tools">
+        <button class="toggle-btn" type="button" id="satellite-toggle" aria-pressed="false">Satellite</button>
+      </div>
+      <p class="map-note">Zoom and pan the map, then click a marker for details</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head center">
+      <span class="eyebrow">The fall directory</span>
+      <h2>Every pumpkin patch, in one map</h2>
+      <p>We track pumpkin patches, corn mazes, u-pick farms and fall festivals across all 50 states — {{STAT_LISTINGS}} listings in {{STAT_CITIES}} towns and counting. No sign-up, no app, no guessing which farm is still open.</p>
+    </div>
+    <div class="grid grid-4">
+      <div class="card">
+        <span class="card-num">1</span>
+        <h3>Search your ZIP</h3>
+        <p>Drop in a ZIP code or share your location and the map recentres instantly on the patches closest to you.</p>
+      </div>
+      <div class="card">
+        <span class="card-num">2</span>
+        <h3>Filter what matters</h3>
+        <p>Corn maze for the teens, petting zoo for the toddlers, u-pick for the photos. Filter by feature, state and rating.</p>
+      </div>
+      <div class="card">
+        <span class="card-num">3</span>
+        <h3>Check before you go</h3>
+        <p>Every listing shows hours, phone number and ratings so you can confirm the gate is open before you drive out.</p>
+      </div>
+      <div class="card">
+        <span class="card-num">4</span>
+        <h3>Get directions</h3>
+        <p>One tap sends the farm straight to Google Maps with turn-by-turn directions from wherever you are.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Top rated</span>
+      <h2>Highly rated pumpkin patches</h2>
+      <p>Farms with the strongest review profiles in our directory right now.</p>
+    </div>
+    <div class="grid grid-3">
+{{FEATURED_CARDS}}
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">All 50 states</span>
+      <h2>Browse pumpkin patches by state</h2>
+      <p>Pick a state to see every listed pumpkin patch, corn maze and fall farm we track there.</p>
+    </div>
+{{STATE_GRID}}
+  </div>
+</section>
+
+<section class="section section-alt">
+  <div class="wrap-narrow">
+    <div class="section-head center">
+      <span class="eyebrow">Good to know</span>
+      <h2>Pumpkin patch questions, answered</h2>
+    </div>
+{{FAQ}}
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">From the blog</span>
+      <h2>Plan a better pumpkin patch trip</h2>
+      <p>Practical guides to season timing, pricing and picking the right farm for your group.</p>
+    </div>
+    <div class="post-list">
+{{BLOG_TEASERS}}
+    </div>
+  </div>
+</section>
+
+<section class="section section-orange">
+  <div class="wrap">
+    <div class="cta-band">
+      <div>
+        <h2>Run a pumpkin patch?</h2>
+        <p style="margin-bottom:0;max-width:52ch">Get your farm in front of families searching "pumpkin patch near me" this season. Free listings, plus featured placement for growers who want the top of the map.</p>
+      </div>
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap">
+        <a class="btn btn-outline" href="/partners/">Partner with us</a>
+        <a class="btn btn-outline" href="/contact/">Submit a patch</a>
+      </div>
+    </div>
+  </div>
+</section>
