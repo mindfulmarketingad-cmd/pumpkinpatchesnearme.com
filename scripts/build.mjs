@@ -59,10 +59,38 @@ function stars(rating) {
   return '★'.repeat(full) + '☆'.repeat(Math.max(0, 5 - full));
 }
 
-const statePath = (stateName) => `/pumpkin-patches/${slugify(stateName)}/`;
-const cityPath = (stateName, cityName) => `/pumpkin-patches/${slugify(stateName)}/${slugify(cityName)}/`;
+const statePath = (stateName) => `/${slugify(stateName)}/`;
+const cityPath = (stateName, cityName) => `/${slugify(stateName)}/${slugify(cityName)}/`;
 const categoryPath = (category) => `/${category.slug}/`;
-const listingPath = (listing) => `/patch/${listing.slug}/`;
+
+/**
+ * Individual listings live at /<state>/<city>/<business-name>/, nested under
+ * the same state and city pages. Business-name slugs are de-duplicated within
+ * their city so two farms sharing a name in the same town don't collide, and
+ * this runs once up front so every call site (cards, breadcrumbs, JSON-LD,
+ * the client-side map JSON) agrees on the same URL for a given listing.
+ */
+const usedByCityBucket = new Map(); // "state-slug/city-slug" -> Set of business slugs taken
+for (const l of listings) {
+  if (l.state && l.city) {
+    const stateSlug = slugify(l.state);
+    const citySlug = slugify(l.city);
+    const bucketKey = `${stateSlug}/${citySlug}`;
+    if (!usedByCityBucket.has(bucketKey)) usedByCityBucket.set(bucketKey, new Set());
+    const used = usedByCityBucket.get(bucketKey);
+    const base = slugify(l.name) || 'pumpkin-patch';
+    let businessSlug = base;
+    let n = 2;
+    while (used.has(businessSlug)) businessSlug = `${base}-${n++}`;
+    used.add(businessSlug);
+    l.url = `/${stateSlug}/${citySlug}/${businessSlug}/`;
+  } else {
+    // Listings missing a state or city shouldn't occur with clean data, but
+    // fall back to a flat path rather than ever producing a broken URL.
+    l.url = `/patch/${l.slug}/`;
+  }
+}
+const listingPath = (listing) => listing.url;
 
 /** Featured (paid placement) listings float to the top of every collection. */
 function rankListings(items) {
@@ -143,6 +171,63 @@ function renderCard(l, { showState = true, showCity = true } = {}) {
     </div>
   </div>
 </article>`;
+}
+
+function joinNatural(words) {
+  if (words.length <= 1) return words[0] || '';
+  if (words.length === 2) return `${words[0]} and ${words[1]}`;
+  return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+}
+
+// Cycles through a handful of sentence shapes so a page of 10 ranked farms
+// doesn't read as the same template ten times in a row.
+const BLURB_OPENERS = [
+  (name, place) => `${name}${place ? ` in ${place}` : ''} takes the top spot`,
+  (name, place) => `${name}${place ? `, out in ${place},` : ''} is next up`,
+  (name, place) => `${name}${place ? ` near ${place}` : ''} rounds out this stretch of the list`,
+  (name, place) => `Also worth the drive: ${name}${place ? ` in ${place}` : ''}`,
+];
+
+function blurbFor(l, rank, stateName) {
+  const place = l.city && l.city !== stateName ? l.city : null;
+  const opener = BLURB_OPENERS[rank % BLURB_OPENERS.length](esc(l.name), place ? esc(place) : null);
+
+  const ratingClause = l.rating
+    ? `, rated ${l.rating.toFixed(1)} out of 5${l.reviews ? ` from ${l.reviews.toLocaleString('en-US')} reviews` : ''}`
+    : '';
+
+  const features = (l.features || []).slice(0, 2).map((f) => esc(f.toLowerCase()));
+  const featureSentence = features.length ? ` Visitors come here for ${joinNatural(features)}.` : '';
+  const seasonSentence = l.season ? ` Typical season: ${esc(l.season)}.` : '';
+
+  const featuredNote = l.featured ? ' This is a featured listing.' : '';
+
+  return `${opener}${ratingClause}.${featureSentence}${seasonSentence}${featuredNote}`;
+}
+
+function renderListicleEntry(l, rank, stateName) {
+  const place = [l.city, l.stateCode].filter(Boolean).join(', ');
+  const tags = (l.features || []).slice(0, 4);
+  return `<li class="listicle-item${l.featured ? ' is-featured' : ''}" id="${attr(l.slug)}">
+  <span class="listicle-rank" aria-hidden="true">${rank}</span>
+  <div class="listicle-body">
+    ${l.featured ? '<p class="featured-flag featured-flag-inline">Featured farm</p>' : ''}
+    <h3><a href="${listingPath(l)}">${esc(l.name)}</a></h3>
+    <div class="listing-meta">
+      ${l.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(l.rating)}</span> ${l.rating.toFixed(1)}</span>` : ''}
+      ${l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} reviews</span>` : ''}
+      ${place ? `<span>${esc(place)}</span>` : ''}
+      ${l.sample ? '<span class="tag">Sample data</span>' : ''}
+    </div>
+    <p class="listicle-blurb">${blurbFor(l, rank - 1, stateName)}</p>
+    ${l.street ? `<p class="listing-address">${esc(l.street)}${l.postalCode ? `, ${esc(l.postalCode)}` : ''}</p>` : ''}
+    ${tags.length ? `<div class="tag-row">${tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+    <div class="card-actions">
+      <a class="btn btn-primary btn-sm" href="${listingPath(l)}">View details</a>
+      <a class="btn btn-outline btn-sm" href="https://www.google.com/maps/dir/?api=1&amp;destination=${l.lat},${l.lng}" target="_blank" rel="noopener nofollow">Directions</a>
+    </div>
+  </div>
+</li>`;
 }
 
 function renderFaqHtml(items) {
@@ -500,31 +585,53 @@ for (const stateName of stateNames) {
   const items = byState.get(stateName) || [];
   const path = statePath(stateName);
   const cities = [...new Set(items.map((l) => l.city).filter(Boolean))].sort();
+  const rankedCount = Math.min(10, items.length);
+  const ranked = items.slice(0, rankedCount);
+  const rest = items.slice(rankedCount);
 
+  const titleCount = rankedCount || null;
   const meta = {
     path,
-    title: `Pumpkin Patches in ${stateName} — Find a Pumpkin Patch Near You`,
+    title: titleCount
+      ? `The ${titleCount} Best Pumpkin Patches in ${stateName} (${SEASON_YEAR})`
+      : `Pumpkin Patches in ${stateName} — Find a Pumpkin Patch Near You`,
     description: items.length
-      ? `Browse ${items.length} pumpkin patch${items.length === 1 ? '' : 'es'} in ${stateName}, with addresses, hours, ratings and directions. Updated for the current fall season.`
+      ? `Ranked: the best pumpkin patches in ${stateName}, with ratings, addresses, hours and directions. ${items.length} listing${items.length === 1 ? '' : 's'} total, updated for ${SEASON_YEAR}.`
       : `Looking for a pumpkin patch in ${stateName}? Browse our directory of ${stateName} pumpkin patches, corn mazes and fall farms, and submit the ones we are missing.`,
-    h1: `Pumpkin Patches in ${stateName}`,
+    h1: titleCount
+      ? `The ${titleCount} Best Pumpkin Patches in ${stateName}`
+      : `Pumpkin Patches in ${stateName}`,
     lede: items.length
-      ? `${items.length} listing${items.length === 1 ? '' : 's'} across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'} in ${stateName}. Check hours before you drive out — most patches open late September and close in early November.`
+      ? `Ranked by rating and review volume across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'} in ${stateName}${rest.length ? `, plus ${rest.length} more listing${rest.length === 1 ? '' : 's'} below` : ''}. Always confirm hours before you drive out — most patches open late September and close in early November.`
       : `We are still building out our ${stateName} coverage. Know a great local patch? Send it to us and we will add it.`,
     nav: 'find',
     layout: 'wide',
     trail: [{ label: 'Find', href: '/find/' }, { label: stateName }],
   };
 
-  const listSection = items.length
-    ? `<div class="grid grid-3">
-${items.map((l) => renderCard(l, { showState: false })).join('\n')}
-</div>`
+  const tocSection = ranked.length > 3
+    ? `<p class="listicle-toc"><strong>Jump to:</strong> ${ranked
+        .map((l, i) => `<a href="#${attr(l.slug)}">${i + 1}. ${esc(l.name)}</a>`)
+        .join(' <span aria-hidden="true">&middot;</span> ')}</p>`
+    : '';
+
+  const rankedSection = ranked.length
+    ? `${tocSection}
+<ol class="listicle">
+${ranked.map((l, i) => renderListicleEntry(l, i + 1, stateName)).join('\n')}
+</ol>`
     : `<div class="empty-state">
   <h3>No ${esc(stateName)} listings yet</h3>
   <p>Our ${esc(stateName)} data is on the way. If you run or love a pumpkin patch here, tell us about it and we will get it listed.</p>
   <a class="btn btn-primary" href="/add-a-listing/">Submit a pumpkin patch</a>
 </div>`;
+
+  const restSection = rest.length
+    ? `<h2>More pumpkin patches in ${esc(stateName)}</h2>
+<div class="grid grid-3">
+${rest.map((l) => renderCard(l, { showState: false })).join('\n')}
+</div>`
+    : '';
 
   const citySection = cities.length
     ? `<h2>Pumpkin patches by town in ${esc(stateName)}</h2>
@@ -543,8 +650,9 @@ ${present.map(({ c, n }) => `  <a class="tag tag-link" href="${categoryPath(c)}"
 </div>`;
   })();
 
-  const body = `${listSection}
+  const body = `${rankedSection}
 <div class="section" style="padding-bottom:0">
+${restSection}
 ${citySection}
 ${catSection}
 <h2>Planning a ${esc(stateName)} pumpkin patch trip</h2>

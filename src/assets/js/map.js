@@ -117,7 +117,7 @@
     var tags = (item.features || []).slice(0, 3);
     return '<article class="listing-card" data-slug="' + esc(item.slug) + '">' +
       '<div class="listing-card-body">' +
-        '<h3><a href="/patch/' + esc(item.slug) + '/">' + esc(item.name) + '</a></h3>' +
+        '<h3><a href="' + esc(item.url) + '">' + esc(item.name) + '</a></h3>' +
         '<div class="listing-meta">' +
           (item.rating ? '<span class="rating"><span class="stars" aria-hidden="true">' + starString(item.rating) + '</span> ' + item.rating.toFixed(1) + '</span>' : '') +
           (item.reviews ? '<span>' + item.reviews.toLocaleString('en-US') + ' reviews</span>' : '') +
@@ -128,7 +128,7 @@
         (item._distance != null ? '<p><span class="listing-distance">' + item._distance.toFixed(1) + ' mi away</span></p>' : '') +
         (tags.length ? '<div class="tag-row">' + tags.map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('') + '</div>' : '') +
         '<div class="card-actions">' +
-          '<a class="btn btn-primary btn-sm" href="/patch/' + esc(item.slug) + '/">View details</a>' +
+          '<a class="btn btn-primary btn-sm" href="' + esc(item.url) + '">View details</a>' +
           '<button class="btn btn-outline btn-sm" type="button" data-focus="' + esc(item.slug) + '">Show on map</button>' +
         '</div>' +
       '</div>' +
@@ -140,7 +140,7 @@
     return '<div class="map-popup">' +
       '<h4>' + esc(item.name) + '</h4>' +
       '<p>' + (item.rating ? '<span class="stars">' + starString(item.rating) + '</span> ' + item.rating.toFixed(1) + ' &middot; ' : '') + esc(place) + '</p>' +
-      '<a class="btn btn-primary btn-sm" href="/patch/' + esc(item.slug) + '/">View details</a>' +
+      '<a class="btn btn-primary btn-sm" href="' + esc(item.url) + '">View details</a>' +
     '</div>';
   }
 
