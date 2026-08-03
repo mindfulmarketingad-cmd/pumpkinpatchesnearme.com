@@ -118,9 +118,9 @@ for (const l of listings) {
 }
 for (const [key, arr] of byState) byState.set(key, rankListings(arr));
 
-const stateNames = [...new Set(Object.values(STATES))]
-  .filter((s) => s !== 'District of Columbia')
-  .sort();
+// Only states that actually have a listing get a page — no empty shells for
+// the rest of the 50, and this stays correct automatically as data changes.
+const stateNames = [...byState.keys()].sort();
 
 // Cities keyed as "State|City" so identically named towns in different states
 // stay separate (Portland ME and Portland OR both exist in the data).
@@ -321,10 +321,7 @@ ${listHtml}
 function renderStateGrid() {
   return `<div class="state-grid">
 ${stateNames
-  .map((s) => {
-    const count = (byState.get(s) || []).length;
-    return `  <a class="state-link" href="${statePath(s)}">${esc(s)} <span>${count || '—'}</span></a>`;
-  })
+  .map((s) => `  <a class="state-link" href="${statePath(s)}">${esc(s)} <span>${byState.get(s).length}</span></a>`)
   .join('\n')}
 </div>`;
 }
@@ -630,28 +627,21 @@ for (const page of staticPages) {
 /* --- state pages --------------------------------------------------------- */
 
 for (const stateName of stateNames) {
-  const items = byState.get(stateName) || [];
+  // stateNames is derived from byState's own keys, so every state reached
+  // here has at least one listing — no empty-state branch needed.
+  const items = byState.get(stateName);
   const path = statePath(stateName);
   const cities = [...new Set(items.map((l) => l.city).filter(Boolean))].sort();
   const rankedCount = Math.min(10, items.length);
   const ranked = items.slice(0, rankedCount);
   const rest = items.slice(rankedCount);
 
-  const titleCount = rankedCount || null;
   const meta = {
     path,
-    title: titleCount
-      ? `The ${titleCount} Best Pumpkin Patches in ${stateName} (${SEASON_YEAR})`
-      : `Pumpkin Patches in ${stateName} — Find a Pumpkin Patch Near You`,
-    description: items.length
-      ? `Ranked: the best pumpkin patches in ${stateName}, with ratings, addresses, hours and directions. ${items.length} listing${items.length === 1 ? '' : 's'} total, updated for ${SEASON_YEAR}.`
-      : `Looking for a pumpkin patch in ${stateName}? Browse our directory of ${stateName} pumpkin patches, corn mazes and fall farms, and submit the ones we are missing.`,
-    h1: titleCount
-      ? `The ${titleCount} Best Pumpkin Patches in ${stateName}`
-      : `Pumpkin Patches in ${stateName}`,
-    lede: items.length
-      ? `Ranked by rating and review volume across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'} in ${stateName}${rest.length ? `, plus ${rest.length} more listing${rest.length === 1 ? '' : 's'} below` : ''}. Always confirm hours before you drive out — most patches open late September and close in early November.`
-      : `We are still building out our ${stateName} coverage. Know a great local patch? Send it to us and we will add it.`,
+    title: `The ${rankedCount} Best Pumpkin Patches in ${stateName} (${SEASON_YEAR})`,
+    description: `Ranked: the best pumpkin patches in ${stateName}, with ratings, addresses, hours and directions. ${items.length} listing${items.length === 1 ? '' : 's'} total, updated for ${SEASON_YEAR}.`,
+    h1: `The ${rankedCount} Best Pumpkin Patches in ${stateName}`,
+    lede: `Ranked by rating and review volume across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'} in ${stateName}${rest.length ? `, plus ${rest.length} more listing${rest.length === 1 ? '' : 's'} below` : ''}. Always confirm hours before you drive out — most patches open late September and close in early November.`,
     nav: 'find',
     layout: 'wide',
     trail: [{ label: 'Find', href: '/find/' }, { label: stateName }],
@@ -663,16 +653,10 @@ for (const stateName of stateNames) {
         .join(' <span aria-hidden="true">&middot;</span> ')}</p>`
     : '';
 
-  const rankedSection = ranked.length
-    ? `${tocSection}
+  const rankedSection = `${tocSection}
 <ol class="listicle">
 ${ranked.map((l, i) => renderListicleEntry(l, i + 1, stateName)).join('\n')}
-</ol>`
-    : `<div class="empty-state">
-  <h3>No ${esc(stateName)} listings yet</h3>
-  <p>Our ${esc(stateName)} data is on the way. If you run or love a pumpkin patch here, tell us about it and we will get it listed.</p>
-  <a class="btn btn-primary" href="/add-a-listing/">Submit a pumpkin patch</a>
-</div>`;
+</ol>`;
 
   const restSection = rest.length
     ? `<h2>More pumpkin patches in ${esc(stateName)}</h2>

@@ -1,22 +1,28 @@
 /**
  * Imports an Outscraper "Google Maps / Places" export into data/listings.json.
  *
+ *   node scripts/import-outscraper.mjs path/to/outscraper-export.xlsx
  *   node scripts/import-outscraper.mjs path/to/outscraper-export.csv
  *   node scripts/import-outscraper.mjs path/to/export.json --keep-samples
  *
- * Accepts CSV or JSON. Recognised Outscraper columns:
- *   name, site, category, type, subtypes, phone, full_address, street, city,
- *   postal_code, state, us_state, latitude, longitude, rating, reviews,
- *   working_hours, photo, place_id, google_id, location_link, description,
- *   business_status, email_1
+ * Accepts XLSX, CSV or JSON — XLSX is Outscraper's default download format.
+ * Recognised Outscraper columns:
+ *   name, site/website, category, type, subtypes, phone, full_address, street,
+ *   city, county, postal_code, state, us_state/state_code, latitude,
+ *   longitude, rating, reviews, working_hours, about, photo, place_id,
+ *   google_id, location_link, description, business_status, email_1
  *
- * Rows without a name or usable coordinates are skipped and reported.
+ * Rows without a name or usable coordinates are skipped and reported. Rows
+ * marked CLOSED_PERMANENTLY are dropped; CLOSED_TEMPORARILY rows are kept,
+ * since that status is common for genuinely seasonal businesses.
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve, dirname, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import XLSX from 'xlsx';
 import { normaliseListing } from './lib/listings.mjs';
 
+const { readFile: readXlsxFile, utils: xlsxUtils } = XLSX;
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DATA_FILE = resolve(ROOT, 'data/listings.json');
 
@@ -63,7 +69,7 @@ function main() {
   const keepSamples = args.includes('--keep-samples');
 
   if (!file) {
-    console.error('Usage: node scripts/import-outscraper.mjs <export.csv|export.json> [--keep-samples]');
+    console.error('Usage: node scripts/import-outscraper.mjs <export.xlsx|export.csv|export.json> [--keep-samples]');
     process.exit(1);
   }
   const source = resolve(process.cwd(), file);
@@ -72,13 +78,28 @@ function main() {
     process.exit(1);
   }
 
-  const raw = readFileSync(source, 'utf8');
+  const ext = extname(source).toLowerCase();
   let rows;
-  if (extname(source).toLowerCase() === '.json') {
-    const parsed = JSON.parse(raw);
+  if (ext === '.xlsx' || ext === '.xls') {
+    const workbook = readXlsxFile(source);
+    const sheetName = workbook.SheetNames[0];
+    // Outscraper writes column headers already snake_cased (e.g. "postal_code"),
+    // but re-normalise defensively in case a hand-edited sheet uses "Postal Code".
+    rows = xlsxUtils
+      .sheet_to_json(workbook.Sheets[sheetName], { defval: '' })
+      .map((row) =>
+        Object.fromEntries(
+          Object.entries(row).map(([key, value]) => [
+            key.trim().toLowerCase().replace(/\s+/g, '_'),
+            typeof value === 'string' ? value.trim() : value,
+          ])
+        )
+      );
+  } else if (ext === '.json') {
+    const parsed = JSON.parse(readFileSync(source, 'utf8'));
     rows = Array.isArray(parsed) ? parsed : parsed.listings || parsed.data || [];
   } else {
-    rows = parseCsv(raw);
+    rows = parseCsv(readFileSync(source, 'utf8'));
   }
 
   const taken = new Set();

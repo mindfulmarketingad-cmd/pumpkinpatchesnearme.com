@@ -24,34 +24,51 @@ already point at the right build command and output directory.
 
 ## Importing Outscraper data
 
-The site currently ships with **placeholder listings** so the directory is fully
-browsable before the real import. Every placeholder row carries `"sample": true`,
-which means it is marked `noindex`, kept out of `sitemap.xml`, tagged "Sample data"
-in the UI, and flagged with a banner on the homepage. All of that disappears
-automatically once real listings are imported.
-
-To import a real Outscraper export:
+`data/listings.json` holds the live dataset — currently 2,000 real listings
+across 48 states, imported from an Outscraper export. To refresh it with a
+new export:
 
 ```bash
-node scripts/import-outscraper.mjs ~/Downloads/outscraper-pumpkin-patches.csv
+node scripts/import-outscraper.mjs ~/Downloads/outscraper-pumpkin-patches.xlsx
 npm run build
 ```
 
-CSV and JSON exports are both accepted. Recognised Outscraper columns:
+XLSX (Outscraper's default download format), CSV and JSON are all accepted.
+The import **replaces** `data/listings.json` outright — run it, then rebuild.
+State and city pages are generated only for locations that actually have a
+listing (`stateNames` and `byCity` in `scripts/build.mjs` are both derived
+from the data, not a fixed list), so a state or town with zero listings
+simply gets no page rather than an empty placeholder.
+
+Before this repo had real data, it shipped with a **placeholder dataset** so
+the directory was fully browsable before the first import — every row carried
+`"sample": true`, which marked it `noindex`, kept it out of `sitemap.xml`,
+tagged it "Sample data" in the UI, and triggered a banner on the homepage.
+That machinery still exists (`npm run sample-data` regenerates it) for local
+development or a fresh clone with no data yet, but nothing in the live
+dataset is flagged `sample` today, so none of it is currently active.
+
+Recognised Outscraper columns:
 
 | Outscraper column | Used for |
 | --- | --- |
 | `name` | Listing name (required) |
 | `latitude`, `longitude` | Map position (required) |
-| `street`, `city`, `postal_code`, `state`, `us_state`, `full_address` | Address |
-| `phone`, `site`, `email_1` | Contact details |
+| `street`, `city`, `postal_code`, `state`, `us_state` / `state_code`, `full_address` | Address |
+| `phone`, `site` / `website`, `email_1` | Contact details |
 | `rating`, `reviews` | Rating display and sorting |
-| `working_hours` | Hours table on the listing page |
+| `working_hours` | Hours table on the listing page. Each day may be a plain string or an array (a lunch-break split, timed sessions); arrays are joined with " / " |
 | `category`, `type`, `subtypes`, `description` | Category and auto-generated feature tags |
 | `place_id`, `google_id`, `location_link`, `photo` | Identifiers and media |
-| `business_status` | Rows marked `CLOSED_PERMANENTLY` are dropped |
+| `business_status` | Rows marked `CLOSED_PERMANENTLY` are dropped; `CLOSED_TEMPORARILY` rows are kept |
 | `county` / `borough` | Shown on the listing page if present |
 | `about` | Outscraper's nested attributes column — accepted payment methods are pulled out of it automatically |
+
+Outscraper fills empty cells with literal placeholder text — `county` is
+`"None"` on roughly 90% of rows in a typical export — rather than leaving them
+blank. `cleanField()` in `scripts/lib/listings.mjs` catches that (`"None"`,
+`"N/A"`, `"-"`, etc.) and stores `null` instead of publishing the placeholder
+text as if it were real data.
 
 A few fields Outscraper does not carry — `season`, `admission`, `directions`,
 `featured` — stay `null` until a farm sends them in through `/add-a-listing/` or
@@ -229,7 +246,7 @@ cp node_modules/leaflet.markercluster/dist/MarkerCluster.css src/assets/vendor/l
 
 ## Before going live
 
-- [ ] Run the real Outscraper import so the placeholder banner disappears
+- [x] Run the real Outscraper import so the placeholder banner disappears
 - [ ] Point `CONTACT_EMAIL` in `scripts/build.mjs` at a mailbox you actually monitor
 - [ ] Submit `https://pumpkinpatchesnearme.com/sitemap.xml` in Google Search Console
 - [ ] Confirm `https://pumpkinpatchesnearme.com/ads.txt` resolves before requesting AdSense review

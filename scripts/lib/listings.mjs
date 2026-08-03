@@ -48,6 +48,20 @@ export function resolveStateCode(stateRaw, usStateRaw) {
   return STATE_CODE_BY_NAME[raw.toLowerCase()] || '';
 }
 
+const PLACEHOLDER_VALUES = new Set(['none', 'n/a', 'na', 'null', 'undefined', '-', '--']);
+
+/**
+ * Outscraper fills empty fields with literal placeholder text ("None" is by
+ * far the most common, e.g. ~90% of `county` values in a typical export)
+ * rather than leaving the cell blank. Trims and maps those to null so they
+ * don't get published as if they were real data.
+ */
+export function cleanField(value) {
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed || PLACEHOLDER_VALUES.has(trimmed.toLowerCase())) return null;
+  return trimmed;
+}
+
 /** Great-circle distance in miles. */
 export function distanceMiles(lat1, lng1, lat2, lng2) {
   const R = 3958.8;
@@ -82,7 +96,12 @@ function normaliseHourKeys(obj) {
   const out = {};
   for (const [key, val] of Object.entries(obj)) {
     const day = String(key).trim().toLowerCase();
-    if (DAYS.includes(day)) out[day] = String(val).trim();
+    if (!DAYS.includes(day)) continue;
+    // Outscraper gives each day as an array — usually one window ("10AM-6PM"),
+    // occasionally several (a lunch break, or a farm open only for timed
+    // sessions) — joined here rather than left as a comma-run from a bare
+    // String(array) cast.
+    out[day] = Array.isArray(val) ? val.map((v) => String(v).trim()).join(' / ') : String(val).trim();
   }
   return Object.keys(out).length ? out : null;
 }
@@ -138,8 +157,8 @@ export function parsePayments(value) {
 
 /** Final shape consumed by the site build and the front-end map. */
 export function normaliseListing(input, taken) {
-  const stateCode = resolveStateCode(input.state, input.us_state);
-  const city = String(input.city || '').trim();
+  const stateCode = resolveStateCode(input.state, input.us_state || input.state_code);
+  const city = cleanField(input.city) || '';
   const name = String(input.name || '').trim();
   if (!name) return null;
 
@@ -161,18 +180,18 @@ export function normaliseListing(input, taken) {
     name,
     category: String(input.category || input.type || 'Pumpkin patch').trim(),
     description: String(input.description || '').trim() || null,
-    street: String(input.street || '').trim() || null,
+    street: cleanField(input.street),
     city: city || null,
-    county: String(input.county || input.borough || '').trim() || null,
-    state: STATES[stateCode] || String(input.state || '').trim() || null,
+    county: cleanField(input.county || input.borough),
+    state: STATES[stateCode] || cleanField(input.state) || null,
     stateCode: stateCode || null,
-    postalCode: String(input.postal_code || input.postalCode || '').trim() || null,
-    fullAddress: String(input.full_address || '').trim() || null,
+    postalCode: cleanField(input.postal_code || input.postalCode),
+    fullAddress: cleanField(input.full_address),
     lat,
     lng,
-    phone: String(input.phone || '').trim() || null,
-    website: String(input.site || input.website || '').trim() || null,
-    email: String(input.email_1 || input.email || '').trim() || null,
+    phone: cleanField(input.phone),
+    website: cleanField(input.site || input.website),
+    email: cleanField(input.email_1 || input.email),
     rating: Number.isFinite(rating) && rating > 0 ? Math.round(rating * 10) / 10 : null,
     reviews: Number.isFinite(reviews) && reviews > 0 ? Math.round(reviews) : null,
     hours: parseWorkingHours(input.working_hours || input.hours),
