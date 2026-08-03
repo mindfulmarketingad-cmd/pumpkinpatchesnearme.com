@@ -290,9 +290,11 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
 }
 .listing-card.is-active { border-color: var(--orange); }
 .listing-card-body { padding: 1rem 1.1rem 1.1rem; }
-.listing-card h3 { margin: 0 0 0.25rem; font-size: 1.13rem; }
-.listing-card h3 a { color: var(--ink); text-decoration: none; }
-.listing-card h3 a:hover { color: var(--orange-700); }
+/* Cards render an h3 heading everywhere except the state/city overflow grids,
+   which use h2 (farm names are the only h2s on those pages, by design). */
+.listing-card h2, .listing-card h3 { margin: 0 0 0.25rem; font-size: 1.13rem; }
+.listing-card h2 a, .listing-card h3 a { color: var(--ink); text-decoration: none; }
+.listing-card h2 a:hover, .listing-card h3 a:hover { color: var(--orange-700); }
 
 .listing-meta {
   display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem 0.7rem;
@@ -367,9 +369,9 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
   font-family: var(--font-display); font-weight: 700; font-size: 1.2rem;
 }
 .listicle-body { flex: 1; min-width: 0; }
-.listicle-body h3 { margin-bottom: 0.3rem; font-size: 1.2rem; }
-.listicle-body h3 a { color: var(--ink); text-decoration: none; }
-.listicle-body h3 a:hover { color: var(--orange-700); }
+.listicle-body h2 { margin-bottom: 0.3rem; font-size: 1.2rem; }
+.listicle-body h2 a { color: var(--ink); text-decoration: none; }
+.listicle-body h2 a:hover { color: var(--orange-700); }
 .listicle-blurb { color: var(--ink-2); margin: 0.5rem 0 0.65rem; }
 .featured-flag-inline {
   display: inline-block; border-radius: var(--r-pill); margin-bottom: 0.5rem; padding: 0.15rem 0.75rem;

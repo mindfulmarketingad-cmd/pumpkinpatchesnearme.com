@@ -155,13 +155,14 @@ const stats = {
 
 /* ------------------------------------------------------- shared fragments */
 
-function renderCard(l, { showState = true, showCity = true } = {}) {
+function renderCard(l, { showState = true, showCity = true, headingLevel = 3 } = {}) {
   const place = [showCity ? l.city : null, showState ? l.stateCode : null].filter(Boolean).join(', ');
   const tags = (l.features || []).slice(0, 3);
+  const h = headingLevel;
   return `<article class="listing-card${l.featured ? ' is-featured' : ''}">
   ${l.featured ? '<p class="featured-flag">Featured farm</p>' : ''}
   <div class="listing-card-body">
-    <h3><a href="${listingPath(l)}">${esc(l.name)}</a></h3>
+    <h${h}><a href="${listingPath(l)}">${esc(l.name)}</a></h${h}>
     <div class="listing-meta">
       ${l.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(l.rating)}</span> ${l.rating.toFixed(1)}</span>` : ''}
       ${l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} reviews</span>` : ''}
@@ -217,7 +218,7 @@ function renderListicleEntry(l, rank, stateName) {
   <span class="listicle-rank" aria-hidden="true">${rank}</span>
   <div class="listicle-body">
     ${l.featured ? '<p class="featured-flag featured-flag-inline">Featured farm</p>' : ''}
-    <h3><a href="${listingPath(l)}">${esc(l.name)}</a></h3>
+    <h2><a href="${listingPath(l)}">${esc(l.name)}</a></h2>
     <div class="listing-meta">
       ${l.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(l.rating)}</span> ${l.rating.toFixed(1)}</span>` : ''}
       ${l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} reviews</span>` : ''}
@@ -676,7 +677,7 @@ ${ranked.map((l, i) => renderListicleEntry(l, i + 1, stateName)).join('\n')}
   const restSection = rest.length
     ? `<h2>More pumpkin patches in ${esc(stateName)}</h2>
 <div class="grid grid-3">
-${rest.map((l) => renderCard(l, { showState: false })).join('\n')}
+${rest.map((l) => renderCard(l, { showState: false, headingLevel: 2 })).join('\n')}
 </div>`
     : '';
 
@@ -780,7 +781,7 @@ ${ranked.map((l, i) => renderListicleEntry(l, i + 1, cityName)).join('\n')}
   const restSection = rest.length
     ? `<h2>More pumpkin patches near ${esc(cityName)}</h2>
 <div class="grid grid-3">
-${rest.map((l) => renderCard(l, { showState: false, showCity: false })).join('\n')}
+${rest.map((l) => renderCard(l, { showState: false, showCity: false, headingLevel: 2 })).join('\n')}
 </div>`
     : '';
 
