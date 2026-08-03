@@ -137,6 +137,32 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
   letter-spacing: -0.02em;
 }
 
+.header-actions { display: flex; align-items: center; gap: 0.6rem; }
+
+.header-search-details { position: relative; }
+.header-search-toggle {
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border: 2px solid var(--line);
+  cursor: pointer; color: var(--ink); list-style: none; background: #fff;
+}
+.header-search-toggle::-webkit-details-marker { display: none; }
+.header-search-toggle:hover { border-color: var(--orange); color: var(--orange-700); }
+.header-search-details[open] .header-search-toggle {
+  border-color: var(--orange); color: var(--orange-700); background: var(--orange-50);
+}
+.header-search {
+  position: absolute; right: 0; top: calc(100% + 0.7rem);
+  background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-md);
+  padding: 1rem; width: min(88vw, 340px); z-index: 1001;
+}
+.header-search-form { display: flex; gap: 0.5rem; }
+.header-search-form input {
+  flex: 1; min-width: 0; padding: 0.55rem 0.75rem; border: 2px solid var(--line);
+  font-family: var(--font-body); font-size: 0.95rem; color: var(--ink); background: #fff;
+}
+.header-search-form input:focus { outline: none; border-color: var(--orange); }
+.header-search-hint { margin: 0.6rem 0 0; font-size: 0.8rem; color: var(--muted); }
+
 .nav-toggle {
   display: none; background: none; border: 2px solid var(--line); border-radius: var(--r-sm);
   padding: 0.4rem 0.6rem; cursor: pointer; color: var(--ink); font-weight: 600;
@@ -166,6 +192,16 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
   .main-nav[data-open="true"] { display: block; }
   .main-nav ul { flex-direction: column; align-items: stretch; padding: 0.6rem 1.25rem 1rem; gap: 0.15rem; }
   .main-nav a { padding: 0.8rem 1rem; border-radius: var(--r-sm); }
+}
+
+@media (max-width: 520px) {
+  /* A dropdown anchored to the search icon's right edge would run off the
+     left side of the viewport at phone widths — switch to a full-width bar
+     under the header instead of a small floating panel. */
+  .header-search {
+    position: fixed; left: 0; right: 0; top: var(--header-h);
+    width: auto; border-left: 0; border-right: 0; box-shadow: var(--shadow-lg);
+  }
 }
 
 /* ------------------------------------------------------- map hero (home) */

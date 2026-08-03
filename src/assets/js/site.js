@@ -20,6 +20,27 @@
     });
   }
 
+  // The header search is a native <details> disclosure, so it works even if
+  // this script fails to load — this just adds the click-outside-to-close
+  // behaviour <details> doesn't give you for free, plus autofocus on open.
+  var searchDetails = document.querySelector('.header-search-details');
+  var searchInput = document.getElementById('header-search-input');
+  if (searchDetails) {
+    searchDetails.addEventListener('toggle', function () {
+      if (searchDetails.open && searchInput) searchInput.focus();
+    });
+    document.addEventListener('click', function (event) {
+      if (!searchDetails.open) return;
+      if (searchDetails.contains(event.target)) return;
+      searchDetails.open = false;
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && searchDetails.open) {
+        searchDetails.open = false;
+      }
+    });
+  }
+
   // Neither form has a backend; each composes an email the visitor sends.
   var contactForm = document.getElementById('contact-form');
   if (contactForm) {

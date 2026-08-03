@@ -45,16 +45,31 @@
       <img src="/assets/img/logo-mark.svg" alt="" width="38" height="38">
       <span class="brand-text"><b>Pumpkin Patches</b><span>Near Me</span></span>
     </a>
-    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button>
-    <nav class="main-nav" id="main-nav" aria-label="Main">
-      <ul>
-        <li><a href="/"{{NAV_HOME}}>Home</a></li>
-        <li><a href="/blog/"{{NAV_BLOG}}>Blog</a></li>
-        <li><a href="/about/"{{NAV_ABOUT}}>About</a></li>
-        <li class="nav-cta"><a href="/find/"{{NAV_FIND}}>Find</a></li>
-        <li><a href="/partners/"{{NAV_PARTNERS}}>Partners</a></li>
-      </ul>
-    </nav>
+    <div class="header-actions">
+      <details class="header-search-details">
+        <summary class="header-search-toggle" aria-label="Search the site">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </summary>
+        <div class="header-search">
+          <form class="header-search-form" action="/search/" method="get" role="search">
+            <label class="visually-hidden" for="header-search-input">Search the site</label>
+            <input id="header-search-input" name="q" type="text" placeholder="Search farms, towns, states, guides…" autocomplete="off">
+            <button class="btn btn-primary btn-sm" type="submit">Search</button>
+          </form>
+          <p class="header-search-hint">Try a city like "Atlanta," a state, or a farm name.</p>
+        </div>
+      </details>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button>
+      <nav class="main-nav" id="main-nav" aria-label="Main">
+        <ul>
+          <li><a href="/"{{NAV_HOME}}>Home</a></li>
+          <li><a href="/blog/"{{NAV_BLOG}}>Blog</a></li>
+          <li><a href="/about/"{{NAV_ABOUT}}>About</a></li>
+          <li class="nav-cta"><a href="/find/"{{NAV_FIND}}>Find</a></li>
+          <li><a href="/partners/"{{NAV_PARTNERS}}>Partners</a></li>
+        </ul>
+      </nav>
+    </div>
   </div>
 </header>
 

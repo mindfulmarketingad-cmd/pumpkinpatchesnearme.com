@@ -76,6 +76,17 @@ const esc = (s) =>
 
 const attr = (s) => esc(s).replace(/'/g, '&#39;');
 
+// Meta descriptions get cut off in the SERP snippet somewhere around 155-160
+// characters — trimming at a word boundary here keeps every page's tag
+// under that budget instead of relying on each call site to count.
+function truncateMetaDescription(s, max = 155) {
+  const str = String(s ?? '');
+  if (str.length <= max) return str;
+  const cut = str.slice(0, max - 1);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${cut.slice(0, lastSpace > 0 ? lastSpace : max - 1)}…`;
+}
+
 function writePage(urlPath, html) {
   const rel = urlPath === '/' ? 'index.html' : join(urlPath.replace(/^\/|\/$/g, ''), 'index.html');
   const out = join(DIST, rel);
@@ -720,7 +731,7 @@ function render(meta, body, opts = {}) {
 
   const replacements = {
     '{{TITLE}}': esc(meta.title),
-    '{{DESCRIPTION}}': attr(meta.description),
+    '{{DESCRIPTION}}': attr(truncateMetaDescription(meta.description)),
     '{{CANONICAL}}': SITE_URL + meta.path,
     '{{SITE_URL}}': SITE_URL,
     '{{OG_TYPE}}': meta.ogType || 'website',
@@ -775,8 +786,8 @@ rmSync(DIST, { recursive: true, force: true });
 mkdirSync(DIST, { recursive: true });
 
 const sitemapEntries = [];
-const addToSitemap = (path, priority, changefreq) =>
-  sitemapEntries.push({ path, priority, changefreq });
+const addToSitemap = (path, priority, changefreq, lastmod) =>
+  sitemapEntries.push({ path, priority, changefreq, lastmod: lastmod || BUILD_DATE });
 
 /* --- blog posts ---------------------------------------------------------- */
 
@@ -838,7 +849,7 @@ for (const post of handAuthoredPosts) {
   };
   const byline = renderByline(post.meta.author, post.meta.date, post.meta.readingTime);
   writePage(meta.path, render(meta, heroHtml + byline + toc + bodyWithIds, { jsonld }));
-  addToSitemap(meta.path, '0.6', 'monthly');
+  addToSitemap(meta.path, '0.6', 'monthly', post.meta.updated || post.meta.date);
 }
 
 /* --- programmatic "5 Best Pumpkin Patches in <City>" posts --------------- */
@@ -1002,7 +1013,7 @@ ${closingSummary}`;
   };
   const byline = renderByline(cityAuthorSlug, postMeta.date, postMeta.readingTime);
   writePage(path, render(meta, heroHtml + byline + body, { jsonld }));
-  addToSitemap(path, '0.6', 'weekly');
+  addToSitemap(path, '0.6', 'weekly', postMeta.date);
 }
 
 /* --- programmatic "X Best <Attraction> in <City>" posts ------------------
@@ -1177,7 +1188,7 @@ ${closingSummary}`;
     };
     const byline = renderByline(attractionAuthorSlug, postMeta.date, postMeta.readingTime);
     writePage(path, render(meta, heroHtml + byline + body, { jsonld }));
-    addToSitemap(path, '0.6', 'weekly');
+    addToSitemap(path, '0.6', 'weekly', postMeta.date);
   }
 }
 
@@ -1185,19 +1196,6 @@ ${closingSummary}`;
 // one feed from here on — the blog index, XML/HTML sitemaps and search index
 // all read from `posts` and don't need to know which kind a given entry is.
 const posts = [...handAuthoredPosts, ...cityPosts, ...attractionCityPosts].sort((a, b) => (b.meta.date || '').localeCompare(a.meta.date || ''));
-
-const blogTeasers = posts
-  .map((p) => {
-    const author = authorsBySlug.get(p.meta.author);
-    const byAuthor = author ? `By <a href="${authorPath(author)}">${esc(author.name)}</a> &middot; ` : '';
-    return `<article class="post-item">
-  <h3><a href="/blog/${p.meta.slug}/">${esc(p.meta.h1 || p.meta.title)}</a></h3>
-  <p class="post-meta">${byAuthor}${p.meta.date ? new Date(`${p.meta.date}T12:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : ''}${p.meta.readingTime ? ` &middot; ${esc(p.meta.readingTime)}` : ''}</p>
-  <p>${esc(p.meta.excerpt || p.meta.description)}</p>
-  <a class="btn btn-outline btn-sm" href="/blog/${p.meta.slug}/">Read the guide</a>
-</article>`;
-  })
-  .join('\n');
 
 /* --- author pages ---------------------------------------------------------
    /authors/ lists every writer; /authors/<slug>/ gives each their own page
@@ -1323,7 +1321,25 @@ const staticPages = readPageFiles(join(SRC, 'pages'));
 const tokens = {
   '{{FAQ}}': renderFaqHtml(faqs),
   '{{STATE_GRID}}': renderStateGrid(),
-  '{{BLOG_TEASERS}}': blogTeasers,
+  // The homepage teases a handful of guides rather than the full feed —
+  // with 800+ programmatic attraction posts now in the mix, dumping every
+  // post's card onto "/" would make it enormous. Hand-authored and
+  // citywide posts are the more homepage-appropriate editorial picks;
+  // long-tail attraction posts are left for /blog/ and search to surface.
+  '{{HOME_BLOG_TEASERS}}': [...handAuthoredPosts, ...cityPosts]
+    .sort((a, b) => (b.meta.date || '').localeCompare(a.meta.date || ''))
+    .slice(0, 3)
+    .map((p) => {
+      const author = authorsBySlug.get(p.meta.author);
+      const byAuthor = author ? `By <a href="${authorPath(author)}">${esc(author.name)}</a> &middot; ` : '';
+      return `<article class="post-item">
+  <h3><a href="/blog/${p.meta.slug}/">${esc(p.meta.h1 || p.meta.title)}</a></h3>
+  <p class="post-meta">${byAuthor}${p.meta.date ? new Date(`${p.meta.date}T12:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : ''}${p.meta.readingTime ? ` &middot; ${esc(p.meta.readingTime)}` : ''}</p>
+  <p>${esc(p.meta.excerpt || p.meta.description)}</p>
+  <a class="btn btn-outline btn-sm" href="/blog/${p.meta.slug}/">Read the guide</a>
+</article>`;
+    })
+    .join('\n'),
   '{{FEATURED_CARDS}}': featured.map((l) => renderCard(l)).join('\n'),
   '{{STAT_LISTINGS}}': stats.listings.toLocaleString('en-US'),
   '{{STAT_STATES}}': String(stats.states),
@@ -1348,8 +1364,8 @@ const tokens = {
     ? `<div class="grid grid-3">\n${featuredListings.map((l) => renderCard(l)).join('\n')}\n</div>`
     : `<div class="empty-state">
   <h3>No featured farms yet this season</h3>
-  <p>Featured placement opens ahead of each fall season. If you run a pumpkin patch and want the top of your state and metro results, we would like to hear from you.</p>
-  <a class="btn btn-primary" href="/contact/">Request featured pricing</a>
+  <p>Featured placement goes to claimed listings. If you run a pumpkin patch and want the top of your state and town results, claim your listing.</p>
+  <a class="btn btn-primary" href="/partners/">Claim your listing</a>
 </div>`,
   '{{SEASON_YEAR}}': String(SEASON_YEAR),
 };
@@ -1402,7 +1418,11 @@ for (const page of staticPages) {
         ...page.meta,
         path: pagePath,
         title: pageNum === 1 ? page.meta.title : `${page.meta.title} — Page ${pageNum} of ${totalPages}`,
-        description: pageNum === 1 ? page.meta.description : `${page.meta.description} Page ${pageNum} of ${totalPages}.`,
+        // The page-number marker goes first, not appended at the end —
+        // meta descriptions get truncated around 155 characters, and a
+        // suffix past that cutoff would collapse every page's description
+        // to the same truncated string instead of staying distinct.
+        description: pageNum === 1 ? page.meta.description : `Page ${pageNum} of ${totalPages}. ${page.meta.description}`,
         trail: pageNum === 1 ? page.meta.trail : [{ label: 'Blog', href: '/blog/' }, { label: `Page ${pageNum}` }],
       };
       const crumbs = breadcrumbJsonLd(pageMeta.trail, pagePath);
@@ -1761,15 +1781,32 @@ ${statesWith
 
 /* --- listing detail pages ------------------------------------------------ */
 
+// Some operators run several same-named seasonal lots in one town (real,
+// separate listings at different addresses) — precomputed so their titles
+// and descriptions can be disambiguated with a street address instead of
+// shipping identical <title>/<meta description> tags across distinct URLs.
+const nameCityCounts = new Map();
+for (const l of listings) {
+  const key = `${l.name.trim().toLowerCase()}|${l.city || ''}|${l.state || ''}`;
+  nameCityCounts.set(key, (nameCityCounts.get(key) || 0) + 1);
+}
+
 for (const l of listings) {
   const path = listingPath(l);
   const place = [l.city, l.stateCode].filter(Boolean).join(', ');
+  const isDuplicateNameInCity = nameCityCounts.get(`${l.name.trim().toLowerCase()}|${l.city || ''}|${l.state || ''}`) > 1;
+  const titlePlace = isDuplicateNameInCity && l.street ? `${l.street}, ${place}` : place;
+  const baseTitle = `${l.name}${titlePlace ? ` — ${titlePlace}` : ''}`;
+  // Drop the site-name suffix rather than truncating mid-word when the full
+  // title would run past a safe SERP display length — the business name and
+  // location are the part worth keeping intact.
+  const title = `${baseTitle} | Pumpkin Patch Near Me`.length <= 60 ? `${baseTitle} | Pumpkin Patch Near Me` : baseTitle;
   const meta = {
     path,
-    title: `${l.name}${place ? ` — ${place}` : ''} | Pumpkin Patch Near Me`,
+    title,
     description:
       l.description ||
-      `${l.name} is a pumpkin patch${place ? ` in ${place}` : ''}. See the address, hours, rating and directions before you visit.`,
+      `${l.name} is a pumpkin patch${isDuplicateNameInCity && l.street ? ` at ${l.street}` : place ? ` in ${place}` : ''}. See the address, hours, rating and directions before you visit.`,
     h1: l.name,
     lede: place ? `Pumpkin patch in ${place}` : 'Pumpkin patch',
     nav: 'find',
@@ -1972,7 +2009,7 @@ ${sitemapEntries
   .map(
     (e) => `  <url>
     <loc>${SITE_URL}${e.path}</loc>
-    <lastmod>${BUILD_DATE}</lastmod>
+    <lastmod>${e.lastmod}</lastmod>
     <changefreq>${e.changefreq}</changefreq>
     <priority>${e.priority}</priority>
   </url>`
