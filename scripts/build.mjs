@@ -699,12 +699,16 @@ for (const [key, items] of byCity) {
     .map((c) => ({ c, n: items.filter((l) => (l.features || []).includes(c.feature)).length }))
     .filter((x) => x.n > 0);
 
+  const rankedCount = Math.min(10, items.length);
+  const ranked = items.slice(0, rankedCount);
+  const rest = items.slice(rankedCount);
+
   const meta = {
     path,
-    title: `Pumpkin Patches in ${label} — ${items.length} Near You`,
-    description: `Find pumpkin patches near ${label}. ${items.length} farm${items.length === 1 ? '' : 's'} with addresses, hours, ratings and directions, updated for the ${SEASON_YEAR} fall season.`,
-    h1: `Pumpkin Patches in ${cityName}, ${stateCode}`,
-    lede: `${items.length} pumpkin patch${items.length === 1 ? '' : 'es'} in and around ${cityName}. Updated for the ${SEASON_YEAR} season — always confirm hours with the farm before you drive out.`,
+    title: `The ${rankedCount} Best Pumpkin Patches in ${label} (${SEASON_YEAR})`,
+    description: `Ranked: the best pumpkin patches near ${label}, with ratings, addresses, hours and directions. ${items.length} listing${items.length === 1 ? '' : 's'} total, updated for ${SEASON_YEAR}.`,
+    h1: `The ${rankedCount} Best Pumpkin Patches in ${label}`,
+    lede: `Ranked by rating and review volume${rest.length ? `, plus ${rest.length} more listing${rest.length === 1 ? '' : 's'} below` : ''}. Updated for the ${SEASON_YEAR} season — always confirm hours with the farm before you drive out.`,
     nav: 'find',
     layout: 'wide',
     trail: [
@@ -716,11 +720,28 @@ for (const [key, items] of byCity) {
 
   const siblings = citiesInState(stateName).filter((c) => c !== cityName);
 
-  const body = `<div class="grid grid-3">
-${items.map((l) => renderCard(l, { showState: false, showCity: false })).join('\n')}
-</div>
+  const tocSection = ranked.length > 3
+    ? `<p class="listicle-toc"><strong>Jump to:</strong> ${ranked
+        .map((l, i) => `<a href="#${attr(l.slug)}">${i + 1}. ${esc(l.name)}</a>`)
+        .join(' <span aria-hidden="true">&middot;</span> ')}</p>`
+    : '';
+
+  const rankedSection = `${tocSection}
+<ol class="listicle">
+${ranked.map((l, i) => renderListicleEntry(l, i + 1, cityName)).join('\n')}
+</ol>`;
+
+  const restSection = rest.length
+    ? `<h2>More pumpkin patches near ${esc(cityName)}</h2>
+<div class="grid grid-3">
+${rest.map((l) => renderCard(l, { showState: false, showCity: false })).join('\n')}
+</div>`
+    : '';
+
+  const body = `${rankedSection}
 
 <div class="section" style="padding-bottom:0">
+  ${restSection}
   ${featureCounts.length ? `<h2>What ${esc(cityName)} farms offer</h2>
   <div class="tag-row">
 ${featureCounts.map(({ c, n }) => `    <a class="tag tag-link" href="${categoryPath(c)}">${esc(c.name)} (${n})</a>`).join('\n')}
