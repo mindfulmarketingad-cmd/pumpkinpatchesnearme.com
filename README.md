@@ -202,6 +202,61 @@ repeats. Programmatic posts share one feed with the hand-written guides in
 sitemaps, and the search index — so nothing downstream needs to know which
 kind a given post is.
 
+### Programmatic "X Best <Attraction> in <City>" posts
+
+Same idea as the city-wide post above, but scoped to one attraction
+(corn maze, hayride, etc.) within one city. For every (city, category) pair
+with at least `ATTRACTION_POST_MIN_LISTINGS` (3) distinctly-named businesses
+carrying that category's feature tag, the build emits
+`/blog/<x>-best-<attraction>-in-<city>-<state>/`, where `<x>` is however many
+qualify, up to `ATTRACTION_POST_MAX_LISTINGS` (5). Given how sparse
+per-attraction tagging is compared to the citywide pumpkin-patch count, this
+produces far fewer posts than the citywide version — that's expected and
+correct: the 3-listing floor is the same honesty bar as everywhere else on
+the site, so most city/attraction combinations simply don't get a page rather
+than getting a padded-out one. H1 and `<title>` are identical, per spec
+(`3 Best Corn Mazes in Portland, OR`), unlike the citywide posts which append
+a tagline. Structure otherwise matches the citywide posts: hero image, TOC,
+listicle entries, 5-question FAQ, closing summary, byline.
+
+### Business summaries inside listicle entries
+
+`renderListicleEntry()` — shared by state pages, city pages, and both flavors
+of programmatic blog post — renders a ~500-word, data-grounded summary for
+every business via `businessSummaryHtml()`: an overview paragraph (location,
+rating, tagged features), what visitors mention (review tags and/or
+description), practical visiting info (hours, admission, payment), a planning
+paragraph (season, weekday-vs-weekend, weather), and a wrap-up linking to the
+full listing page. Nothing here invents a fact about a specific farm — every
+branch has an honest fallback sentence when the underlying field is missing,
+which is also what keeps the floor at ~500 words even for the sparsest
+listings in the dataset (verified floor: 529 words across all 2,466 ranked
+entries site-wide). This means state and city pages, which rank up to 10
+businesses each, are now substantially longer pages than before — intentional,
+matching the site's existing "no thin pages" stance on listing detail pages.
+
+### Blog and category page hero images
+
+Every blog post (hand-authored, citywide, and attraction/city) and every
+attraction category page (`/hayrides/`, etc.) now opens with a featured hero
+image, reusing the same `.detail-hero` figure markup as listing pages.
+Sourced from the Outscraper photo data rather than a stock graphic:
+hand-authored guides rotate deterministically through the full pool of
+listings with a photo (`pickBlogPhoto()`); city and attraction posts use a
+photo from one of their own listed businesses; category pages use a photo
+from any listing in that category. Falls back to the illustrated placeholder
+when no photo is available. `BlogPosting` JSON-LD's `image` field points at
+the same photo actually shown, rather than a generic OG image.
+
+### Claiming a listing ($19.99)
+
+`/partners/` is a single paid offer: claim your own listing for $19.99 via a
+Stripe Payment Link, which verifies ownership and moves the farm ahead of
+unclaimed listings on its state/town/attraction pages. Every listing detail
+page also carries a "Claim Business" card in the sidebar linking to the same
+Stripe URL. Submitting a brand-new listing (`/add-a-listing/`) stays free —
+claiming only applies to farms already in the directory.
+
 ### Authors
 
 `src/data/authors.json` defines the site's writers — four personas, each with

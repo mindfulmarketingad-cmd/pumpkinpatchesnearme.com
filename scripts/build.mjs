@@ -234,6 +234,79 @@ function blurbFor(l, rank, stateName) {
   return `${opener}${ratingClause}.${featureSentence}${seasonSentence}${featuredNote}`;
 }
 
+// Every ranked listicle entry (state pages, city pages, and the programmatic
+// "5 Best" blog posts all share this renderer) gets a substantial,
+// data-grounded summary of the business rather than a one-line blurb — see
+// businessSummaryHtml() below. Nothing here invents a fact about a specific
+// farm; where data is missing the copy says so and points to the full
+// listing page instead.
+function hoursSummaryText(l) {
+  if (!l.hours) return '';
+  return DAYS.filter((d) => l.hours[d] && l.hours[d].toLowerCase() !== 'closed')
+    .map((d) => `${d[0].toUpperCase()}${d.slice(1)} ${l.hours[d]}`)
+    .join(', ');
+}
+
+function businessSummaryHtml(l, rank, stateName) {
+  const name = esc(l.name);
+  const place = l.city && l.city !== stateName ? l.city : null;
+  const fullPlace = [l.city, l.stateCode].filter(Boolean).join(', ');
+  const address = l.fullAddress || [l.street, fullPlace, l.postalCode].filter(Boolean).join(', ');
+
+  // Paragraph 1 — overview: where it is, how it's rated, what it's tagged for.
+  const ratingSentence = l.rating
+    ? `It carries a ${l.rating.toFixed(1)}-out-of-5 rating on Google${l.reviews ? ` from ${l.reviews.toLocaleString('en-US')} review${l.reviews === 1 ? '' : 's'}` : ''}, which puts it${place ? ` among the more established pumpkin patches we track near ${esc(place)}` : ' among the more established pumpkin patches in our data'}.`
+    : `We don't have a public rating on file for this listing yet — that usually just means it's newer to Google's index rather than a reflection of quality, so the details below lean on the rest of its business listing.`;
+  const featureIntro = (l.features || []).length
+    ? ` Beyond the pumpkin field itself, it's tagged for ${joinNatural(l.features.slice(0, 4).map((f) => esc(f.toLowerCase())))}, so there's usually more to a visit than just picking a pumpkin and heading home.`
+    : ` Its listing doesn't break out specific extra attractions beyond the pumpkin patch itself, so it's worth a quick look at the farm's website or a call ahead if you're hoping for something like a corn maze or hayride on top of the field.`;
+  const p1 = `${name} is ranked ${rank === 1 ? '#1' : `#${rank}`} on this list${address ? `, located at ${esc(address)}` : place ? `, serving the ${esc(place)} area` : ''}. ${ratingSentence}${featureIntro}`;
+
+  // Paragraph 2 — what visitors mention, in the site's own words where we have them.
+  const tagsSentence = (l.reviewTags || []).length
+    ? `Recurring themes in reviews of ${name} include ${joinNatural(l.reviewTags.slice(0, 5).map((t) => esc(t.toLowerCase())))} — not a direct quote from any single visitor, but the topics that come up most often when people describe the farm.`
+    : `Google hasn't surfaced a set of recurring review themes for ${name} yet, so there isn't a themed summary of what visitors say to pass along here — the star rating and review count above remain the clearest public signal until more detail comes in.`;
+  const descSentence = l.description ? ` In the farm's own words: "${esc(l.description)}"` : '';
+  const categoryMatch = categories.find((c) => (l.features || []).includes(c.feature));
+  const categorySentence = categoryMatch
+    ? ` ${esc(l.name)} is one of the farms we track with a ${esc(categoryMatch.singular)}, which typically means ${(categoryMatch.intro.match(/<p>(.*?)<\/p>/) || ['', 'guests get more than a straightforward pumpkin field — check the listing for specifics on what runs and when'])[1].replace(/<[^>]+>/g, '').toLowerCase().slice(0, 220)}${(categoryMatch.intro.match(/<p>(.*?)<\/p>/) || ['', ''])[1].length > 220 ? '…' : '.'}`
+    : ` Most pumpkin patches share a similar core visit regardless of what's formally listed: a field or lot of pumpkins priced individually or by weight, sometimes reached by a short wagon ride, with an extra attraction like a corn maze or animal area running at many farms in season. What's actually open on a given day depends on the week and the weather, so the listing above is a starting point rather than the full picture.`;
+  const p2 = `${tagsSentence}${descSentence}${categorySentence}`;
+
+  // Paragraph 3 — practical visiting info: hours, season, admission, payment.
+  const hoursSummary = hoursSummaryText(l);
+  const hoursSentence = hoursSummary
+    ? `Based on its public listing, ${name} is typically open ${hoursSummary}. Pumpkin patch hours shift often during the season — expect longer hours the two or three weekends around mid-October and shorter, sometimes weekend-only hours toward either end of the season — so treat this as a strong starting point rather than a guarantee.`
+    : `Hours aren't listed for ${name} in our data. Most pumpkin patches run daily or weekends-only from mid-September through the first days of November, but the surest way to know is to call ahead or check the farm's website before you drive out.`;
+  const admissionSentence = l.admission
+    ? ` ${l.admission} Pricing can still shift season to season, so confirm current admission and pumpkin pricing directly with the farm.`
+    : ` Admission pricing isn't listed for ${name} either — pumpkin patches generally charge one of three ways (free entry with pumpkins priced individually or by weight, a flat gate admission bundling attractions, or a per-attraction wristband system), so it's worth asking which applies here before you go.`;
+  const paymentSentence = l.payment && l.payment.length
+    ? ` It accepts ${joinNatural(l.payment.map((p) => esc(p.toLowerCase())))}, though it's still smart to carry some cash — field admission and wagon rides at farms like this are sometimes handled separately from the main store.`
+    : ` Payment methods aren't listed, and a meaningful share of family-run patches are cash-only for field admission and wagon rides even when the farm store takes cards — bringing some cash as backup avoids an awkward trip back to the car at the gate.`;
+  const p3 = `${hoursSentence}${admissionSentence}${paymentSentence}`;
+
+  // Paragraph 4 — planning a visit: weather, footwear, timing, worth knowing regardless of what data we have.
+  const seasonSentence = l.season
+    ? `${name} lists its season as ${esc(l.season)}, though like almost any working farm that can shift a little in either direction depending on weather and how the crop comes in.`
+    : `Like most working farms, the exact open and close dates for ${name} can shift year to year with weather and how the pumpkin crop comes in, even though the general window is fairly predictable.`;
+  const p4 = `${seasonSentence} If you're planning a special trip, a weekday morning is consistently the quietest time to go, with shorter waits for wagon rides and easier parking than a weekend afternoon. Wear shoes you don't mind getting muddy — pumpkin fields are working farmland rather than paved lots, and they get soft fast after rain — and call ahead if it's rained heavily in the last day or two, since field access and hayrides are usually the first things a farm closes when the ground is saturated. Layers help too: fall mornings can start cold and warm up quickly once the sun is over an open field.`;
+
+  // Paragraph 5 — wrap-up: county, directions, link to the full profile.
+  const wrapLead = address
+    ? `${name} sits${l.county ? ` in ${esc(l.county)} County` : ''}${fullPlace ? `, near ${esc(fullPlace)}` : ''}, with parking typically in a grass field rather than a paved lot — allow a few extra minutes on busy weekends for staff or volunteers to direct traffic, and if you're navigating by GPS rather than the link on this page, search the farm name directly rather than just the street address, since rural addresses sometimes route to the wrong gate.`
+    : `Exact directions for ${name} are on its full listing page and the map on this page, along with parking notes where we have them. If you're navigating by GPS, searching the farm name directly tends to be more reliable than a bare street address out in farm country.`;
+  const p5 = `${wrapLead} See the full profile — hours table, rating breakdown, review themes, FAQ and a map you can route from — on <a href="${listingPath(l)}">${name}'s listing page</a>, or tap Directions below to head straight there.`;
+
+  return `<div class="listicle-summary">
+      <p>${p1}</p>
+      <p>${p2}</p>
+      <p>${p3}</p>
+      <p>${p4}</p>
+      <p>${p5}</p>
+    </div>`;
+}
+
 function renderListicleEntry(l, rank, stateName) {
   const place = [l.city, l.stateCode].filter(Boolean).join(', ');
   const tags = (l.features || []).slice(0, 4);
@@ -254,6 +327,7 @@ function renderListicleEntry(l, rank, stateName) {
     <p class="listicle-blurb">${blurbFor(l, rank - 1, stateName)}</p>
     ${l.street ? `<p class="listing-address">${esc(l.street)}${l.postalCode ? `, ${esc(l.postalCode)}` : ''}</p>` : ''}
     ${tags.length ? `<div class="tag-row">${tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
+    ${businessSummaryHtml(l, rank, stateName)}
     <div class="card-actions">
       <a class="btn btn-primary btn-sm" href="${listingPath(l)}">View details</a>
       <a class="btn btn-outline btn-sm" href="https://www.google.com/maps/dir/?api=1&amp;destination=${l.lat},${l.lng}" target="_blank" rel="noopener nofollow">Directions</a>
@@ -369,11 +443,7 @@ function locationParagraphHtml(l, address, place) {
  */
 function listingFaqData(l, place) {
   const name = l.name;
-  const hoursSummary = l.hours
-    ? DAYS.filter((d) => l.hours[d] && l.hours[d].toLowerCase() !== 'closed')
-        .map((d) => `${d[0].toUpperCase()}${d.slice(1)} ${l.hours[d]}`)
-        .join(', ')
-    : '';
+  const hoursSummary = hoursSummaryText(l);
 
   const qa = [
     {
@@ -693,10 +763,26 @@ const addToSitemap = (path, priority, changefreq) =>
 
 /* --- blog posts ---------------------------------------------------------- */
 
+// Blog posts get a featured hero image pulled from the Outscraper photo data
+// rather than a stock graphic — real photos of real pumpkin patches from the
+// directory, rotated deterministically so rebuilds are reproducible. Posts
+// tied to a specific city (the programmatic "5 Best" posts) use a photo from
+// one of their own top-5 businesses instead; see the city-post loop below.
+const photoPool = rankListings(listings.filter((l) => l.photo));
+const pickBlogPhoto = (seedIndex) => (photoPool.length ? photoPool[seedIndex % photoPool.length].photo : PLACEHOLDER_IMAGE);
+const absImageUrl = (src) => (src.startsWith('http') ? src : `${SITE_URL}${src}`);
+function blogHeroFigureHtml(src, altText) {
+  return `<figure class="detail-hero blog-hero">
+  <img class="detail-hero-img" src="${attr(src)}" alt="${attr(altText)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${PLACEHOLDER_IMAGE}';">
+  <figcaption>${src === PLACEHOLDER_IMAGE ? 'Illustration' : 'Photo via Google, from a pumpkin patch in our directory'}</figcaption>
+</figure>`;
+}
+
 const handAuthoredPosts = readPageFiles(join(SRC, 'pages/blog'))
   .map((p) => ({ ...p, meta: { ...p.meta, path: `/blog/${p.meta.slug}/` } }))
   .sort((a, b) => (b.meta.date || '').localeCompare(a.meta.date || ''));
 
+let handAuthoredHeroIndex = 0;
 for (const post of handAuthoredPosts) {
   const meta = {
     ...post.meta,
@@ -707,6 +793,8 @@ for (const post of handAuthoredPosts) {
   };
   const author = authorsBySlug.get(post.meta.author);
   const { toc, body: bodyWithIds } = autoToc(post.body);
+  const heroSrc = pickBlogPhoto(handAuthoredHeroIndex++);
+  const heroHtml = blogHeroFigureHtml(heroSrc, post.meta.h1 || post.meta.title);
   const jsonld = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -717,7 +805,7 @@ for (const post of handAuthoredPosts) {
         datePublished: post.meta.date,
         dateModified: post.meta.updated || post.meta.date,
         mainEntityOfPage: SITE_URL + meta.path,
-        image: `${SITE_URL}/assets/img/og-image.png`,
+        image: absImageUrl(heroSrc),
         author: author
           ? { '@type': 'Person', name: author.name, url: SITE_URL + authorPath(author), jobTitle: author.title }
           : { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
@@ -732,7 +820,7 @@ for (const post of handAuthoredPosts) {
     ],
   };
   const byline = renderByline(post.meta.author, post.meta.date, post.meta.readingTime);
-  writePage(meta.path, render(meta, byline + toc + bodyWithIds, { jsonld }));
+  writePage(meta.path, render(meta, heroHtml + byline + toc + bodyWithIds, { jsonld }));
   addToSitemap(meta.path, '0.6', 'monthly');
 }
 
@@ -773,11 +861,14 @@ for (const [key, items] of byCity) {
   const slug = slugify(`5 best pumpkin patches in ${cityName} ${stateCode}`);
   const path = `/blog/${slug}/`;
 
+  const heroSrc = (top5.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+  const heroHtml = blogHeroFigureHtml(heroSrc, `Pumpkin patches near ${label}`);
+
   const tocSection = `<p class="listicle-toc"><strong>Jump to:</strong> ${top5
     .map((l, i) => `<a href="#${attr(l.slug)}">${i + 1}. ${esc(l.name)}</a>`)
     .join(' <span aria-hidden="true">&middot;</span> ')}</p>`;
 
-  const summaryIntro = `<p>The 5 best pumpkin patches in ${esc(label)} are ${joinNatural(names.map((n) => esc(n)))}, ranked by rating and review volume. Here's a closer look at each — what they offer, how they're rated, and how to get there — followed by answers to the questions we hear most about visiting.</p>`;
+  const summaryIntro = `<p>The 5 best pumpkin patches in ${esc(label)} are ${joinNatural(names.map((n) => esc(n)))}, ranked by rating and review volume. Here's a closer look at each — what they offer, how they're rated, and how to get there — followed by answers to the questions we hear most about visiting. Want the full picture? See every farm we track in <a href="${cityPath(stateName, cityName)}">${esc(label)}</a>, browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>, or start from our <a href="/find/">state-by-state directory</a>.</p>`;
 
   const listicleHtml = `<ol class="listicle">
 ${top5.map((l, i) => renderListicleEntry(l, i + 1, cityName)).join('\n')}
@@ -860,7 +951,7 @@ ${closingSummary}`;
         datePublished: postMeta.date,
         dateModified: postMeta.date,
         mainEntityOfPage: SITE_URL + path,
-        image: `${SITE_URL}/assets/img/og-image.png`,
+        image: absImageUrl(heroSrc),
         author: cityAuthor
           ? { '@type': 'Person', name: cityAuthor.name, url: SITE_URL + authorPath(cityAuthor), jobTitle: cityAuthor.title }
           : { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
@@ -893,14 +984,177 @@ ${closingSummary}`;
     ],
   };
   const byline = renderByline(cityAuthorSlug, BUILD_DATE, postMeta.readingTime);
-  writePage(path, render(meta, byline + body, { jsonld }));
+  writePage(path, render(meta, heroHtml + byline + body, { jsonld }));
   addToSitemap(path, '0.6', 'weekly');
 }
 
-// Hand-authored guides and programmatic city listicles share one feed from
-// here on — the blog index, XML/HTML sitemaps and search index all read
-// from `posts` and don't need to know which kind a given entry is.
-const posts = [...handAuthoredPosts, ...cityPosts].sort((a, b) => (b.meta.date || '').localeCompare(a.meta.date || ''));
+/* --- programmatic "X Best <Attraction> in <City>" posts ------------------
+   Same idea as the city-wide "5 Best Pumpkin Patches" posts above, but
+   scoped to one attraction (corn maze, hayride, etc.) within one city. Only
+   generated where at least three distinctly-named businesses in that city
+   carry the attraction's feature tag — the same honesty bar used above: a
+   "best of" list with fewer than three real options isn't a list worth
+   publishing, so most city/attraction combinations simply don't get a page.
+*/
+const ATTRACTION_POST_MIN_LISTINGS = 3;
+const ATTRACTION_POST_MAX_LISTINGS = 5;
+const attractionCityPosts = [];
+let attractionPostIndex = 0;
+
+for (const [key, items] of byCity) {
+  const [stateName, cityName] = key.split('|');
+  const stateCode = items[0].stateCode || '';
+  const label = `${cityName}, ${stateCode}`;
+
+  for (const cat of categories) {
+    const seenNames = new Set();
+    const distinct = items.filter((l) => {
+      if (!(l.features || []).includes(cat.feature)) return false;
+      const nameKey = l.name.trim().toLowerCase();
+      if (seenNames.has(nameKey)) return false;
+      seenNames.add(nameKey);
+      return true;
+    });
+    if (distinct.length < ATTRACTION_POST_MIN_LISTINGS) continue;
+
+    const topN = distinct.slice(0, ATTRACTION_POST_MAX_LISTINGS);
+    const x = topN.length;
+    const names = topN.map((l) => l.name);
+    const attractionAuthorSlug = authors[attractionPostIndex++ % authors.length].slug;
+    const slug = slugify(`${x} best ${cat.name} in ${cityName} ${stateCode}`);
+    const path = `/blog/${slug}/`;
+    const h1 = `${x} Best ${cat.name} in ${label}`;
+
+    const heroSrc = (topN.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+    const heroHtml = blogHeroFigureHtml(heroSrc, `${cat.name} near ${label}`);
+
+    const tocSection = `<p class="listicle-toc"><strong>Jump to:</strong> ${topN
+      .map((l, i) => `<a href="#${attr(l.slug)}">${i + 1}. ${esc(l.name)}</a>`)
+      .join(' <span aria-hidden="true">&middot;</span> ')}</p>`;
+
+    const summaryIntro = `<p>The ${x} best ${esc(cat.name.toLowerCase())} in ${esc(label)} are ${joinNatural(names.map((n) => esc(n)))}, ranked by rating and review volume. Here's what each offers, how it's rated, and how to get there — followed by the questions we hear most about visiting. For every pumpkin patch we track nearby, see the full <a href="${cityPath(stateName, cityName)}">list of pumpkin patches in ${esc(label)}</a> or browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>. You can also browse ${esc(cat.name.toLowerCase())} everywhere we track them on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>`;
+
+    const listicleHtml = `<ol class="listicle">
+${topN.map((l, i) => renderListicleEntry(l, i + 1, cityName)).join('\n')}
+</ol>`;
+
+    const faqQa = [
+      {
+        q: `What is the best ${esc(cat.singular)} in ${esc(cityName)}?`,
+        a: `Based on rating and review volume, ${esc(topN[0].name)} ranks first among the ${esc(cat.singular)}${x > 1 ? 's' : ''} we track near ${esc(cityName)}${topN[0].rating ? `, with a ${topN[0].rating.toFixed(1)}-out-of-5 rating` : ''}. See the full breakdown above, or its <a href="${listingPath(topN[0])}">full listing</a> for hours and directions.`,
+      },
+      {
+        q: `When is ${esc(cat.name.toLowerCase())} season near ${esc(cityName)}?`,
+        a: `Most farms with a ${esc(cat.singular)} open it alongside the rest of their pumpkin season, roughly mid-to-late September through the first days of November, though the exact window shifts year to year with weather. Check the listings above or call ahead to confirm current dates.`,
+      },
+      {
+        q: `How much does it cost to visit a ${esc(cat.singular)} near ${esc(cityName)}?`,
+        a: `It varies by farm — some bundle the ${esc(cat.singular)} into general admission, others charge separately. See the admission details on each listing above where we have them, or call the farm directly to confirm current pricing.`,
+      },
+      {
+        q: `Are these ${esc(cat.name.toLowerCase())} good for young kids?`,
+        a: `It depends on the farm and, for haunted attractions in particular, can vary a lot in intensity. Check the individual listing pages above for feature tags and details, and call ahead if you're planning around a specific age group.`,
+      },
+      {
+        q: `Do I need to book ahead for a ${esc(cat.singular)} near ${esc(cityName)}?`,
+        a: `Some farms run first-come, first-served, while others — especially haunted attractions and festival-weekend events — use timed tickets. Check the farm's website or call ahead, particularly for a visit on a weekend in mid-October when demand peaks.`,
+      },
+    ];
+    const faqHtml = `<h2>Frequently asked questions</h2>
+<div class="faq-list">
+${faqQa
+  .map(
+    (item) => `  <details class="faq-item">
+    <summary>${esc(item.q)}</summary>
+    <div class="faq-answer"><p>${esc(item.a)}</p></div>
+  </details>`
+  )
+  .join('\n')}
+</div>`;
+
+    const closingSummary = `<h2>Summary</h2>
+<p>${esc(topN[0].name)} tops our list of ${esc(cat.name.toLowerCase())} in ${esc(label)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${names.length > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and hours, admission and what's actually running on a given day can vary week to week during the season — always confirm with the farm directly before you drive out. For more options nearby, see the full <a href="${cityPath(stateName, cityName)}">list of pumpkin patches in ${esc(label)}</a> or browse ${esc(cat.name.toLowerCase())} across every state on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>`;
+
+    const body = `${tocSection}
+${summaryIntro}
+${listicleHtml}
+${faqHtml}
+${closingSummary}`;
+
+    const postMeta = {
+      path,
+      slug,
+      title: h1,
+      description: `The ${x} best ${cat.name.toLowerCase()} in ${label} are ${joinNatural(names)}. Compare ratings, hours and directions before you go.`,
+      h1,
+      excerpt: `Our picks for the best ${cat.name.toLowerCase()} in ${label}, ranked by rating and reviews: ${joinNatural(names)}.`,
+      date: BUILD_DATE,
+      readingTime: '6 min read',
+      author: attractionAuthorSlug,
+    };
+
+    attractionCityPosts.push({ meta: postMeta, body });
+
+    const meta = {
+      ...postMeta,
+      nav: 'blog',
+      layout: 'prose',
+      ogType: 'article',
+      trail: [{ label: 'Blog', href: '/blog/' }, { label: h1 }],
+    };
+    const attractionAuthor = authorsBySlug.get(attractionAuthorSlug);
+    const jsonld = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BlogPosting',
+          headline: h1,
+          description: postMeta.description,
+          datePublished: postMeta.date,
+          dateModified: postMeta.date,
+          mainEntityOfPage: SITE_URL + path,
+          image: absImageUrl(heroSrc),
+          author: attractionAuthor
+            ? { '@type': 'Person', name: attractionAuthor.name, url: SITE_URL + authorPath(attractionAuthor), jobTitle: attractionAuthor.title }
+            : { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+          publisher: {
+            '@type': 'Organization',
+            name: SITE_NAME,
+            url: SITE_URL,
+            logo: { '@type': 'ImageObject', url: `${SITE_URL}/assets/img/icon-512.png` },
+          },
+        },
+        {
+          '@type': 'ItemList',
+          numberOfItems: topN.length,
+          itemListElement: topN.map((l, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            url: SITE_URL + listingPath(l),
+            name: l.name,
+          })),
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: faqQa.map((item) => ({
+            '@type': 'Question',
+            name: item.q,
+            acceptedAnswer: { '@type': 'Answer', text: item.a },
+          })),
+        },
+        breadcrumbJsonLd(meta.trail, path),
+      ],
+    };
+    const byline = renderByline(attractionAuthorSlug, BUILD_DATE, postMeta.readingTime);
+    writePage(path, render(meta, heroHtml + byline + body, { jsonld }));
+    addToSitemap(path, '0.6', 'weekly');
+  }
+}
+
+// Hand-authored guides and both flavors of programmatic city listicles share
+// one feed from here on — the blog index, XML/HTML sitemaps and search index
+// all read from `posts` and don't need to know which kind a given entry is.
+const posts = [...handAuthoredPosts, ...cityPosts, ...attractionCityPosts].sort((a, b) => (b.meta.date || '').localeCompare(a.meta.date || ''));
 
 const blogTeasers = posts
   .map((p) => {
@@ -1353,8 +1607,11 @@ for (const cat of categories) {
   };
 
   const topItems = items.slice(0, 24);
+  const catHeroSrc = (items.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+  const catHeroHtml = blogHeroFigureHtml(catHeroSrc, `${cat.name} near you`);
 
-  const body = `${cat.intro}
+  const body = `${catHeroHtml}
+${cat.intro}
 
 ${items.length ? `<h2>Top-rated farms with a ${esc(cat.singular)}</h2>
 <div class="grid grid-3">
@@ -1520,7 +1777,12 @@ ${categories
   .join('\n')}
       </ul>
     </div>` : ''}
-    <p style="font-size:0.85rem;color:var(--muted);margin-top:0.75rem">Listing details come from public business data and may be out of date. <a href="/contact/">Report a correction</a> or <a href="/add-a-listing/">claim this listing</a>.</p>
+    <div class="card claim-card" style="margin-top:1.25rem">
+      <h3>Is this your farm?</h3>
+      <p>Claim ${esc(l.name)} for $19.99 to verify ownership, get priority placement on this page's state and town listings, and correct anything that's out of date.</p>
+      <a class="btn btn-primary btn-block" href="https://buy.stripe.com/28E4gAfuG58I9UG9pIfrW04" target="_blank" rel="noopener">Claim Business — $19.99</a>
+    </div>
+    <p style="font-size:0.85rem;color:var(--muted);margin-top:0.75rem">Listing details come from public business data and may be out of date. <a href="/contact/">Report a correction</a> for free, or <a href="/partners/">claim this listing</a>.</p>
   </aside>
 </div>`;
 
