@@ -30,8 +30,15 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap">
+<link rel="preconnect" href="https://lh3.googleusercontent.com">
 <link rel="stylesheet" href="/assets/css/style.css?v={{ASSET_VERSION}}">
+<!-- Google Fonts loaded non-blocking: the print/onload swap fetches the
+     stylesheet without holding up first render, with a <noscript> fallback
+     for the rare case JS is off. Font-face itself already sets
+     font-display: swap, and --font-display/--font-body list system-font
+     fallbacks, so text is never invisible while this loads. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all';this.onload=null;">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"></noscript>
 {{HEAD_EXTRA}}
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9332749804326149" crossorigin="anonymous"></script>
 <script type="application/ld+json">{{JSONLD}}</script>

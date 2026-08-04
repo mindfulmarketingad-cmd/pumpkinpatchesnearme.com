@@ -49,9 +49,17 @@
       .replace(/"/g, '&quot;');
   }
 
-  function imgHtml(item, className) {
-    var src = item.photo || PLACEHOLDER_IMAGE;
-    return '<img class="' + className + '" src="' + esc(src) + '" alt="' + esc(item.name) + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + PLACEHOLDER_IMAGE + '\';">';
+  // Google's photo CDN takes the pixel size straight in the URL
+  // (=w800-h500-k-no) — request only what the rendered element needs
+  // instead of downloading the full-size source for a small card or popup.
+  function resizedPhotoUrl(url, width, height) {
+    if (!url || url.indexOf('googleusercontent.com') === -1) return url;
+    return url.replace(/=w\d+-h\d+[^&]*$/, '=w' + width + '-h' + height + '-k-no');
+  }
+
+  function imgHtml(item, className, width, height) {
+    var src = item.photo ? resizedPhotoUrl(item.photo, width, height) : PLACEHOLDER_IMAGE;
+    return '<img class="' + className + '" src="' + esc(src) + '" alt="' + esc(item.name) + '" width="' + width + '" height="' + height + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + PLACEHOLDER_IMAGE + '\';">';
   }
 
   function distanceMiles(lat1, lng1, lat2, lng2) {
@@ -122,7 +130,7 @@
     var place = [item.city, item.stateCode].filter(Boolean).join(', ');
     var tags = (item.features || []).slice(0, 3);
     return '<article class="listing-card" data-slug="' + esc(item.slug) + '">' +
-      '<a class="listing-card-media" href="' + esc(item.url) + '" tabindex="-1" aria-hidden="true">' + imgHtml(item, 'listing-card-img') + '</a>' +
+      '<a class="listing-card-media" href="' + esc(item.url) + '" tabindex="-1" aria-hidden="true">' + imgHtml(item, 'listing-card-img', 480, 300) + '</a>' +
       '<div class="listing-card-body">' +
         '<h3><a href="' + esc(item.url) + '">' + esc(item.name) + '</a></h3>' +
         '<div class="listing-meta">' +
@@ -145,7 +153,7 @@
   function popupHtml(item) {
     var place = [item.city, item.stateCode].filter(Boolean).join(', ');
     return '<div class="map-popup">' +
-      imgHtml(item, 'map-popup-img') +
+      imgHtml(item, 'map-popup-img', 240, 120) +
       '<h4>' + esc(item.name) + '</h4>' +
       '<p>' + (item.rating ? '<span class="stars">' + starString(item.rating) + '</span> ' + item.rating.toFixed(1) + ' &middot; ' : '') + esc(place) + '</p>' +
       '<a class="btn btn-primary btn-sm" href="' + esc(item.url) + '">View details</a>' +

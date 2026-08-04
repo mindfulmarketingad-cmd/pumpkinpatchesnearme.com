@@ -57,9 +57,14 @@
     return new Array(full + 1).join('★') + new Array(Math.max(0, 5 - full) + 1).join('☆');
   }
 
+  function resizedPhotoUrl(url, width, height) {
+    if (!url || url.indexOf('googleusercontent.com') === -1) return url;
+    return url.replace(/=w\d+-h\d+[^&]*$/, '=w' + width + '-h' + height + '-k-no');
+  }
+
   function imgHtml(item) {
-    var src = item.photo || PLACEHOLDER_IMAGE;
-    return '<img class="listing-card-img" src="' + esc(src) + '" alt="' + esc(item.name) + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + PLACEHOLDER_IMAGE + '\';">';
+    var src = item.photo ? resizedPhotoUrl(item.photo, 480, 300) : PLACEHOLDER_IMAGE;
+    return '<img class="listing-card-img" src="' + esc(src) + '" alt="' + esc(item.name) + '" width="480" height="300" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + PLACEHOLDER_IMAGE + '\';">';
   }
 
   function cardHtml(item) {

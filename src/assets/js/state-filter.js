@@ -44,6 +44,16 @@
       if (sortKey === 'reviews') {
         return Number(b.getAttribute('data-reviews')) - Number(a.getAttribute('data-reviews'));
       }
+      if (sortKey === 'distance') {
+        var da = a.getAttribute('data-distance');
+        var db = b.getAttribute('data-distance');
+        // Entries without a distance yet (location not shared) sort last rather
+        // than to the top as "0 miles away".
+        if (da == null && db == null) return Number(b.getAttribute('data-rating')) - Number(a.getAttribute('data-rating'));
+        if (da == null) return 1;
+        if (db == null) return -1;
+        return Number(da) - Number(db);
+      }
       return Number(b.getAttribute('data-rating')) - Number(a.getAttribute('data-rating'));
     });
     sorted.forEach(function (el) { list.appendChild(el); });
@@ -59,7 +69,17 @@
     timer = window.setTimeout(apply, 120);
   });
   featureSelect.addEventListener('change', apply);
-  sortSelect.addEventListener('change', apply);
+  sortSelect.addEventListener('change', function () {
+    // Picking "Nearest to me" is itself the user gesture that justifies
+    // requesting location — trigger the same flow the visible button uses
+    // if distances haven't been computed yet.
+    if (sortSelect.value === 'distance' && !list.querySelector('.pillar-entry[data-distance]')) {
+      var geoBtn = document.querySelector('[data-geo-trigger]');
+      if (geoBtn) geoBtn.click();
+    }
+    apply();
+  });
+  document.addEventListener('pillar:distances-ready', apply);
 
   function reset() {
     qInput.value = '';

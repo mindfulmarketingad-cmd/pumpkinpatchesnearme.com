@@ -436,12 +436,17 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
 .listicle-summary p:last-child { margin-bottom: 0; }
 
 .pillar-list {
-  list-style: decimal; margin: 0 0 2rem; padding-left: 1.35rem;
+  list-style: none; margin: 0 0 2rem; padding-left: 0; counter-reset: pillar-rank;
   display: flex; flex-direction: column; gap: 1.1rem;
 }
 .pillar-list[hidden] { display: none; }
-.pillar-entry { display: flex; align-items: flex-start; gap: 0.9rem; padding-left: 0.3rem; }
+.pillar-entry { counter-increment: pillar-rank; display: flex; align-items: flex-start; gap: 0.9rem; }
 .pillar-entry[hidden] { display: none; }
+.pillar-entry::before {
+  content: counter(pillar-rank); flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; margin-top: 2px; border-radius: 50%; background: var(--orange); color: #fff;
+  font-family: var(--font-display); font-weight: 700; font-size: 0.8rem;
+}
 .pillar-media {
   flex: 0 0 auto; display: block; width: 120px; aspect-ratio: 8 / 5;
   overflow: hidden; background: var(--orange-50);
@@ -451,7 +456,19 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
 .pillar-entry h3 { margin: 0 0 0.25rem; font-size: 1.05rem; }
 .pillar-entry h3 a { color: var(--ink); text-decoration: none; }
 .pillar-entry h3 a:hover { color: var(--orange-700); }
-.pillar-entry p:last-child { color: var(--ink-2); margin: 0; }
+.pillar-entry .listing-meta { margin-bottom: 0.3rem; }
+.pillar-address { font-size: 0.88rem; color: var(--ink-2); margin: 0 0 0.3rem; }
+.pillar-hours-today { font-size: 0.85rem; color: var(--muted); font-weight: 600; margin: 0 0 0.3rem; }
+.pillar-hours-today:empty { display: none; }
+.pillar-hours-today.is-open { color: var(--green); }
+.pillar-hours-today.is-closed { color: var(--muted); }
+.pillar-perfect-for { font-size: 0.92rem; color: var(--ink); margin: 0 0 0.4rem; }
+.pillar-blurb { color: var(--ink-2); margin: 0 0 0.5rem; }
+.pillar-entry .tag-row { margin-bottom: 0; }
+.pillar-distance {
+  display: inline-block; background: var(--orange-50); color: var(--orange-900);
+  padding: 0.1rem 0.6rem; font-size: 0.8rem; font-weight: 600;
+}
 
 @media (max-width: 480px) {
   .pillar-media { width: 84px; }

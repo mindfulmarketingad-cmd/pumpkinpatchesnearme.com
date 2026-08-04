@@ -41,9 +41,14 @@
     return new Array(full + 1).join('★') + new Array(Math.max(0, 5 - full) + 1).join('☆');
   }
 
+  function resizedPhotoUrl(url, width, height) {
+    if (!url || url.indexOf('googleusercontent.com') === -1) return url;
+    return url.replace(/=w\d+-h\d+[^&]*$/, '=w' + width + '-h' + height + '-k-no');
+  }
+
   function imgHtml(item) {
-    var src = item.photo || PLACEHOLDER_IMAGE;
-    return '<img class="map-popup-img" src="' + esc(src) + '" alt="' + esc(item.name) + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + PLACEHOLDER_IMAGE + '\';">';
+    var src = item.photo ? resizedPhotoUrl(item.photo, 240, 120) : PLACEHOLDER_IMAGE;
+    return '<img class="map-popup-img" src="' + esc(src) + '" alt="' + esc(item.name) + '" width="240" height="120" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + PLACEHOLDER_IMAGE + '\';">';
   }
 
   function popupHtml(item) {

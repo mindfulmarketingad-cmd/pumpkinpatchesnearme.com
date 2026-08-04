@@ -41,14 +41,33 @@ function backdatedPostDate(seed) {
   return d.toISOString().slice(0, 10);
 }
 
+/** Google's photo CDN takes the requested pixel size straight in the URL
+ *  (`=w800-h500-k-no`) — swapping those numbers gets an appropriately small
+ *  image instead of downloading the full 800x500 source for a 120px
+ *  thumbnail. A state page with 200+ entries was shipping 200+ full-size
+ *  photos for images rendered at a fraction of that size. */
+function resizedPhotoUrl(url, width, height) {
+  if (!url || url.indexOf('googleusercontent.com') === -1) return url;
+  return url.replace(/=w\d+-h\d+[^&]*$/, `=w${width}-h${height}-k-no`);
+}
+
+const IMAGE_SIZES = {
+  thumb: { width: 280, height: 175 }, // listicle/pillar entry thumbnails (rendered 84-180px)
+  card: { width: 480, height: 300 },  // grid cards (rendered up to 340px)
+  hero: { width: 900, height: 500 },  // detail/blog/category hero (rendered up to 900px)
+};
+
 /** Every listing image: the real photo when we have one, the illustrated
  *  placeholder when we don't — a listing never renders with no image. Google
  *  photo URLs occasionally 404 after the fact, so onerror swaps to the same
- *  placeholder client-side rather than leaving a broken-image icon. */
-function listingImage(l, { alt, className = '', sizes = '' } = {}) {
-  const src = l.photo || PLACEHOLDER_IMAGE;
+ *  placeholder client-side rather than leaving a broken-image icon. Explicit
+ *  width/height attributes (matching the rendered aspect ratio) let the
+ *  browser reserve space before the image loads, avoiding layout shift. */
+function listingImage(l, { alt, className = '', sizes = '', size = 'card' } = {}) {
+  const preset = IMAGE_SIZES[size] || IMAGE_SIZES.card;
   const altText = alt || `${l.name}${l.city ? ` in ${l.city}` : ''}`;
-  return `<img class="${className}" src="${attr(src)}" alt="${attr(altText)}" loading="lazy" decoding="async"${sizes ? ` sizes="${attr(sizes)}"` : ''} onerror="this.onerror=null;this.src='${PLACEHOLDER_IMAGE}';">`;
+  const src = l.photo ? resizedPhotoUrl(l.photo, preset.width, preset.height) : PLACEHOLDER_IMAGE;
+  return `<img class="${className}" src="${attr(src)}" alt="${attr(altText)}" width="${preset.width}" height="${preset.height}" loading="lazy" decoding="async"${sizes ? ` sizes="${attr(sizes)}"` : ''} onerror="this.onerror=null;this.src='${PLACEHOLDER_IMAGE}';">`;
 }
 
 /* ----------------------------------------------------------------- inputs */
@@ -341,7 +360,7 @@ function renderListicleEntry(l, rank, stateName) {
   return `<li class="listicle-item${l.featured ? ' is-featured' : ''}" id="${attr(l.slug)}">
   <span class="listicle-rank" aria-hidden="true">${rank}</span>
   <a class="listicle-media" href="${listingPath(l)}" tabindex="-1" aria-hidden="true">
-    ${listingImage(l, { className: 'listicle-img', sizes: '(min-width: 640px) 180px, 100vw' })}
+    ${listingImage(l, { className: 'listicle-img', sizes: '(min-width: 640px) 180px, 100vw', size: 'thumb' })}
   </a>
   <div class="listicle-body">
     ${l.featured ? '<p class="featured-flag featured-flag-inline">Featured farm</p>' : ''}
@@ -364,23 +383,48 @@ function renderListicleEntry(l, rank, stateName) {
 </li>`;
 }
 
+// A one-line steer for who a farm suits, derived only from real feature
+// tags and rating/review volume already on the listing — never a specific
+// invented claim about a farm we don't actually have data for.
+function perfectForText(l) {
+  const f = l.features || [];
+  if (f.includes('Petting zoo') || f.includes('Kids play area')) return 'Perfect for families with young kids';
+  if (f.includes('Haunted attraction')) return 'Perfect for older kids and teens looking for a scare';
+  if (f.includes('Corn maze')) return 'Perfect for a group that wants a challenge';
+  if (f.includes('Sunflower field')) return 'Perfect for photos';
+  if (f.includes('Apple picking')) return 'Perfect for a two-in-one apple and pumpkin trip';
+  if (f.includes('Fall festival')) return 'Perfect for a full day out with food and music';
+  if (f.includes('Hayrides')) return 'Perfect for a classic hayride out to the field';
+  if (f.includes('U-pick pumpkins')) return 'Perfect for picking your own pumpkin straight from the vine';
+  if (l.rating >= 4.7 && l.reviews >= 200) return 'Perfect for a reliably great visit, based on reviews';
+  return 'Perfect for a straightforward pumpkin-picking trip';
+}
+
 // A lighter-weight ranked entry than renderListicleEntry() above — a
 // thumbnail, name, rating line and one-sentence blurb, no 500-word summary.
 // Used anywhere a list needs to stay skimmable at real scale: the "Must See"
 // pillar post (up to 240 entries) and full state directories (up to several
 // hundred). data-* attributes carry enough of the listing for client-side
-// search/filter/sort to work over server-rendered content, no second fetch.
+// search/filter/sort/distance/today's-hours to work over server-rendered
+// content, no second fetch.
 function renderPillarEntry(l, rank, stateName) {
   const place = [l.city, l.stateCode].filter(Boolean).join(', ');
   const features = (l.features || []).join('|');
-  return `    <li class="pillar-entry" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}">
+  const address = l.fullAddress || [l.street, place, l.postalCode].filter(Boolean).join(', ');
+  const tags = (l.features || []).slice(0, 4);
+  const hoursJson = l.hours ? attr(JSON.stringify(DAYS.map((d) => l.hours[d] || ''))) : '';
+  return `    <li class="pillar-entry" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}" data-lat="${l.lat ?? ''}" data-lng="${l.lng ?? ''}"${hoursJson ? ` data-hours='${hoursJson}'` : ''}>
       <a class="pillar-media" href="${listingPath(l)}" tabindex="-1" aria-hidden="true">
-        ${listingImage(l, { className: 'pillar-img', sizes: '(min-width: 640px) 120px, 96px' })}
+        ${listingImage(l, { className: 'pillar-img', sizes: '(min-width: 640px) 120px, 96px', size: 'thumb' })}
       </a>
       <div class="pillar-entry-body">
         <h3><a href="${listingPath(l)}">${esc(l.name)}</a></h3>
-        <p class="listing-meta">${l.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(l.rating)}</span> ${l.rating.toFixed(1)}</span>` : ''}${l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} reviews</span>` : ''}${place ? `<span>${esc(place)}</span>` : ''}</p>
-        <p>${blurbFor(l, rank, stateName)}</p>
+        <p class="listing-meta">${l.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(l.rating)}</span> ${l.rating.toFixed(1)}</span>` : ''}${l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} reviews</span>` : ''}${place ? `<span>${esc(place)}</span>` : ''}<span class="pillar-distance" hidden></span></p>
+        ${address ? `<p class="pillar-address">${esc(address)}</p>` : ''}
+        <p class="pillar-hours-today">${l.hours ? '' : 'Hours not listed — confirm directly before you go.'}</p>
+        <p class="pillar-perfect-for"><strong>${esc(perfectForText(l))}.</strong></p>
+        <p class="pillar-blurb">${blurbFor(l, rank, stateName)}</p>
+        ${tags.length ? `<div class="tag-row">${tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
       </div>
     </li>`;
 }
@@ -821,9 +865,11 @@ const photoPool = rankListings(listings.filter((l) => l.photo));
 const pickBlogPhoto = (seedIndex) => (photoPool.length ? photoPool[seedIndex % photoPool.length].photo : PLACEHOLDER_IMAGE);
 const absImageUrl = (src) => (src.startsWith('http') ? src : `${SITE_URL}${src}`);
 function blogHeroFigureHtml(src, altText) {
+  const isPlaceholder = src === PLACEHOLDER_IMAGE;
+  const resized = isPlaceholder ? src : resizedPhotoUrl(src, IMAGE_SIZES.hero.width, IMAGE_SIZES.hero.height);
   return `<figure class="detail-hero blog-hero">
-  <img class="detail-hero-img" src="${attr(src)}" alt="${attr(altText)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${PLACEHOLDER_IMAGE}';">
-  <figcaption>${src === PLACEHOLDER_IMAGE ? 'Illustration' : 'Photo via Google, from a pumpkin patch in our directory'}</figcaption>
+  <img class="detail-hero-img" src="${attr(resized)}" alt="${attr(altText)}" width="${IMAGE_SIZES.hero.width}" height="${IMAGE_SIZES.hero.height}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${PLACEHOLDER_IMAGE}';">
+  <figcaption>${isPlaceholder ? 'Illustration' : 'Photo via Google, from a pumpkin patch in our directory'}</figcaption>
 </figure>`;
 }
 
@@ -907,7 +953,8 @@ ${statePicks.map((s) => `  <a class="tag tag-link" href="#${attr(slugify(s.state
 </div>`;
 
   const introHtml = `<p>Halloween season means one thing above all: finding a pumpkin patch worth the drive. We pulled the ${esc(totalPicks.toLocaleString('en-US'))} highest-rated pumpkin patches from our directory — up to five per state, ranked by Google rating and review volume — into one list, state by state, so you can find the best option near you or scout one out before a trip. Jump to your state below, or read straight through for the full coast-to-coast picture.</p>
-<p>Every farm below links to its full profile with hours, admission details and a map, and every state links to our complete, ranked directory of every pumpkin patch we track there — this list is the highlight reel, not the whole picture. For help narrowing it down once you're on a specific farm's page, see our guide to <a href="/blog/how-to-choose-a-pumpkin-patch/">choosing the right pumpkin patch for your group</a>, and check <a href="/blog/when-does-pumpkin-patch-season-start/">when pumpkin patch season actually starts</a> in your region before you plan the trip. Want to search instead of scroll? Head to <a href="/find/">Find a Pumpkin Patch Near You</a> and filter by state, ZIP code or attraction.</p>`;
+<p>Every farm below links to its full profile with hours, admission details and a map, and every state links to our complete, ranked directory of every pumpkin patch we track there — this list is the highlight reel, not the whole picture. For help narrowing it down once you're on a specific farm's page, see our guide to <a href="/blog/how-to-choose-a-pumpkin-patch/">choosing the right pumpkin patch for your group</a>, and check <a href="/blog/when-does-pumpkin-patch-season-start/">when pumpkin patch season actually starts</a> in your region before you plan the trip. Want to search instead of scroll? Head to <a href="/find/">Find a Pumpkin Patch Near You</a> and filter by state, ZIP code or attraction.</p>
+<p><button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button></p>`;
 
   const stateSectionsHtml = statePicks
     .map(({ stateName, top5 }) => {
@@ -1034,7 +1081,8 @@ ${closingSummary}`;
     ],
   };
   const byline = renderByline(pillarAuthorSlug, postMeta.date, postMeta.readingTime);
-  writePage(path, render(meta, heroHtml + byline + body, { jsonld }));
+  const pillarScripts = `<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
+  writePage(path, render(meta, heroHtml + byline + body, { jsonld, scripts: pillarScripts }));
   addToSitemap(path, '0.7', 'weekly', postMeta.date);
 }
 
@@ -1743,9 +1791,11 @@ ${presentCategories.map(({ c, n }) => `        <option value="${attr(c.feature.t
         <option value="rating">Top rated</option>
         <option value="reviews">Most reviewed</option>
         <option value="name">Name A-Z</option>
+        <option value="distance">Nearest to me</option>
       </select>
     </label>
     <button class="toggle-btn" type="button" id="state-filter-reset">Reset</button>
+    <button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button>
   </div>
   <div class="results-head" style="padding:0.6rem 0 0;background:transparent;border:0">
     <p class="results-count" id="state-filter-count">${items.length.toLocaleString('en-US')} pumpkin patches</p>
@@ -1805,7 +1855,7 @@ ${catSection}
   };
 
   const scripts = items.length
-    ? `${pageMapScripts}\n<script src="/assets/js/state-filter.js?v=${ASSET_VERSION}" defer></script>`
+    ? `${pageMapScripts}\n<script src="/assets/js/state-filter.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`
     : '';
   writePage(path, render(meta, body, { jsonld, scripts }));
   addToSitemap(path, '0.8', 'weekly');
@@ -2048,7 +2098,7 @@ for (const l of listings) {
 
   const body = `${l.sample ? `<div class="notice"><p><strong>Sample listing.</strong> This is placeholder data used to demonstrate the directory layout. It is excluded from search engines and will be replaced when the live Outscraper import runs.</p></div>` : ''}
 <figure class="detail-hero">
-  ${listingImage(l, { className: 'detail-hero-img', sizes: '(min-width: 900px) 900px, 100vw' })}
+  ${listingImage(l, { className: 'detail-hero-img', sizes: '(min-width: 900px) 900px, 100vw', size: 'hero' })}
   <figcaption>${l.photo ? `Photo of ${esc(l.name)} via Google` : `Illustration — a real photo is not yet available for ${esc(l.name)}`}</figcaption>
 </figure>
 <div class="detail-grid">
@@ -2184,7 +2234,24 @@ ${categories
 
 cpSync(join(SRC, 'assets'), join(DIST, 'assets'), { recursive: true });
 mkdirSync(join(DIST, 'data'), { recursive: true });
-writeFileSync(join(DIST, 'data/listings.json'), JSON.stringify({ ...data, listings }, null, 0));
+
+// The only consumers of this file are map.js and find.js, both driving the
+// homepage/find-page map and card UI — neither needs the full listing
+// record (hours, description, phone, reviewsPerScore, mapsUrl, ids...).
+// Trimming to just the fields those scripts actually read cut this file
+// from ~2.6MB to a fraction of that, which matters more than almost
+// anything else here since it's fetched in full on every homepage/find
+// visit before the map or results list can render at all.
+const CLIENT_LISTING_FIELDS = [
+  'slug', 'name', 'street', 'city', 'county', 'state', 'stateCode', 'postalCode',
+  'lat', 'lng', 'rating', 'reviews', 'photo', 'features', 'featured', 'sample', 'url',
+];
+const clientListings = listings.map((l) => {
+  const out = {};
+  for (const key of CLIENT_LISTING_FIELDS) if (l[key] != null) out[key] = l[key];
+  return out;
+});
+writeFileSync(join(DIST, 'data/listings.json'), JSON.stringify({ listings: clientListings }, null, 0));
 
 /* Lightweight index for the /search/ page: farms, states, attractions, guides. */
 const searchIndex = [
