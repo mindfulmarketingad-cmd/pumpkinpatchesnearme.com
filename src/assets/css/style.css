@@ -434,6 +434,17 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
 .listicle-summary { margin: 0 0 0.85rem; }
 .listicle-summary p { margin: 0 0 0.75rem; color: var(--ink-2); font-size: 0.97rem; line-height: 1.65; }
 .listicle-summary p:last-child { margin-bottom: 0; }
+
+.pillar-list {
+  list-style: decimal; margin: 0 0 2rem; padding-left: 1.35rem;
+  display: flex; flex-direction: column; gap: 1.1rem;
+}
+.pillar-entry { padding-left: 0.3rem; }
+.pillar-entry h3 { margin: 0 0 0.25rem; font-size: 1.05rem; }
+.pillar-entry h3 a { color: var(--ink); text-decoration: none; }
+.pillar-entry h3 a:hover { color: var(--orange-700); }
+.pillar-entry p:last-child { color: var(--ink-2); margin: 0; }
+
 .featured-flag-inline {
   display: inline-block; border-radius: var(--r-pill); margin-bottom: 0.5rem; padding: 0.15rem 0.75rem;
 }

@@ -852,6 +852,173 @@ for (const post of handAuthoredPosts) {
   addToSitemap(meta.path, '0.6', 'monthly', post.meta.updated || post.meta.date);
 }
 
+/* --- pillar post: "Must See Pumpkin Patches" (top 5 per state) ----------
+   One long-form roundup covering every state we have data for, rather than
+   one city or one attraction — the top of the site's content funnel. Kept
+   deliberately text-only (no per-entry photo, no address/tag chips): the
+   full-detail version of every entry already lives on its state, city and
+   listing pages, and this piece's job is to link out to all of them rather
+   than duplicate them. */
+const pillarPosts = [];
+{
+  const h1 = 'Must See Pumpkin Patches To Visit This Halloween Season';
+  const slug = slugify(h1);
+  const path = `/blog/${slug}/`;
+  const pillarAuthorSlug = 'emily-carter';
+  const statePicks = stateNames.map((stateName) => ({
+    stateName,
+    top5: (byState.get(stateName) || []).slice(0, 5),
+  }));
+  const totalPicks = statePicks.reduce((sum, s) => sum + s.top5.length, 0);
+
+  const heroSrc = pickBlogPhoto(0);
+  const heroHtml = blogHeroFigureHtml(heroSrc, h1);
+
+  const tocHtml = `<div class="tag-row">
+${statePicks.map((s) => `  <a class="tag tag-link" href="#${attr(slugify(s.stateName))}">${esc(s.stateName)}</a>`).join('\n')}
+</div>`;
+
+  const introHtml = `<p>Halloween season means one thing above all: finding a pumpkin patch worth the drive. We pulled the ${esc(totalPicks.toLocaleString('en-US'))} highest-rated pumpkin patches from our directory — up to five per state, ranked by Google rating and review volume — into one list, state by state, so you can find the best option near you or scout one out before a trip. Jump to your state below, or read straight through for the full coast-to-coast picture.</p>
+<p>Every farm below links to its full profile with hours, admission details and a map, and every state links to our complete, ranked directory of every pumpkin patch we track there — this list is the highlight reel, not the whole picture. For help narrowing it down once you're on a specific farm's page, see our guide to <a href="/blog/how-to-choose-a-pumpkin-patch/">choosing the right pumpkin patch for your group</a>, and check <a href="/blog/when-does-pumpkin-patch-season-start/">when pumpkin patch season actually starts</a> in your region before you plan the trip. Want to search instead of scroll? Head to <a href="/find/">Find a Pumpkin Patch Near You</a> and filter by state, ZIP code or attraction.</p>`;
+
+  const stateSectionsHtml = statePicks
+    .map(({ stateName, top5 }) => {
+      if (!top5.length) return '';
+      const stateSlug = slugify(stateName);
+      const entriesHtml = top5
+        .map((l, i) => {
+          const place = [l.city, l.stateCode].filter(Boolean).join(', ');
+          return `    <li class="pillar-entry">
+      <h3><a href="${listingPath(l)}">${esc(l.name)}</a></h3>
+      <p class="listing-meta">${l.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(l.rating)}</span> ${l.rating.toFixed(1)}</span>` : ''}${l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} reviews</span>` : ''}${place ? `<span>${esc(place)}</span>` : ''}</p>
+      <p>${blurbFor(l, i, stateName)}</p>
+    </li>`;
+        })
+        .join('\n');
+      return `<h2 id="${attr(stateSlug)}">${esc(stateName)}</h2>
+<p>${esc(top5[0].name)} leads our ${esc(stateName)} picks${top5[0].rating ? `, rated ${top5[0].rating.toFixed(1)} out of 5` : ''}. <a href="${statePath(stateName)}">See every pumpkin patch we track in ${esc(stateName)} &rarr;</a></p>
+<ol class="pillar-list">
+${entriesHtml}
+</ol>`;
+    })
+    .join('\n\n');
+
+  const faqQa = [
+    {
+      q: 'How did you pick the pumpkin patches on this list?',
+      a: 'Every farm here is ranked by its public Google rating and review volume, pulled from our full directory of tracked pumpkin patches. We show up to five per state — fewer if a state has fewer than five listed. Nothing on this list is a paid placement; claimed listings get priority within a directory page, but this roundup is ranked purely on rating and reviews.',
+    },
+    {
+      q: 'What is the single best pumpkin patch in the country?',
+      a: "There isn't one objectively — ratings are strong within a farm's own market but aren't a fair way to compare, say, a small u-pick lot in one state against a destination agritourism farm in another. Use this list to find the strongest options in your own state, or nearby ones, rather than chasing a single national \"best.\"",
+    },
+    {
+      q: 'When should I visit a pumpkin patch this Halloween season?',
+      a: 'Most patches nationwide run from mid-to-late September through the first days of November, with the two or three weekends around mid-October the busiest by far. Weekday mornings are consistently the quietest time to go. See our full <a href="/blog/when-does-pumpkin-patch-season-start/">season timing guide</a> for how this shifts by region.',
+    },
+    {
+      q: 'Are the pumpkin patches on this list good for young kids?',
+      a: "It varies by farm — check the feature tags and details on each farm's own listing page, which we link to throughout. Petting zoos and dedicated play areas are the two features that tend to matter most for toddlers and preschoolers specifically.",
+    },
+    {
+      q: 'How often is this list updated?',
+      a: "This page rebuilds from the same live directory data as the rest of the site, so rankings reflect current ratings and review counts as of publish. Individual farm hours, pricing and what's running on a given day can still change week to week during the season — always confirm with the farm directly before you drive out.",
+    },
+  ];
+  const faqHtml = `<h2>Frequently asked questions</h2>
+<div class="faq-list">
+${faqQa
+  .map(
+    (item) => `  <details class="faq-item">
+    <summary>${esc(item.q)}</summary>
+    <div class="faq-answer"><p>${item.a}</p></div>
+  </details>`
+  )
+  .join('\n')}
+</div>`;
+
+  const closingSummary = `<h2>Summary</h2>
+<p>This roundup covers our top-rated pumpkin patch picks in ${esc(String(statePicks.filter((s) => s.top5.length).length))} states, drawn straight from the ${esc(stats.listings.toLocaleString('en-US'))}-farm directory we maintain year-round. Ratings and review counts reflect public data at the time of writing and shift over time, and hours, admission and what's actually running can vary week to week during the season — always confirm with a farm directly before you drive out. For the complete, ranked list in any state, jump to its section above or start from <a href="/find/">Find a Pumpkin Patch Near You</a>.</p>`;
+
+  const tocSection = `<p class="listicle-toc"><strong>Jump to your state:</strong></p>
+${tocHtml}`;
+
+  const body = `${tocSection}
+${introHtml}
+${stateSectionsHtml}
+${faqHtml}
+${closingSummary}`;
+
+  const description = `Our picks for the best pumpkin patches to visit this Halloween season, state by state — ranked by rating and reviews, with ${esc(totalPicks.toLocaleString('en-US'))} farms across ${esc(String(statePicks.filter((s) => s.top5.length).length))} states.`;
+  const postMeta = {
+    path,
+    slug,
+    title: h1,
+    description,
+    h1,
+    excerpt: description,
+    date: backdatedPostDate(slug),
+    readingTime: '18 min read',
+    author: pillarAuthorSlug,
+  };
+  pillarPosts.push({ meta: postMeta, body });
+
+  const meta = {
+    ...postMeta,
+    nav: 'blog',
+    layout: 'prose',
+    ogType: 'article',
+    trail: [{ label: 'Blog', href: '/blog/' }, { label: h1 }],
+  };
+  const pillarAuthor = authorsBySlug.get(pillarAuthorSlug);
+  const allPicks = statePicks.flatMap((s) => s.top5);
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BlogPosting',
+        headline: h1,
+        description,
+        datePublished: postMeta.date,
+        dateModified: postMeta.date,
+        mainEntityOfPage: SITE_URL + path,
+        image: absImageUrl(heroSrc),
+        author: pillarAuthor
+          ? { '@type': 'Person', name: pillarAuthor.name, url: SITE_URL + authorPath(pillarAuthor), jobTitle: pillarAuthor.title }
+          : { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+        publisher: {
+          '@type': 'Organization',
+          name: SITE_NAME,
+          url: SITE_URL,
+          logo: { '@type': 'ImageObject', url: `${SITE_URL}/assets/img/icon-512.png` },
+        },
+      },
+      {
+        '@type': 'ItemList',
+        numberOfItems: allPicks.length,
+        itemListElement: allPicks.slice(0, 25).map((l, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          url: SITE_URL + listingPath(l),
+          name: l.name,
+        })),
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: faqQa.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a.replace(/<[^>]+>/g, '') },
+        })),
+      },
+      breadcrumbJsonLd(meta.trail, path),
+    ],
+  };
+  const byline = renderByline(pillarAuthorSlug, postMeta.date, postMeta.readingTime);
+  writePage(path, render(meta, heroHtml + byline + body, { jsonld }));
+  addToSitemap(path, '0.7', 'weekly', postMeta.date);
+}
+
 /* --- programmatic "5 Best Pumpkin Patches in <City>" posts --------------- */
 // One per town with at least this many listings, generated straight from
 // the dataset — no hand-written source file, so this list grows on its own
@@ -1195,7 +1362,7 @@ ${closingSummary}`;
 // Hand-authored guides and both flavors of programmatic city listicles share
 // one feed from here on — the blog index, XML/HTML sitemaps and search index
 // all read from `posts` and don't need to know which kind a given entry is.
-const posts = [...handAuthoredPosts, ...cityPosts, ...attractionCityPosts].sort((a, b) => (b.meta.date || '').localeCompare(a.meta.date || ''));
+const posts = [...handAuthoredPosts, ...pillarPosts, ...cityPosts, ...attractionCityPosts].sort((a, b) => (b.meta.date || '').localeCompare(a.meta.date || ''));
 
 /* --- author pages ---------------------------------------------------------
    /authors/ lists every writer; /authors/<slug>/ gives each their own page
@@ -1323,12 +1490,15 @@ const tokens = {
   '{{STATE_GRID}}': renderStateGrid(),
   // The homepage teases a handful of guides rather than the full feed —
   // with 800+ programmatic attraction posts now in the mix, dumping every
-  // post's card onto "/" would make it enormous. Hand-authored and
-  // citywide posts are the more homepage-appropriate editorial picks;
-  // long-tail attraction posts are left for /blog/ and search to surface.
-  '{{HOME_BLOG_TEASERS}}': [...handAuthoredPosts, ...cityPosts]
-    .sort((a, b) => (b.meta.date || '').localeCompare(a.meta.date || ''))
-    .slice(0, 3)
+  // post's card onto "/" would make it enormous. The pillar post always
+  // gets a slot; hand-authored and citywide posts fill the rest by recency.
+  // Long-tail attraction posts are left for /blog/ and search to surface.
+  '{{HOME_BLOG_TEASERS}}': [
+    ...pillarPosts,
+    ...[...handAuthoredPosts, ...cityPosts]
+      .sort((a, b) => (b.meta.date || '').localeCompare(a.meta.date || ''))
+      .slice(0, 2),
+  ]
     .map((p) => {
       const author = authorsBySlug.get(p.meta.author);
       const byAuthor = author ? `By <a href="${authorPath(author)}">${esc(author.name)}</a> &middot; ` : '';
