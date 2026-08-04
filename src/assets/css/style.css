@@ -458,6 +458,9 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
 .pillar-entry h3 a:hover { color: var(--orange-700); }
 .pillar-entry .listing-meta { margin-bottom: 0.3rem; }
 .pillar-address { font-size: 0.88rem; color: var(--ink-2); margin: 0 0 0.3rem; }
+.pillar-contact { font-size: 0.88rem; margin: 0 0 0.3rem; }
+.pillar-contact a { color: var(--orange-700); }
+.pillar-contact span { color: var(--line); }
 .pillar-hours-today { font-size: 0.85rem; color: var(--muted); font-weight: 600; margin: 0 0 0.3rem; }
 .pillar-hours-today:empty { display: none; }
 .pillar-hours-today.is-open { color: var(--green); }

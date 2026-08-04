@@ -421,6 +421,7 @@ function renderPillarEntry(l, rank, stateName) {
         <h3><a href="${listingPath(l)}">${esc(l.name)}</a></h3>
         <p class="listing-meta">${l.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(l.rating)}</span> ${l.rating.toFixed(1)}</span>` : ''}${l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} reviews</span>` : ''}${place ? `<span>${esc(place)}</span>` : ''}<span class="pillar-distance" hidden></span></p>
         ${address ? `<p class="pillar-address">${esc(address)}</p>` : ''}
+        ${l.phone || l.website ? `<p class="pillar-contact">${l.phone ? `<a href="tel:${attr(l.phone.replace(/[^\d+]/g, ''))}">${esc(l.phone)}</a>` : ''}${l.phone && l.website ? ' <span aria-hidden="true">&middot;</span> ' : ''}${l.website ? `<a href="${attr(l.website)}" target="_blank" rel="noopener nofollow">Visit website</a>` : ''}</p>` : ''}
         <p class="pillar-hours-today">${l.hours ? '' : 'Hours not listed — confirm directly before you go.'}</p>
         <p class="pillar-perfect-for"><strong>${esc(perfectForText(l))}.</strong></p>
         <p class="pillar-blurb">${blurbFor(l, rank, stateName)}</p>
