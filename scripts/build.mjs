@@ -364,6 +364,27 @@ function renderListicleEntry(l, rank, stateName) {
 </li>`;
 }
 
+// A lighter-weight ranked entry than renderListicleEntry() above — a
+// thumbnail, name, rating line and one-sentence blurb, no 500-word summary.
+// Used anywhere a list needs to stay skimmable at real scale: the "Must See"
+// pillar post (up to 240 entries) and full state directories (up to several
+// hundred). data-* attributes carry enough of the listing for client-side
+// search/filter/sort to work over server-rendered content, no second fetch.
+function renderPillarEntry(l, rank, stateName) {
+  const place = [l.city, l.stateCode].filter(Boolean).join(', ');
+  const features = (l.features || []).join('|');
+  return `    <li class="pillar-entry" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}">
+      <a class="pillar-media" href="${listingPath(l)}" tabindex="-1" aria-hidden="true">
+        ${listingImage(l, { className: 'pillar-img', sizes: '(min-width: 640px) 120px, 96px' })}
+      </a>
+      <div class="pillar-entry-body">
+        <h3><a href="${listingPath(l)}">${esc(l.name)}</a></h3>
+        <p class="listing-meta">${l.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(l.rating)}</span> ${l.rating.toFixed(1)}</span>` : ''}${l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} reviews</span>` : ''}${place ? `<span>${esc(place)}</span>` : ''}</p>
+        <p>${blurbFor(l, rank, stateName)}</p>
+      </div>
+    </li>`;
+}
+
 /* ------------------------------------------------ listing detail content */
 /* Everything below builds the substantial, data-grounded content a single
    listing page needs so it is never thin: real numbers restated in prose
@@ -885,16 +906,7 @@ ${statePicks.map((s) => `  <a class="tag tag-link" href="#${attr(slugify(s.state
     .map(({ stateName, top5 }) => {
       if (!top5.length) return '';
       const stateSlug = slugify(stateName);
-      const entriesHtml = top5
-        .map((l, i) => {
-          const place = [l.city, l.stateCode].filter(Boolean).join(', ');
-          return `    <li class="pillar-entry">
-      <h3><a href="${listingPath(l)}">${esc(l.name)}</a></h3>
-      <p class="listing-meta">${l.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(l.rating)}</span> ${l.rating.toFixed(1)}</span>` : ''}${l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} reviews</span>` : ''}${place ? `<span>${esc(place)}</span>` : ''}</p>
-      <p>${blurbFor(l, i, stateName)}</p>
-    </li>`;
-        })
-        .join('\n');
+      const entriesHtml = top5.map((l, i) => renderPillarEntry(l, i, stateName)).join('\n');
       return `<h2 id="${attr(stateSlug)}">${esc(stateName)}</h2>
 <p>${esc(top5[0].name)} leads our ${esc(stateName)} picks${top5[0].rating ? `, rated ${top5[0].rating.toFixed(1)} out of 5` : ''}. <a href="${statePath(stateName)}">See every pumpkin patch we track in ${esc(stateName)} &rarr;</a></p>
 <ol class="pillar-list">
@@ -1689,38 +1701,55 @@ for (const stateName of stateNames) {
   const items = byState.get(stateName);
   const path = statePath(stateName);
   const cities = [...new Set(items.map((l) => l.city).filter(Boolean))].sort();
-  const rankedCount = Math.min(10, items.length);
-  const ranked = items.slice(0, rankedCount);
-  const rest = items.slice(rankedCount);
 
   const meta = {
     path,
-    title: `The ${rankedCount} Best Pumpkin Patches in ${stateName} (${SEASON_YEAR})`,
-    description: `Ranked: the best pumpkin patches in ${stateName}, with ratings, addresses, hours and directions. ${items.length} listing${items.length === 1 ? '' : 's'} total, updated for ${SEASON_YEAR}.`,
-    h1: `The ${rankedCount} Best Pumpkin Patches in ${stateName}`,
-    lede: `Ranked by rating and review volume across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'} in ${stateName}${rest.length ? `, plus ${rest.length} more listing${rest.length === 1 ? '' : 's'} below` : ''}. Always confirm hours before you drive out — most patches open late September and close in early November.`,
+    title: `${items.length} Pumpkin Patches in ${stateName}, Ranked (${SEASON_YEAR})`,
+    description: `Every pumpkin patch we track in ${stateName} — ${items.length} listing${items.length === 1 ? '' : 's'} across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'}, ranked by rating, with search and filter. Updated for ${SEASON_YEAR}.`,
+    h1: `${items.length} Pumpkin Patches in ${stateName}`,
+    lede: `Every pumpkin patch we track in ${stateName}, ranked by rating and review volume across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'}. Search by name or town, or filter by attraction. Always confirm hours before you drive out — most patches open late September and close in early November.`,
     nav: 'find',
     layout: 'wide',
     trail: [{ label: 'Find', href: '/find/' }, { label: stateName }],
   };
 
-  const tocSection = ranked.length > 3
-    ? `<p class="listicle-toc"><strong>Jump to:</strong> ${ranked
-        .map((l, i) => `<a href="#${attr(l.slug)}">${i + 1}. ${esc(l.name)}</a>`)
-        .join(' <span aria-hidden="true">&middot;</span> ')}</p>`
-    : '';
+  const presentCategories = categories
+    .map((c) => ({ c, n: items.filter((l) => (l.features || []).includes(c.feature)).length }))
+    .filter((x) => x.n > 0);
 
-  const rankedSection = `${tocSection}
-<ol class="listicle">
-${ranked.map((l, i) => renderListicleEntry(l, i + 1, stateName)).join('\n')}
-</ol>`;
+  const filterBar = `<div class="find-tool state-filter" id="state-filter">
+  <div class="search-field">
+    <label class="visually-hidden" for="state-filter-q">Search by name or town</label>
+    <input id="state-filter-q" type="text" placeholder="Search by name or town..." autocomplete="off">
+  </div>
+  <div class="control-group">
+    <label class="control">
+      <span class="control-label">Attraction</span>
+      <select id="state-filter-feature" aria-label="Filter by attraction">
+        <option value="">All</option>
+${presentCategories.map(({ c, n }) => `        <option value="${attr(c.feature.toLowerCase())}">${esc(c.name)} (${n})</option>`).join('\n')}
+      </select>
+    </label>
+    <label class="control">
+      <span class="control-label">Sort</span>
+      <select id="state-filter-sort" aria-label="Sort results">
+        <option value="rating">Top rated</option>
+        <option value="reviews">Most reviewed</option>
+        <option value="name">Name A-Z</option>
+      </select>
+    </label>
+    <button class="toggle-btn" type="button" id="state-filter-reset">Reset</button>
+  </div>
+  <div class="results-head" style="padding:0.6rem 0 0;background:transparent;border:0">
+    <p class="results-count" id="state-filter-count">${items.length.toLocaleString('en-US')} pumpkin patches</p>
+  </div>
+</div>`;
 
-  const restSection = rest.length
-    ? `<h2>More pumpkin patches in ${esc(stateName)}</h2>
-<div class="grid grid-3">
-${rest.map((l) => renderCard(l, { showState: false, headingLevel: 2 })).join('\n')}
-</div>`
-    : '';
+  const listHtml = `${filterBar}
+<ol class="pillar-list" id="state-pillar-list">
+${items.map((l, i) => renderPillarEntry(l, i, stateName)).join('\n')}
+</ol>
+<p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
 
   const citySection = cities.length
     ? `<h2>Pumpkin patches by town in ${esc(stateName)}</h2>
@@ -1728,18 +1757,14 @@ ${rest.map((l) => renderCard(l, { showState: false, headingLevel: 2 })).join('\n
 ${renderCityLinks(stateName)}`
     : '';
 
-  const catSection = (() => {
-    const present = categories
-      .map((c) => ({ c, n: items.filter((l) => (l.features || []).includes(c.feature)).length }))
-      .filter((x) => x.n > 0);
-    if (!present.length) return '';
-    return `<h2>${esc(stateName)} farms by attraction</h2>
+  const catSection = presentCategories.length
+    ? `<h2>${esc(stateName)} farms by attraction</h2>
 <div class="tag-row">
-${present.map(({ c, n }) => `  <a class="tag tag-link" href="${categoryPath(c)}">${esc(c.name)} (${n})</a>`).join('\n')}
-</div>`;
-  })();
+${presentCategories.map(({ c, n }) => `  <a class="tag tag-link" href="${categoryPath(c)}">${esc(c.name)} (${n})</a>`).join('\n')}
+</div>`
+    : '';
 
-  const body = `${renderScopedMap(items, `${rankedSection}${restSection ? `\n${restSection}` : ''}`)}
+  const body = `${renderScopedMap(items, listHtml)}
 <div class="section" style="padding-bottom:0">
 ${citySection}
 ${catSection}
@@ -1772,7 +1797,10 @@ ${catSection}
     ],
   };
 
-  writePage(path, render(meta, body, { jsonld, scripts: items.length ? pageMapScripts : '' }));
+  const scripts = items.length
+    ? `${pageMapScripts}\n<script src="/assets/js/state-filter.js?v=${ASSET_VERSION}" defer></script>`
+    : '';
+  writePage(path, render(meta, body, { jsonld, scripts }));
   addToSitemap(path, '0.8', 'weekly');
 }
 
@@ -1993,6 +2021,14 @@ for (const l of listings) {
   // Other farms in the same town, so every listing page has somewhere to go next.
   const nearby = (byCity.get(`${l.state}|${l.city}`) || []).filter((o) => o.slug !== l.slug).slice(0, 3);
 
+  // A second, broader set of relevant listings statewide — sharing at least
+  // one attraction tag where possible, so a listing page links out to more
+  // than just its own town rather than dead-ending at three same-city cards.
+  const excludeSlugs = new Set([l.slug, ...nearby.map((o) => o.slug)]);
+  const sameStateOthers = (byState.get(l.state) || []).filter((o) => !excludeSlugs.has(o.slug));
+  const sameStateByFeature = sameStateOthers.filter((o) => (o.features || []).some((f) => (l.features || []).includes(f)));
+  const related = (sameStateByFeature.length ? sameStateByFeature : sameStateOthers).slice(0, 3);
+
   const address = l.fullAddress || [l.street, place, l.postalCode].filter(Boolean).join(', ');
   const hoursRows = l.hours
     ? DAYS.map(
@@ -2052,6 +2088,13 @@ for (const l of listings) {
 ${nearby.map((o) => renderCard(o, { showState: false, showCity: false })).join('\n')}
     </div>
     <p><a href="${cityPath(l.state, l.city)}">All pumpkin patches in ${esc(l.city)}, ${esc(l.stateCode || '')}</a></p>` : ''}
+
+    ${related.length ? `<h2>You might also like</h2>
+    <p>${sameStateByFeature.length ? `More farms in ${esc(l.stateCode || l.state)} with similar attractions:` : `More pumpkin patches to compare across ${esc(l.stateCode || l.state)}:`}</p>
+    <div class="grid grid-2">
+${related.map((o) => renderCard(o, { showState: false, showCity: true })).join('\n')}
+    </div>
+    <p><a href="${statePath(l.state)}">All pumpkin patches in ${esc(l.state)}</a></p>` : ''}
   </div>
   <aside>
     <div class="card">
@@ -2081,8 +2124,8 @@ ${categories
     </div>` : ''}
     <div class="card claim-card" style="margin-top:1.25rem">
       <h3>Is this your farm?</h3>
-      <p>Claim ${esc(l.name)} for $19.99 to verify ownership, get priority placement on this page's state and town listings, and correct anything that's out of date.</p>
-      <a class="btn btn-primary btn-block" href="https://buy.stripe.com/28E4gAfuG58I9UG9pIfrW04" target="_blank" rel="noopener">Claim Business — $19.99</a>
+      <p>Claim ${esc(l.name)} to verify ownership, get priority placement on this page's state and town listings, and correct anything that's out of date.</p>
+      <a class="btn btn-primary btn-block" href="https://buy.stripe.com/28E4gAfuG58I9UG9pIfrW04" target="_blank" rel="noopener">Claim This Business</a>
     </div>
     <p style="font-size:0.85rem;color:var(--muted);margin-top:0.75rem">Listing details come from public business data and may be out of date. <a href="/contact/">Report a correction</a> for free, or <a href="/partners/">claim this listing</a>.</p>
   </aside>

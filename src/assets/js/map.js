@@ -282,7 +282,44 @@
     state.origin = null;
     if (originMarker) { map.removeLayer(originMarker); originMarker = null; }
     applyFilters();
+    renderFeaturedNearby();
     map.setView([39.5, -98.35], 4);
+  }
+
+  /* ------------------------------------------- "highly rated near you" -- */
+  // The homepage's "Highly rated pumpkin patches" grid is server-rendered
+  // with the top-rated farms nationwide by default (so it's real content on
+  // first load, no JS required). Once a visitor's location is known — ZIP
+  // search or "Use my location" — it switches to the highest-rated farms
+  // near that location instead, and reverts to the default set on reset.
+  var featuredDefaultHtml = null;
+
+  function renderFeaturedNearby() {
+    var grid = document.getElementById('featured-grid');
+    var heading = document.getElementById('featured-heading');
+    var sub = document.getElementById('featured-sub');
+    if (!grid) return;
+
+    if (!state.origin) {
+      if (featuredDefaultHtml != null) grid.innerHTML = featuredDefaultHtml;
+      if (heading) heading.textContent = 'Highly rated pumpkin patches';
+      if (sub) sub.textContent = 'Farms with the strongest review profiles in our directory right now.';
+      return;
+    }
+
+    var nearby = state.all
+      .map(function (item) {
+        return { item: item, dist: distanceMiles(state.origin.lat, state.origin.lng, item.lat, item.lng) };
+      })
+      .sort(function (a, b) { return a.dist - b.dist; })
+      .slice(0, 30)
+      .sort(function (a, b) { return (b.item.rating || 0) - (a.item.rating || 0) || (b.item.reviews || 0) - (a.item.reviews || 0); })
+      .slice(0, 6);
+
+    if (!nearby.length) return;
+    grid.innerHTML = nearby.map(function (x) { x.item._distance = x.dist; return cardHtml(x.item); }).join('');
+    if (heading) heading.textContent = 'Highly rated pumpkin patches near ' + state.origin.label;
+    if (sub) sub.textContent = 'The strongest review profiles within driving distance of ' + state.origin.label + '.';
   }
 
   /* --------------------------------------------------------- ZIP lookup */
@@ -328,6 +365,7 @@
         state.origin = origin;
         els.sort.value = 'distance';
         applyFilters();
+        renderFeaturedNearby();
       })
       .catch(function () {
         els.scope.textContent = 'We could not find ZIP ' + zip + '. Try another ZIP code.';
@@ -346,6 +384,7 @@
         els.zip.value = '';
         els.sort.value = 'distance';
         applyFilters();
+        renderFeaturedNearby();
       },
       function () {
         els.scope.textContent = 'Location permission denied — search by ZIP code instead';
@@ -433,6 +472,8 @@
       state.all = (payload.listings || []).filter(function (i) {
         return typeof i.lat === 'number' && typeof i.lng === 'number';
       });
+      var featuredGridEl = document.getElementById('featured-grid');
+      if (featuredGridEl) featuredDefaultHtml = featuredGridEl.innerHTML;
       populateFilters();
       bindEvents();
 
