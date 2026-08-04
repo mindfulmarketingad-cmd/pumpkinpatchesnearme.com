@@ -354,6 +354,10 @@ function joinNatural(words) {
   return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
 }
 
+function patchWord(n) {
+  return n === 1 ? 'Pumpkin Patch' : 'Pumpkin Patches';
+}
+
 // Cycles through a handful of sentence shapes so a page of 10 ranked farms
 // doesn't read as the same template ten times in a row.
 // Index 0 is reserved for the #1 entry specifically — it must never cycle
@@ -2029,9 +2033,9 @@ for (const stateName of stateNames) {
 
   const meta = {
     path,
-    title: `${items.length} Pumpkin Patches in ${stateName}, Ranked (${SEASON_YEAR})`,
+    title: `${items.length} ${patchWord(items.length)} in ${stateName}, Ranked (${SEASON_YEAR})`,
     description: `Every pumpkin patch we track in ${stateName} — ${items.length} listing${items.length === 1 ? '' : 's'} across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'}, ranked by rating, with search and filter. Updated for ${SEASON_YEAR}.`,
-    h1: `${items.length} Pumpkin Patches in ${stateName}`,
+    h1: `${items.length} ${patchWord(items.length)} in ${stateName}`,
     lede: `Every pumpkin patch we track in ${stateName}, ranked by rating and review volume across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'}. Search by name or town, or filter by attraction. Always confirm hours before you drive out — most patches open late September and close in early November.`,
     nav: 'find',
     layout: 'wide',
@@ -2077,7 +2081,7 @@ ${presentCategories.map(({ c, n }) => `        <option value="${attr(c.feature.t
     <button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button>
   </div>
   <div class="results-head" style="padding:0.6rem 0 0;background:transparent;border:0">
-    <p class="results-count" id="state-filter-count">${items.length.toLocaleString('en-US')} pumpkin patches</p>
+    <p class="results-count" id="state-filter-count">${items.length.toLocaleString('en-US')} pumpkin patch${items.length === 1 ? '' : 'es'}</p>
   </div>
 </div>`;
 
@@ -2153,16 +2157,12 @@ for (const [key, items] of byCity) {
     .map((c) => ({ c, n: items.filter((l) => (l.features || []).includes(c.feature)).length }))
     .filter((x) => x.n > 0);
 
-  const rankedCount = Math.min(10, items.length);
-  const ranked = items.slice(0, rankedCount);
-  const rest = items.slice(rankedCount);
-
   const meta = {
     path,
-    title: `The ${rankedCount} Best Pumpkin Patches in ${label} (${SEASON_YEAR})`,
-    description: `Ranked: the best pumpkin patches near ${label}, with ratings, addresses, hours and directions. ${items.length} listing${items.length === 1 ? '' : 's'} total, updated for ${SEASON_YEAR}.`,
-    h1: `The ${rankedCount} Best Pumpkin Patches in ${label}`,
-    lede: `Ranked by rating and review volume${rest.length ? `, plus ${rest.length} more listing${rest.length === 1 ? '' : 's'} below` : ''}. Updated for the ${SEASON_YEAR} season — always confirm hours with the farm before you drive out.`,
+    title: `${items.length} ${patchWord(items.length)} in ${label}, Ranked (${SEASON_YEAR})`,
+    description: `Every pumpkin patch we track in ${label} — ${items.length} listing${items.length === 1 ? '' : 's'}, ranked by rating, with search and filter. Updated for ${SEASON_YEAR}.`,
+    h1: `${items.length} ${patchWord(items.length)} in ${label}`,
+    lede: `Every pumpkin patch we track in ${label}, ranked by rating and review volume. Search by name, or filter by attraction. Always confirm hours before you drive out — most patches open late September and close in early November.`,
     nav: 'find',
     layout: 'wide',
     trail: [
@@ -2174,25 +2174,44 @@ for (const [key, items] of byCity) {
 
   const siblings = citiesInState(stateName).filter((c) => c !== cityName);
 
-  const tocSection = ranked.length > 3
-    ? `<p class="listicle-toc"><strong>Jump to:</strong> ${ranked
-        .map((l, i) => `<a href="#${attr(l.slug)}">${i + 1}. ${esc(l.name)}</a>`)
-        .join(' <span aria-hidden="true">&middot;</span> ')}</p>`
-    : '';
+  const filterBar = `<div class="find-tool state-filter" id="state-filter">
+  <div class="search-field">
+    <label class="visually-hidden" for="state-filter-q">Search by name</label>
+    <input id="state-filter-q" type="text" placeholder="Search by name..." autocomplete="off">
+  </div>
+  <div class="control-group">
+    <label class="control">
+      <span class="control-label">Attraction</span>
+      <select id="state-filter-feature" aria-label="Filter by attraction">
+        <option value="">All</option>
+${featureCounts.map(({ c, n }) => `        <option value="${attr(c.feature.toLowerCase())}">${esc(c.name)} (${n})</option>`).join('\n')}
+      </select>
+    </label>
+    <label class="control">
+      <span class="control-label">Sort</span>
+      <select id="state-filter-sort" aria-label="Sort results">
+        <option value="rating">Top rated</option>
+        <option value="reviews">Most reviewed</option>
+        <option value="name">Name A-Z</option>
+        <option value="distance">Nearest to me</option>
+      </select>
+    </label>
+    <button class="toggle-btn" type="button" id="state-filter-reset">Reset</button>
+    <button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button>
+  </div>
+  <div class="results-head" style="padding:0.6rem 0 0;background:transparent;border:0">
+    <p class="results-count" id="state-filter-count">${items.length.toLocaleString('en-US')} pumpkin patch${items.length === 1 ? '' : 'es'}</p>
+  </div>
+</div>`;
 
-  const rankedSection = `${tocSection}
-<ol class="listicle">
-${ranked.map((l, i) => renderListicleEntry(l, i + 1, cityName)).join('\n')}
-</ol>`;
+  const listHtml = `${filterBar}
+${renderSpotlightBanner(items, key)}
+<ol class="pillar-list" id="state-pillar-list">
+${items.map((l, i) => renderPillarEntry(l, i, cityName)).join('\n')}
+</ol>
+<p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
 
-  const restSection = rest.length
-    ? `<h2>More pumpkin patches near ${esc(cityName)}</h2>
-<div class="grid grid-3">
-${rest.map((l) => renderCard(l, { showState: false, showCity: false, headingLevel: 2 })).join('\n')}
-</div>`
-    : '';
-
-  const body = `${renderScopedMap(items, `${rankedSection}${restSection ? `\n${restSection}` : ''}`)}
+  const body = `${renderScopedMap(items, listHtml)}
 
 <div class="section" style="padding-bottom:0">
   ${featureCounts.length ? `<h2>What ${esc(cityName)} farms offer</h2>
@@ -2237,7 +2256,9 @@ ${siblings
     ],
   };
 
-  writePage(path, render(meta, body, { jsonld, scripts: pageMapScripts }));
+  const scripts = `${pageMapScripts}\n<script src="/assets/js/state-filter.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
+
+  writePage(path, render(meta, body, { jsonld, scripts }));
   addToSitemap(path, '0.7', 'weekly');
 }
 
