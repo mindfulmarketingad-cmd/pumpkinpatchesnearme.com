@@ -10,6 +10,7 @@
 
   var list = document.getElementById('state-pillar-list');
   var qInput = document.getElementById('state-filter-q');
+  var citySelect = document.getElementById('state-filter-city');
   var featureSelect = document.getElementById('state-filter-feature');
   var sortSelect = document.getElementById('state-filter-sort');
   var resetBtn = document.getElementById('state-filter-reset');
@@ -22,17 +23,19 @@
 
   function apply() {
     var q = qInput.value.trim().toLowerCase();
+    var city = citySelect ? citySelect.value : '';
     var feature = featureSelect.value;
     var sortKey = sortSelect.value;
 
     var visible = 0;
     items.forEach(function (el) {
       var name = el.getAttribute('data-name') || '';
-      var city = el.getAttribute('data-city') || '';
+      var cityVal = el.getAttribute('data-city') || '';
       var features = el.getAttribute('data-features') || '';
-      var matchesQuery = !q || name.indexOf(q) !== -1 || city.indexOf(q) !== -1;
+      var matchesQuery = !q || name.indexOf(q) !== -1 || cityVal.indexOf(q) !== -1;
+      var matchesCity = !city || cityVal === city;
       var matchesFeature = !feature || features.split('|').indexOf(feature) !== -1;
-      var show = matchesQuery && matchesFeature;
+      var show = matchesQuery && matchesCity && matchesFeature;
       el.hidden = !show;
       if (show) visible++;
     });
@@ -68,6 +71,7 @@
     window.clearTimeout(timer);
     timer = window.setTimeout(apply, 120);
   });
+  if (citySelect) citySelect.addEventListener('change', apply);
   featureSelect.addEventListener('change', apply);
   sortSelect.addEventListener('change', function () {
     // Picking "Nearest to me" is itself the user gesture that justifies
@@ -83,6 +87,7 @@
 
   function reset() {
     qInput.value = '';
+    if (citySelect) citySelect.value = '';
     featureSelect.value = '';
     sortSelect.value = 'rating';
     apply();

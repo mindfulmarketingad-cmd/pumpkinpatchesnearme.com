@@ -2042,12 +2042,21 @@ for (const stateName of stateNames) {
     .map((c) => ({ c, n: items.filter((l) => (l.features || []).includes(c.feature)).length }))
     .filter((x) => x.n > 0);
 
+  const cityCounts = cities.map((c) => ({ city: c, n: items.filter((l) => l.city === c).length }));
+
   const filterBar = `<div class="find-tool state-filter" id="state-filter">
   <div class="search-field">
     <label class="visually-hidden" for="state-filter-q">Search by name or town</label>
     <input id="state-filter-q" type="text" placeholder="Search by name or town..." autocomplete="off">
   </div>
   <div class="control-group">
+    <label class="control">
+      <span class="control-label">City</span>
+      <select id="state-filter-city" aria-label="Filter by city">
+        <option value="">All cities</option>
+${cityCounts.map(({ city, n }) => `        <option value="${attr(city.toLowerCase())}">${esc(city)} (${n})</option>`).join('\n')}
+      </select>
+    </label>
     <label class="control">
       <span class="control-label">Attraction</span>
       <select id="state-filter-feature" aria-label="Filter by attraction">
@@ -2077,7 +2086,7 @@ ${renderSpotlightBanner(items, stateName)}
 <ol class="pillar-list" id="state-pillar-list">
 ${items.map((l, i) => renderPillarEntry(l, i, stateName)).join('\n')}
 </ol>
-<p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
+<p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search, city or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
 
   const citySection = cities.length
     ? `<h2>Pumpkin patches by town in ${esc(stateName)}</h2>
