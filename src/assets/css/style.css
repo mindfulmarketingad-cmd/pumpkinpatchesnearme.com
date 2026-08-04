@@ -654,6 +654,8 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 .prose h3 { margin-top: 1.8rem; }
 .prose ul, .prose ol { padding-left: 1.25rem; margin-bottom: 1.2rem; }
 .prose li { margin-bottom: 0.45rem; }
+.table-wrap { overflow-x: auto; margin-bottom: 1.5rem; }
+.table-wrap table { margin-bottom: 0; }
 .prose table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; font-size: 0.95rem; }
 .prose th, .prose td { text-align: left; padding: 0.65rem 0.8rem; border-bottom: 1px solid var(--line); }
 .prose th { background: var(--orange-50); font-family: var(--font-display); font-weight: 600; }
@@ -736,6 +738,10 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 .author-card h2 { margin: 0 0 0.15rem; font-size: 1.15rem; color: var(--ink); }
 .author-card .author-title { font-size: 0.88rem; margin-bottom: 0.4rem; }
 .author-card p:last-child { margin: 0; color: var(--ink-2); font-size: 0.92rem; }
+
+.post-figure { margin: 1.75rem 0; }
+.post-figure img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--orange-50); }
+.post-figure figcaption { margin-top: 0.5rem; font-size: 0.85rem; color: var(--muted); }
 
 .detail-hero { margin: 0 0 1.75rem; }
 .detail-hero-img {

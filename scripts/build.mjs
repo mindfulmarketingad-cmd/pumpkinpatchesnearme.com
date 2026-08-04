@@ -841,7 +841,14 @@ for (const post of handAuthoredPosts) {
     trail: [{ label: 'Blog', href: '/blog/' }, { label: post.meta.h1 || post.meta.title }],
   };
   const author = authorsBySlug.get(post.meta.author);
-  const { toc, body: bodyWithIds } = autoToc(post.body);
+  // Hand-authored posts don't go through the static-page expandTokens()
+  // pipeline, but a couple of live stats are still useful to reference
+  // without hardcoding a number that drifts out of date on the next import.
+  const postBody = post.body
+    .split('{{STAT_LISTINGS}}').join(stats.listings.toLocaleString('en-US'))
+    .split('{{STAT_STATES}}').join(String(stats.states))
+    .split('{{STAT_CITIES}}').join(String(stats.cities));
+  const { toc, body: bodyWithIds } = autoToc(postBody);
   const heroSrc = pickBlogPhoto(handAuthoredHeroIndex++);
   const heroHtml = blogHeroFigureHtml(heroSrc, post.meta.h1 || post.meta.title);
   const jsonld = {
