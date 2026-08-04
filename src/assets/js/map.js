@@ -474,6 +474,63 @@
     });
   }
 
+  /* --------------------------------------------------- location banner -- */
+  // A passive "pumpkin patches near you" suggestion — never a forced
+  // redirect, and never a cold geolocation prompt. It only ever appears for
+  // a visitor whose browser already has geolocation permission granted
+  // from an earlier visit (e.g. they used "Use my location" before), which
+  // the Permissions API lets us check without triggering a new prompt.
+  var LOCATION_BANNER_MAX_MILES = 75;
+  var LOCATION_BANNER_DISMISS_KEY = 'ppnm-location-banner-dismissed';
+
+  function slugify(value) {
+    return String(value == null ? '' : value)
+      .normalize('NFKD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .replace(/&/g, ' and ')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 90);
+  }
+
+  function maybeShowLocationBanner() {
+    var banner = document.getElementById('location-banner');
+    if (!banner) return;
+    if (window.sessionStorage && window.sessionStorage.getItem(LOCATION_BANNER_DISMISS_KEY)) return;
+    if (!navigator.permissions || !navigator.permissions.query) return;
+
+    navigator.permissions.query({ name: 'geolocation' }).then(function (status) {
+      if (status.state !== 'granted') return;
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        var nearest = null;
+        var nearestDist = Infinity;
+        state.all.forEach(function (item) {
+          if (!item.city || !item.state) return;
+          var d = distanceMiles(pos.coords.latitude, pos.coords.longitude, item.lat, item.lng);
+          if (d < nearestDist) { nearestDist = d; nearest = item; }
+        });
+        if (!nearest || nearestDist > LOCATION_BANNER_MAX_MILES) return;
+
+        var url = '/' + slugify(nearest.state) + '/' + slugify(nearest.city) + '/';
+        var label = nearest.city + ', ' + (nearest.stateCode || nearest.state);
+        document.getElementById('location-banner-text').textContent = 'Pumpkin patches near ' + label;
+        var link = document.getElementById('location-banner-link');
+        link.href = url;
+        link.textContent = 'See patches in ' + nearest.city;
+        banner.hidden = false;
+      }, function () { /* permission was granted but the lookup itself failed — say nothing */ }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
+    }).catch(function () {});
+  }
+
+  var locationBannerClose = document.getElementById('location-banner-close');
+  if (locationBannerClose) {
+    locationBannerClose.addEventListener('click', function () {
+      document.getElementById('location-banner').hidden = true;
+      if (window.sessionStorage) window.sessionStorage.setItem(LOCATION_BANNER_DISMISS_KEY, '1');
+    });
+  }
+
   fetch('/data/listings.json')
     .then(function (res) { return res.json(); })
     .then(function (payload) {
@@ -484,6 +541,7 @@
       if (featuredGridEl) featuredDefaultHtml = featuredGridEl.innerHTML;
       populateFilters();
       bindEvents();
+      maybeShowLocationBanner();
 
       // Deep link: /?zip=90210 runs the search on load.
       var params = new URLSearchParams(window.location.search);

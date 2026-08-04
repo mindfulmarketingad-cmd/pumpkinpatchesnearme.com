@@ -41,6 +41,15 @@ function backdatedPostDate(seed) {
   return d.toISOString().slice(0, 10);
 }
 
+/** A stable (rebuild-to-rebuild) "random" 0..2^32-1 hash of a string —
+ *  used anywhere a page needs a pick or shuffle that looks random but
+ *  doesn't reshuffle every time the site rebuilds from the same data. */
+function seededHash(seed) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  return hash;
+}
+
 /** Google's photo CDN takes the requested pixel size straight in the URL
  *  (`=w800-h500-k-no`) — swapping those numbers gets an appropriately small
  *  image instead of downloading the full 800x500 source for a 120px
@@ -279,6 +288,64 @@ function renderCard(l, { showState = true, showCity = true, headingLevel = 3 } =
     </div>
   </div>
 </article>`;
+}
+
+// A horizontal spotlight banner for the top of a state page, above the
+// ranked list. Picks a genuinely claimed/featured listing when one exists
+// in that state (labelled "Featured Farm" — the same claim status shown
+// elsewhere); otherwise picks a deterministic "random" listing from the
+// whole state and labels it "Spotlight" instead, since nothing was
+// actually paid for or claimed and the copy shouldn't imply it was.
+function renderSpotlightBanner(items, seedKey) {
+  if (!items.length) return '';
+  const featuredPool = items.filter((l) => l.featured);
+  const pool = featuredPool.length ? featuredPool : items;
+  const pick = pool[seededHash(seedKey) % pool.length];
+  const isFeatured = featuredPool.length > 0;
+  const place = [pick.city, pick.stateCode].filter(Boolean).join(', ');
+  return `<div class="spotlight-banner">
+  <a class="spotlight-media" href="${listingPath(pick)}" tabindex="-1" aria-hidden="true">
+    ${listingImage(pick, { className: 'spotlight-img', sizes: '(min-width: 900px) 320px, 100vw', size: 'card' })}
+  </a>
+  <div class="spotlight-body">
+    <p class="spotlight-tag">${isFeatured ? 'Featured Farm' : 'Spotlight'}</p>
+    <h2><a href="${listingPath(pick)}">${esc(pick.name)}</a></h2>
+    <p class="listing-meta">
+      ${pick.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(pick.rating)}</span> ${pick.rating.toFixed(1)}</span>` : ''}
+      ${pick.reviews ? `<span>${pick.reviews.toLocaleString('en-US')} reviews</span>` : ''}
+      ${place ? `<span>${esc(place)}</span>` : ''}
+    </p>
+    <p>${blurbFor(pick, 1, '')}</p>
+    <div class="card-actions">
+      <a class="btn btn-primary btn-sm" href="${listingPath(pick)}">View details</a>
+      ${isFeatured ? '' : `<a class="btn btn-outline btn-sm" href="/partners/">Is this your farm? Claim it</a>`}
+    </div>
+  </div>
+</div>`;
+}
+
+// A small gallery of real photos from a page's own listings, deterministically
+// shuffled per page (same seed -> same photos on every rebuild, not a fresh
+// shuffle each time). Skipped entirely on pages with no photographed listings
+// rather than padding with the illustrated placeholder.
+function renderPhotoGallery(items, seedKey, label, count = 5) {
+  const withPhotos = items.filter((l) => l.photo);
+  if (!withPhotos.length) return '';
+  const picks = withPhotos
+    .map((l) => ({ l, key: seededHash(seedKey + l.slug) }))
+    .sort((a, b) => a.key - b.key)
+    .slice(0, count)
+    .map((x) => x.l);
+  return `<h2>Photos from pumpkin patches in ${esc(label)}</h2>
+<div class="photo-gallery">
+${picks
+  .map(
+    (l) => `  <a class="photo-gallery-item" href="${listingPath(l)}" aria-label="${attr(l.name)}">
+    ${listingImage(l, { className: 'photo-gallery-img', size: 'card' })}
+  </a>`
+  )
+  .join('\n')}
+</div>`;
 }
 
 function joinNatural(words) {
@@ -1843,6 +1910,7 @@ ${presentCategories.map(({ c, n }) => `        <option value="${attr(c.feature.t
 </div>`;
 
   const listHtml = `${filterBar}
+${renderSpotlightBanner(items, stateName)}
 <ol class="pillar-list" id="state-pillar-list">
 ${items.map((l, i) => renderPillarEntry(l, i, stateName)).join('\n')}
 </ol>
@@ -1869,6 +1937,7 @@ ${catSection}
 <p>Pumpkin patch season in ${esc(stateName)} generally runs from mid-September through the first weekend of November, with the busiest weekends falling in mid-October. Weekday mornings are the quietest time to visit, and many farms charge admission only on weekends when the corn maze, hayrides and food stands are all running.</p>
 <p>Bring cash — plenty of family farms still run cash-only gates or wagon rides — and check whether the patch charges by the pumpkin, by the pound or as a flat admission. Call ahead after heavy rain, since field access is the first thing farms close.</p>
 <p><a class="btn btn-outline" href="/">Search the ${esc(stateName)} map</a></p>
+${renderPhotoGallery(items, path, stateName)}
 </div>`;
 
   const jsonld = {
@@ -1974,6 +2043,8 @@ ${siblings
     <a class="btn btn-primary" href="/">Search the map by ZIP code</a>
     <a class="btn btn-outline" href="${statePath(stateName)}">All ${esc(stateName)} pumpkin patches</a>
   </p>
+
+  ${renderPhotoGallery(items, path, cityName)}
 </div>`;
 
   const jsonld = {

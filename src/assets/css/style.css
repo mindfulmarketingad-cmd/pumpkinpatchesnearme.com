@@ -204,6 +204,24 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
   }
 }
 
+/* ---------------------------------------------------- location banner --- */
+/* Only ever shown when the browser already has geolocation permission
+   granted from a prior visit (checked via the Permissions API, never
+   prompted cold) — a passive suggestion, not a forced redirect. */
+.location-banner {
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+  gap: 0.6rem 1rem; background: var(--orange-50); border-bottom: 1px solid var(--orange-100);
+  padding: 0.65rem 3rem 0.65rem 1rem; position: relative; text-align: center;
+}
+.location-banner[hidden] { display: none; }
+.location-banner p { margin: 0; font-weight: 600; color: var(--orange-900); }
+.location-banner-close {
+  position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%);
+  background: none; border: 0; font-size: 1.4rem; line-height: 1; color: var(--muted);
+  cursor: pointer; padding: 0.25rem 0.5rem;
+}
+.location-banner-close:hover { color: var(--ink); }
+
 /* ------------------------------------------------------- map hero (home) */
 
 .hero-app {
@@ -564,6 +582,42 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 }
 
 .state-filter { margin-bottom: 1.5rem; }
+
+.spotlight-banner {
+  display: flex; align-items: stretch; gap: 1.25rem; background: #fff;
+  border: 1px solid var(--orange-100); box-shadow: var(--shadow-md);
+  margin-bottom: 1.5rem; overflow: hidden;
+}
+.spotlight-media { flex: 0 0 auto; display: block; width: 280px; background: var(--orange-50); }
+.spotlight-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.spotlight-body { flex: 1; min-width: 0; padding: 1.25rem 1.5rem 1.25rem 0; display: flex; flex-direction: column; justify-content: center; }
+.spotlight-tag {
+  display: inline-block; align-self: flex-start; background: var(--orange); color: #fff;
+  font-family: var(--font-display); font-weight: 700; font-size: 0.75rem; letter-spacing: 0.03em;
+  text-transform: uppercase; padding: 0.2rem 0.7rem; margin-bottom: 0.5rem;
+}
+.spotlight-body h2 { margin: 0 0 0.3rem; font-size: 1.35rem; }
+.spotlight-body h2 a { color: var(--ink); text-decoration: none; }
+.spotlight-body h2 a:hover { color: var(--orange-700); }
+.spotlight-body .listing-meta { margin-bottom: 0.4rem; }
+@media (max-width: 640px) {
+  .spotlight-banner { flex-direction: column; }
+  .spotlight-media { width: 100%; aspect-ratio: 16 / 9; }
+  .spotlight-body { padding: 1.1rem; }
+}
+
+.photo-gallery {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; margin-bottom: 1.5rem;
+}
+.photo-gallery-item { display: block; aspect-ratio: 1 / 1; overflow: hidden; background: var(--orange-50); }
+.photo-gallery-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.25s ease; }
+.photo-gallery-item:hover .photo-gallery-img { transform: scale(1.05); }
+@media (max-width: 700px) {
+  .photo-gallery { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 420px) {
+  .photo-gallery { grid-template-columns: repeat(2, 1fr); }
+}
 
 /* --------------------------------------------------------- map popups */
 
