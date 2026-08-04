@@ -199,6 +199,45 @@ const citiesInState = (stateName) =>
     .map((k) => k.split('|')[1])
     .sort();
 
+// Approximate centroid per city (average of its own listings' coordinates)
+// — good enough to rank other towns in the same state by real proximity for
+// "nearby cities" links, without needing a separate geocoding source.
+const cityCentroids = new Map();
+for (const [key, arr] of byCity) {
+  const withCoords = arr.filter((l) => Number.isFinite(l.lat) && Number.isFinite(l.lng));
+  if (!withCoords.length) continue;
+  cityCentroids.set(key, {
+    lat: withCoords.reduce((sum, l) => sum + l.lat, 0) / withCoords.length,
+    lng: withCoords.reduce((sum, l) => sum + l.lng, 0) / withCoords.length,
+  });
+}
+
+function haversineMiles(lat1, lng1, lat2, lng2) {
+  const R = 3958.8;
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// Other towns in the same state, ranked by real distance between city
+// centroids rather than alphabetically — used for the "Nearby Cities"
+// section on every listing page.
+function nearbyCities(stateName, cityName, count) {
+  const ownKey = `${stateName}|${cityName}`;
+  const origin = cityCentroids.get(ownKey);
+  if (!origin) return [];
+  return [...cityCentroids.entries()]
+    .filter(([key]) => key !== ownKey && key.startsWith(`${stateName}|`))
+    .map(([key, centroid]) => {
+      const city = key.split('|')[1];
+      return { city, distance: haversineMiles(origin.lat, origin.lng, centroid.lat, centroid.lng), count: byCity.get(key).length };
+    })
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, count);
+}
+
 const byCategory = new Map();
 for (const cat of categories) {
   byCategory.set(cat.slug, rankListings(listings.filter((l) => (l.features || []).includes(cat.feature))));
@@ -2086,6 +2125,7 @@ for (const l of listings) {
   const sameStateOthers = (byState.get(l.state) || []).filter((o) => !excludeSlugs.has(o.slug));
   const sameStateByFeature = sameStateOthers.filter((o) => (o.features || []).some((f) => (l.features || []).includes(f)));
   const related = (sameStateByFeature.length ? sameStateByFeature : sameStateOthers).slice(0, 3);
+  const nearCities = l.state && l.city ? nearbyCities(l.state, l.city, 8) : [];
 
   const address = l.fullAddress || [l.street, place, l.postalCode].filter(Boolean).join(', ');
   const hoursRows = l.hours
@@ -2153,6 +2193,12 @@ ${nearby.map((o) => renderCard(o, { showState: false, showCity: false })).join('
 ${related.map((o) => renderCard(o, { showState: false, showCity: true })).join('\n')}
     </div>
     <p><a href="${statePath(l.state)}">All pumpkin patches in ${esc(l.state)}</a></p>` : ''}
+
+    ${nearCities.length ? `<h2>Nearby Cities</h2>
+    <p>Pumpkin patches in towns near ${esc(l.city)}, ${esc(l.stateCode || l.state)}:</p>
+    <div class="tag-row">
+${nearCities.map((c) => `      <a class="tag tag-link" href="${cityPath(l.state, c.city)}">${esc(c.city)} (${c.count})</a>`).join('\n')}
+    </div>` : ''}
   </div>
   <aside>
     <div class="card">
