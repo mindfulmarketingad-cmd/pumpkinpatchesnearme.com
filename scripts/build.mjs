@@ -519,7 +519,7 @@ function renderPillarEntry(l, rank, stateName) {
   const address = l.fullAddress || [l.street, place, l.postalCode].filter(Boolean).join(', ');
   const tags = (l.features || []).slice(0, 4);
   const hoursJson = l.hours ? attr(JSON.stringify(DAYS.map((d) => l.hours[d] || ''))) : '';
-  return `    <li class="pillar-entry" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-state="${attr((l.state || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}" data-lat="${l.lat ?? ''}" data-lng="${l.lng ?? ''}"${hoursJson ? ` data-hours='${hoursJson}'` : ''}>
+  return `    <li class="pillar-entry" id="${attr(l.slug)}" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-state="${attr((l.state || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}" data-lat="${l.lat ?? ''}" data-lng="${l.lng ?? ''}"${hoursJson ? ` data-hours='${hoursJson}'` : ''}>
       <a class="pillar-media" href="${listingPath(l)}" tabindex="-1" aria-hidden="true">
         ${listingImage(l, { className: 'pillar-img', sizes: '(min-width: 640px) 120px, 96px', size: 'thumb' })}
       </a>
@@ -1193,6 +1193,169 @@ ${closingSummary}`;
   addToSitemap(path, '0.7', 'weekly', postMeta.date);
 }
 
+/* --- programmatic "10 Best Pumpkin Patches in <State>" posts -------------
+   One per state with at least STATE_POST_MIN_LISTINGS listings, using the
+   same pillar-entry card format as the /state/ directory pages themselves
+   (full address, phone/website, today's hours, "perfect for" line) rather
+   than the heavier per-entry format the city posts use. Ranked by rating —
+   byState is already sorted that way (featured first, then rating, then
+   review volume). */
+const STATE_POST_MIN_LISTINGS = 10;
+const STATE_POST_COUNT = 10;
+
+const statePosts = [];
+let statePostIndex = 0;
+for (const stateName of stateNames) {
+  const items = byState.get(stateName) || [];
+  if (items.length < STATE_POST_MIN_LISTINGS) continue;
+
+  // Same-named business at the same city occasionally appears twice in the
+  // source data (separate seasonal lots run by one operator) — dedupe on
+  // name+city, not name alone, so a real chain with locations in two
+  // different towns isn't wrongly treated as a duplicate.
+  const seenNameCity = new Set();
+  const distinct = items.filter((l) => {
+    const key = `${l.name.trim().toLowerCase()}|${(l.city || '').trim().toLowerCase()}`;
+    if (seenNameCity.has(key)) return false;
+    seenNameCity.add(key);
+    return true;
+  });
+  const topN = distinct.slice(0, STATE_POST_COUNT);
+  const names = topN.map((l) => l.name);
+
+  const stateAuthorSlug = authors[statePostIndex++ % authors.length].slug;
+  const h1 = `${STATE_POST_COUNT} Best Pumpkin Patches in ${stateName}`;
+  const slug = slugify(h1);
+  const path = `/blog/${slug}/`;
+
+  const heroSrc = (topN.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+  const heroHtml = blogHeroFigureHtml(heroSrc, `Pumpkin patches in ${stateName}`);
+
+  const tocSection = `<p class="listicle-toc"><strong>Jump to:</strong> ${topN
+    .map((l, i) => `<a href="#${attr(l.slug)}">${i + 1}. ${esc(l.name)}</a>`)
+    .join(' <span aria-hidden="true">&middot;</span> ')}</p>`;
+
+  const summaryIntro = `<p>The ${STATE_POST_COUNT} best pumpkin patches in ${esc(stateName)} are ${joinNatural(names.map((n) => esc(n)))}, ranked by rating and review volume out of the ${esc(items.length.toLocaleString('en-US'))} pumpkin patches we track statewide. Each entry below includes the full address, today's hours, and what visitors say the farm is best for. Want the complete, searchable list? See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or start from our <a href="/pumpkin-patches/">state-by-state directory</a>.</p>
+<p><button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button></p>`;
+
+  const listHtml = `<ol class="pillar-list">
+${topN.map((l, i) => renderPillarEntry(l, i, stateName)).join('\n')}
+</ol>`;
+
+  const faqQa = [
+    {
+      q: `Which pumpkin patch is the highest rated in ${stateName}?`,
+      a: `${esc(topN[0].name)}${topN[0].city ? ` in ${esc(topN[0].city)}` : ''} tops this list${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5${topN[0].reviews ? ` from ${topN[0].reviews.toLocaleString('en-US')} reviews` : ''}` : ''}. Ratings reflect public data at the time of writing and can shift over time.`,
+    },
+    {
+      q: `When do pumpkin patches in ${stateName} open for the season?`,
+      a: `Most pumpkin patches in ${stateName} open in mid-to-late September and run through the first days of November, though exact dates shift year to year with weather and how the pumpkin crop comes in. Check the individual listings above, or call ahead, to confirm current dates.`,
+    },
+    {
+      q: `How much does it cost to visit a pumpkin patch in ${stateName}?`,
+      a: `It varies by farm. Some charge only for the pumpkins you pick, priced individually or by weight; others charge a flat gate admission that bundles in attractions like a corn maze or hayride. See the admission details on each listing above where we have them, or call the farm directly.`,
+    },
+    {
+      q: `Are pumpkin patches in ${stateName} open on weekdays?`,
+      a: `Many are, though weekday hours are often shorter than weekends, and some smaller farms only open Friday through Sunday during the season. Weekday mornings are also the quietest time to visit if your schedule allows it.`,
+    },
+    {
+      q: `How often is this list updated?`,
+      a: `This page rebuilds from the same live directory data as the rest of the site, so rankings reflect current ratings and review counts as of publish. Individual farm hours, pricing and what's running on a given day can still change week to week during the season — always confirm with the farm directly before you drive out.`,
+    },
+  ];
+  const faqHtml = `<h2>Frequently asked questions</h2>
+<div class="faq-list">
+${faqQa
+  .map(
+    (item) => `  <details class="faq-item">
+    <summary>${esc(item.q)}</summary>
+    <div class="faq-answer"><p>${esc(item.a)}</p></div>
+  </details>`
+  )
+  .join('\n')}
+</div>`;
+
+  const closingSummary = `<h2>Summary</h2>
+<p>${esc(topN[0].name)} tops our list of pumpkin patches in ${esc(stateName)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the top ${STATE_POST_COUNT}. Ratings and review counts reflect public data at the time of writing and can change, and hours, admission and what's actually running on a given day can vary week to week during the season — always confirm with the farm directly before you drive out. For the full, ranked, searchable list, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`;
+
+  const body = `${tocSection}
+${summaryIntro}
+${listHtml}
+${faqHtml}
+${closingSummary}`;
+
+  const description = `The ${STATE_POST_COUNT} best pumpkin patches in ${stateName}, ranked by rating and reviews: ${joinNatural(names)}.`;
+  const postMeta = {
+    path,
+    slug,
+    title: `${h1} | Ranked by Rating`,
+    description,
+    h1,
+    excerpt: description,
+    date: backdatedPostDate(slug),
+    readingTime: '9 min read',
+    author: stateAuthorSlug,
+  };
+
+  statePosts.push({ meta: postMeta, body });
+
+  const meta = {
+    ...postMeta,
+    nav: 'blog',
+    layout: 'prose',
+    ogType: 'article',
+    trail: [{ label: 'Blog', href: '/blog/' }, { label: postMeta.h1 }],
+  };
+  const stateAuthor = authorsBySlug.get(stateAuthorSlug);
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BlogPosting',
+        headline: postMeta.h1,
+        description: postMeta.description,
+        datePublished: postMeta.date,
+        dateModified: postMeta.date,
+        mainEntityOfPage: SITE_URL + path,
+        image: absImageUrl(heroSrc),
+        author: stateAuthor
+          ? { '@type': 'Person', name: stateAuthor.name, url: SITE_URL + authorPath(stateAuthor), jobTitle: stateAuthor.title }
+          : { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+        publisher: {
+          '@type': 'Organization',
+          name: SITE_NAME,
+          url: SITE_URL,
+          logo: { '@type': 'ImageObject', url: `${SITE_URL}/assets/img/icon-512.png` },
+        },
+      },
+      {
+        '@type': 'ItemList',
+        numberOfItems: topN.length,
+        itemListElement: topN.map((l, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          url: SITE_URL + listingPath(l),
+          name: l.name,
+        })),
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: faqQa.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      },
+      breadcrumbJsonLd(meta.trail, path),
+    ],
+  };
+  const byline = renderByline(stateAuthorSlug, postMeta.date, postMeta.readingTime);
+  const statePostScripts = `<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
+  writePage(path, render(meta, heroHtml + byline + body, { jsonld, scripts: statePostScripts }));
+  addToSitemap(path, '0.6', 'weekly', postMeta.date);
+}
+
 /* --- programmatic "5 Best Pumpkin Patches in <City>" posts --------------- */
 // One per town with at least this many listings, generated straight from
 // the dataset — no hand-written source file, so this list grows on its own
@@ -1536,7 +1699,7 @@ ${closingSummary}`;
 // Hand-authored guides and both flavors of programmatic city listicles share
 // one feed from here on — the blog index, XML/HTML sitemaps and search index
 // all read from `posts` and don't need to know which kind a given entry is.
-const posts = [...handAuthoredPosts, ...pillarPosts, ...cityPosts, ...attractionCityPosts].sort((a, b) => (b.meta.date || '').localeCompare(a.meta.date || ''));
+const posts = [...handAuthoredPosts, ...pillarPosts, ...statePosts, ...cityPosts, ...attractionCityPosts].sort((a, b) => (b.meta.date || '').localeCompare(a.meta.date || ''));
 
 /* --- author pages ---------------------------------------------------------
    /authors/ lists every writer; /authors/<slug>/ gives each their own page
