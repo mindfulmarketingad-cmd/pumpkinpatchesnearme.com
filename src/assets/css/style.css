@@ -440,7 +440,11 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
   display: flex; flex-direction: column; gap: 1.1rem;
 }
 .pillar-list[hidden] { display: none; }
-.pillar-entry { counter-increment: pillar-rank; display: flex; align-items: flex-start; gap: 0.9rem; }
+.pillar-entry {
+  counter-increment: pillar-rank; display: flex; align-items: flex-start; gap: 0.9rem;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--r-md);
+  padding: 1rem; box-shadow: var(--shadow-sm);
+}
 .pillar-entry[hidden] { display: none; }
 .pillar-entry::before {
   content: counter(pillar-rank); flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
