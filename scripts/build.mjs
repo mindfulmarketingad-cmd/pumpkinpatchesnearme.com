@@ -519,7 +519,7 @@ function renderPillarEntry(l, rank, stateName) {
   const address = l.fullAddress || [l.street, place, l.postalCode].filter(Boolean).join(', ');
   const tags = (l.features || []).slice(0, 4);
   const hoursJson = l.hours ? attr(JSON.stringify(DAYS.map((d) => l.hours[d] || ''))) : '';
-  return `    <li class="pillar-entry" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}" data-lat="${l.lat ?? ''}" data-lng="${l.lng ?? ''}"${hoursJson ? ` data-hours='${hoursJson}'` : ''}>
+  return `    <li class="pillar-entry" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-state="${attr((l.state || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}" data-lat="${l.lat ?? ''}" data-lng="${l.lng ?? ''}"${hoursJson ? ` data-hours='${hoursJson}'` : ''}>
       <a class="pillar-media" href="${listingPath(l)}" tabindex="-1" aria-hidden="true">
         ${listingImage(l, { className: 'pillar-img', sizes: '(min-width: 640px) 120px, 96px', size: 'thumb' })}
       </a>
@@ -894,7 +894,7 @@ ${body}
 }
 
 function render(meta, body, opts = {}) {
-  const navKeys = ['home', 'blog', 'about', 'find', 'partners'];
+  const navKeys = ['home', 'blog', 'about', 'find', 'pumpkin-patches', 'corn-mazes', 'hayrides', 'partners'];
   let html = template;
 
   const banner = sampleOnly && meta.path === '/'
@@ -1060,7 +1060,7 @@ ${statePicks.map((s) => `  <a class="tag tag-link" href="#${attr(slugify(s.state
 </div>`;
 
   const introHtml = `<p>Halloween season means one thing above all: finding a pumpkin patch worth the drive. We pulled the ${esc(totalPicks.toLocaleString('en-US'))} highest-rated pumpkin patches from our directory — up to five per state, ranked by Google rating and review volume — into one list, state by state, so you can find the best option near you or scout one out before a trip. Jump to your state below, or read straight through for the full coast-to-coast picture.</p>
-<p>Every farm below links to its full profile with hours, admission details and a map, and every state links to our complete, ranked directory of every pumpkin patch we track there — this list is the highlight reel, not the whole picture. For help narrowing it down once you're on a specific farm's page, see our guide to <a href="/blog/how-to-choose-a-pumpkin-patch/">choosing the right pumpkin patch for your group</a>, and check <a href="/blog/when-does-pumpkin-patch-season-start/">when pumpkin patch season actually starts</a> in your region before you plan the trip. Want to search instead of scroll? Head to <a href="/find/">Find a Pumpkin Patch Near You</a> and filter by state, ZIP code or attraction.</p>
+<p>Every farm below links to its full profile with hours, admission details and a map, and every state links to our complete, ranked directory of every pumpkin patch we track there — this list is the highlight reel, not the whole picture. For help narrowing it down once you're on a specific farm's page, see our guide to <a href="/blog/how-to-choose-a-pumpkin-patch/">choosing the right pumpkin patch for your group</a>, and check <a href="/blog/when-does-pumpkin-patch-season-start/">when pumpkin patch season actually starts</a> in your region before you plan the trip. Want to search instead of scroll? Head to <a href="/pumpkin-patches/">Find a Pumpkin Patch Near You</a> and filter by state, ZIP code or attraction.</p>
 <p><button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button></p>`;
 
   const stateSectionsHtml = statePicks
@@ -1111,7 +1111,7 @@ ${faqQa
 </div>`;
 
   const closingSummary = `<h2>Summary</h2>
-<p>This roundup covers our top-rated pumpkin patch picks in ${esc(String(statePicks.filter((s) => s.top5.length).length))} states, drawn straight from the ${esc(stats.listings.toLocaleString('en-US'))}-farm directory we maintain year-round. Ratings and review counts reflect public data at the time of writing and shift over time, and hours, admission and what's actually running can vary week to week during the season — always confirm with a farm directly before you drive out. For the complete, ranked list in any state, jump to its section above or start from <a href="/find/">Find a Pumpkin Patch Near You</a>.</p>`;
+<p>This roundup covers our top-rated pumpkin patch picks in ${esc(String(statePicks.filter((s) => s.top5.length).length))} states, drawn straight from the ${esc(stats.listings.toLocaleString('en-US'))}-farm directory we maintain year-round. Ratings and review counts reflect public data at the time of writing and shift over time, and hours, admission and what's actually running can vary week to week during the season — always confirm with a farm directly before you drive out. For the complete, ranked list in any state, jump to its section above or start from <a href="/pumpkin-patches/">Find a Pumpkin Patch Near You</a>.</p>`;
 
   const tocSection = `<p class="listicle-toc"><strong>Jump to your state:</strong></p>
 ${tocHtml}`;
@@ -1237,7 +1237,7 @@ for (const [key, items] of byCity) {
     .map((l, i) => `<a href="#${attr(l.slug)}">${i + 1}. ${esc(l.name)}</a>`)
     .join(' <span aria-hidden="true">&middot;</span> ')}</p>`;
 
-  const summaryIntro = `<p>The 5 best pumpkin patches in ${esc(label)} are ${joinNatural(names.map((n) => esc(n)))}, ranked by rating and review volume. Here's a closer look at each — what they offer, how they're rated, and how to get there — followed by answers to the questions we hear most about visiting. Want the full picture? See every farm we track in <a href="${cityPath(stateName, cityName)}">${esc(label)}</a>, browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>, or start from our <a href="/find/">state-by-state directory</a>.</p>`;
+  const summaryIntro = `<p>The 5 best pumpkin patches in ${esc(label)} are ${joinNatural(names.map((n) => esc(n)))}, ranked by rating and review volume. Here's a closer look at each — what they offer, how they're rated, and how to get there — followed by answers to the questions we hear most about visiting. Want the full picture? See every farm we track in <a href="${cityPath(stateName, cityName)}">${esc(label)}</a>, browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>, or start from our <a href="/pumpkin-patches/">state-by-state directory</a>.</p>`;
 
   const listicleHtml = `<ol class="listicle">
 ${top5.map((l, i) => renderListicleEntry(l, i + 1, cityName)).join('\n')}
@@ -1831,7 +1831,7 @@ for (const page of staticPages) {
     scripts = `<script src="/assets/js/search.js?v=${ASSET_VERSION}" defer></script>`;
   }
 
-  if (meta.path === '/find/') {
+  if (meta.path === '/pumpkin-patches/') {
     scripts = `<script src="/assets/js/find.js?v=${ASSET_VERSION}" defer></script>`;
   }
 
@@ -1872,7 +1872,7 @@ for (const stateName of stateNames) {
     lede: `Every pumpkin patch we track in ${stateName}, ranked by rating and review volume across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'}. Search by name or town, or filter by attraction. Always confirm hours before you drive out — most patches open late September and close in early November.`,
     nav: 'find',
     layout: 'wide',
-    trail: [{ label: 'Find', href: '/find/' }, { label: stateName }],
+    trail: [{ label: 'Pumpkin Patches', href: '/pumpkin-patches/' }, { label: stateName }],
   };
 
   const presentCategories = categories
@@ -1994,7 +1994,7 @@ for (const [key, items] of byCity) {
     nav: 'find',
     layout: 'wide',
     trail: [
-      { label: 'Find', href: '/find/' },
+      { label: 'Pumpkin Patches', href: '/pumpkin-patches/' },
       { label: stateName, href: statePath(stateName) },
       { label: cityName },
     ],
@@ -2082,27 +2082,61 @@ for (const cat of categories) {
     description: cat.description,
     h1: `${cat.name} Near Me`,
     lede: cat.lede,
-    nav: 'find',
+    nav: cat.slug === 'corn-mazes' ? 'corn-mazes' : cat.slug === 'hayrides' ? 'hayrides' : 'pumpkin-patches',
     layout: 'wide',
-    trail: [{ label: 'Find', href: '/find/' }, { label: cat.name }],
+    trail: [{ label: 'Pumpkin Patches', href: '/pumpkin-patches/' }, { label: cat.name }],
   };
 
-  const topItems = items.slice(0, 24);
   const catHeroSrc = (items.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
   const catHeroHtml = blogHeroFigureHtml(catHeroSrc, `${cat.name} near you`);
+
+  const filterBar = `<div class="find-tool state-filter" id="cat-filter">
+  <div class="search-field">
+    <label class="visually-hidden" for="cat-filter-q">Search by name or town</label>
+    <input id="cat-filter-q" type="text" placeholder="Search by name or town..." autocomplete="off">
+  </div>
+  <div class="control-group">
+    <label class="control">
+      <span class="control-label">State</span>
+      <select id="cat-filter-state" aria-label="Filter by state">
+        <option value="">All states</option>
+${statesWith.map((s) => `        <option value="${attr(s.toLowerCase())}">${esc(s)} (${items.filter((l) => l.state === s).length})</option>`).join('\n')}
+      </select>
+    </label>
+    <label class="control">
+      <span class="control-label">Sort</span>
+      <select id="cat-filter-sort" aria-label="Sort results">
+        <option value="rating">Top rated</option>
+        <option value="reviews">Most reviewed</option>
+        <option value="name">Name A-Z</option>
+        <option value="distance">Nearest to me</option>
+      </select>
+    </label>
+    <button class="toggle-btn" type="button" id="cat-filter-reset">Reset</button>
+    <button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button>
+  </div>
+  <div class="results-head" style="padding:0.6rem 0 0;background:transparent;border:0">
+    <p class="results-count" id="cat-filter-count">${items.length.toLocaleString('en-US')} listings</p>
+  </div>
+</div>`;
+
+  const listHtml = items.length
+    ? `${filterBar}
+${renderSpotlightBanner(items, cat.slug)}
+<ol class="pillar-list" id="cat-pillar-list">
+${items.map((l, i) => renderPillarEntry(l, i, cat.name)).join('\n')}
+</ol>
+<p class="empty-state" id="cat-filter-empty" hidden><strong>No matches.</strong> Try a different search or state, or <button type="button" class="btn-link" id="cat-filter-empty-reset">reset the filters</button>.</p>`
+    : `<div class="empty-state">
+  <h3>No ${esc(cat.name.toLowerCase())} listed yet</h3>
+  <p>We are still building out this category. If you know a farm that should be here, send it to us.</p>
+  <a class="btn btn-primary" href="/add-a-listing/">Submit a farm</a>
+</div>`;
 
   const body = `${catHeroHtml}
 ${cat.intro}
 
-${items.length ? `<h2>Top-rated farms with a ${esc(cat.singular)}</h2>
-<div class="grid grid-3">
-${topItems.map((l) => renderCard(l)).join('\n')}
-</div>
-${items.length > topItems.length ? `<p style="color:var(--muted)">Showing ${topItems.length} of ${items.length.toLocaleString('en-US')} farms. <a href="/">Search the map</a> and filter by ${esc(cat.name.toLowerCase())} to see them all near you.</p>` : ''}` : `<div class="empty-state">
-  <h3>No ${esc(cat.name.toLowerCase())} listed yet</h3>
-  <p>We are still building out this category. If you know a farm that should be here, send it to us.</p>
-  <a class="btn btn-primary" href="/add-a-listing/">Submit a farm</a>
-</div>`}
+${renderScopedMap(items, listHtml)}
 
 <div class="section" style="padding-bottom:0">
   ${statesWith.length ? `<h2>${esc(cat.name)} by state</h2>
@@ -2119,8 +2153,9 @@ ${statesWith
   <p>The fastest way to find a farm with a ${esc(cat.singular)} nearby is the map: enter your ZIP code, then set the feature filter to ${esc(cat.name.toLowerCase())}. Results re-sort by distance from your location.</p>
   <p>
     <a class="btn btn-primary" href="/">Search the map</a>
-    <a class="btn btn-outline" href="/find/">Browse all attractions</a>
+    <a class="btn btn-outline" href="/pumpkin-patches/">Browse all attractions</a>
   </p>
+  ${renderPhotoGallery(items, path, cat.name)}
 </div>`;
 
   const jsonld = {
@@ -2130,7 +2165,7 @@ ${statesWith
       {
         '@type': 'ItemList',
         numberOfItems: items.length,
-        itemListElement: topItems.map((l, i) => ({
+        itemListElement: items.slice(0, 25).map((l, i) => ({
           '@type': 'ListItem',
           position: i + 1,
           url: SITE_URL + listingPath(l),
@@ -2141,7 +2176,11 @@ ${statesWith
     ],
   };
 
-  writePage(path, render(meta, body, { jsonld }));
+  const scripts = items.length
+    ? `${pageMapScripts}\n<script src="/assets/js/category-filter.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`
+    : '';
+
+  writePage(path, render(meta, body, { jsonld, scripts }));
   addToSitemap(path, '0.8', 'weekly');
 }
 
@@ -2175,11 +2214,11 @@ for (const l of listings) {
       `${l.name} is a pumpkin patch${isDuplicateNameInCity && l.street ? ` at ${l.street}` : place ? ` in ${place}` : ''}. See the address, hours, rating and directions before you visit.`,
     h1: l.name,
     lede: place ? `Pumpkin patch in ${place}` : 'Pumpkin patch',
-    nav: 'find',
+    nav: 'pumpkin-patches',
     layout: 'wide',
     noindex: Boolean(l.sample),
     trail: [
-      { label: 'Find', href: '/find/' },
+      { label: 'Pumpkin Patches', href: '/pumpkin-patches/' },
       ...(l.state ? [{ label: l.state, href: statePath(l.state) }] : []),
       ...(l.state && l.city ? [{ label: l.city, href: cityPath(l.state, l.city) }] : []),
       { label: l.name },

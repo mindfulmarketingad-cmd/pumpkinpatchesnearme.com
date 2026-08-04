@@ -116,7 +116,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
 /* -------------------------------------------------------------- header */
 
 .site-header {
-  position: sticky; top: 0; z-index: 1000;
+  position: sticky; top: 0; z-index: 1300;
   height: var(--header-h);
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: saturate(180%) blur(8px);
@@ -187,7 +187,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
   .main-nav {
     position: absolute; inset: var(--header-h) 0 auto 0; background: #fff;
     border-bottom: 1px solid var(--line); box-shadow: var(--shadow-md);
-    display: none;
+    display: none; z-index: 1200;
   }
   .main-nav[data-open="true"] { display: block; }
   .main-nav ul { flex-direction: column; align-items: stretch; padding: 0.6rem 1.25rem 1rem; gap: 0.15rem; }

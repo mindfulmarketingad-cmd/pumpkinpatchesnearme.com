@@ -2,6 +2,18 @@
   command = "npm run build"
   publish = "dist"
 
+[[redirects]]
+  from = "/find"
+  to = "/pumpkin-patches/"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/find/"
+  to = "/pumpkin-patches/"
+  status = 301
+  force = true
+
 [[headers]]
   for = "/assets/*"
   [headers.values]

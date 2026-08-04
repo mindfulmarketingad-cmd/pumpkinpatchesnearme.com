@@ -26,7 +26,7 @@
     }
     if (!items.length) {
       status.textContent = 'No matches for "' + query + '"';
-      results.innerHTML = '<div class="empty-state"><h3>Nothing found</h3><p>Try a farm name, a town, or a state. You can also <a href="/">browse the map</a> or <a href="/find/">browse by state</a>.</p></div>';
+      results.innerHTML = '<div class="empty-state"><h3>Nothing found</h3><p>Try a farm name, a town, or a state. You can also <a href="/">browse the map</a> or <a href="/states/">browse by state</a>.</p></div>';
       return;
     }
     status.textContent = items.length + ' result' + (items.length === 1 ? '' : 's') + (items.length >= MAX_RESULTS ? ' (showing the first ' + MAX_RESULTS + ')' : '');

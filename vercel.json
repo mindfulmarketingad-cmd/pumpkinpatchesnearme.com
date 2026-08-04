@@ -4,6 +4,10 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "trailingSlash": true,
+  "redirects": [
+    { "source": "/find", "destination": "/pumpkin-patches/", "permanent": true },
+    { "source": "/find/", "destination": "/pumpkin-patches/", "permanent": true }
+  ],
   "headers": [
     {
       "source": "/assets/(.*)",

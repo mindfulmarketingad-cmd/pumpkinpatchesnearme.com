@@ -556,6 +556,6 @@
     })
     .catch(function () {
       els.list.innerHTML = '<div class="empty-state"><h3>Listings could not be loaded</h3>' +
-        '<p>Refresh the page to try again, or <a href="/find/">browse pumpkin patches by state</a>.</p></div>';
+        '<p>Refresh the page to try again, or <a href="/states/">browse pumpkin patches by state</a>.</p></div>';
     });
 })();
