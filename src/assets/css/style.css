@@ -373,6 +373,9 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
 }
 .rating { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 600; color: var(--ink); }
 .stars { color: var(--gold); letter-spacing: 1px; font-size: 0.95rem; }
+a.pillar-reviews-link { display: inline-flex; align-items: center; gap: 0.7rem; text-decoration: none; }
+a.pillar-reviews-link:hover .rating { color: var(--orange-700); }
+a.pillar-reviews-link:hover span:not(.rating):not(.stars) { text-decoration: underline; }
 .dot-sep::before { content: "\00b7"; margin-right: 0.55rem; color: var(--line); }
 
 .listing-address { font-size: 0.94rem; color: var(--ink-2); margin: 0 0 0.7rem; }

@@ -523,15 +523,42 @@ function renderPillarEntry(l, rank, stateName) {
   const address = l.fullAddress || [l.street, place, l.postalCode].filter(Boolean).join(', ');
   const tags = (l.features || []).slice(0, 4);
   const hoursJson = l.hours ? attr(JSON.stringify(DAYS.map((d) => l.hours[d] || ''))) : '';
+
+  // Every listing carries a Google placeId/mapsUrl from the import, so these
+  // always resolve — no fabricated links, just pointing existing data at the
+  // right Google surface (public reviews list, directions, the place's own
+  // photo set) instead of leaving the rating, address and photo count as
+  // plain text.
+  const reviewsUrl = l.placeId ? `https://search.google.com/local/reviews?placeid=${encodeURIComponent(l.placeId)}` : l.mapsUrl || '';
+  const directionsUrl = Number.isFinite(l.lat) && Number.isFinite(l.lng) ? `https://www.google.com/maps/dir/?api=1&destination=${l.lat},${l.lng}` : '';
+  const photosUrl = l.mapsUrl || '';
+
+  const ratingReviewsInner = `${l.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(l.rating)}</span> ${l.rating.toFixed(1)}</span>` : ''}${l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} reviews</span>` : ''}`;
+  const ratingReviewsHtml = ratingReviewsInner
+    ? reviewsUrl
+      ? `<a class="pillar-reviews-link" href="${attr(reviewsUrl)}" target="_blank" rel="noopener nofollow">${ratingReviewsInner}</a>`
+      : ratingReviewsInner
+    : '';
+
+  const cityHtml = l.city && l.state ? `<a href="${cityPath(l.state, l.city)}">${esc(l.city)}</a>` : esc(l.city || '');
+  const stateHtml = l.state && l.stateCode ? `<a href="${statePath(l.state)}">${esc(l.stateCode)}</a>` : esc(l.stateCode || '');
+  const placeHtml = `${cityHtml ? `<span>${cityHtml}</span>` : ''}${cityHtml && stateHtml ? ', ' : ''}${stateHtml ? `<span>${stateHtml}</span>` : ''}`;
+
+  const contactParts = [];
+  if (l.phone) contactParts.push(`<a href="tel:${attr(l.phone.replace(/[^\d+]/g, ''))}">${esc(l.phone)}</a>`);
+  if (l.website) contactParts.push(`<a href="${attr(l.website)}" target="_blank" rel="noopener nofollow">Visit website</a>`);
+  if (photosUrl) contactParts.push(`<a href="${attr(photosUrl)}" target="_blank" rel="noopener nofollow">${l.photosCount ? `Photos (${l.photosCount.toLocaleString('en-US')})` : 'Photos'}</a>`);
+  const contactHtml = contactParts.length ? `<p class="pillar-contact">${contactParts.join(' <span aria-hidden="true">&middot;</span> ')}</p>` : '';
+
   return `    <li class="pillar-entry" id="${attr(l.slug)}" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-state="${attr((l.state || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}" data-lat="${l.lat ?? ''}" data-lng="${l.lng ?? ''}"${hoursJson ? ` data-hours='${hoursJson}'` : ''}>
       <a class="pillar-media" href="${listingPath(l)}" tabindex="-1" aria-hidden="true">
         ${listingImage(l, { className: 'pillar-img', sizes: '(min-width: 640px) 120px, 96px', size: 'thumb' })}
       </a>
       <div class="pillar-entry-body">
         <h3><a href="${listingPath(l)}">${esc(l.name)}</a></h3>
-        <p class="listing-meta">${l.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(l.rating)}</span> ${l.rating.toFixed(1)}</span>` : ''}${l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} reviews</span>` : ''}${place ? `<span>${esc(place)}</span>` : ''}<span class="pillar-distance" hidden></span></p>
-        ${address ? `<p class="pillar-address">${esc(address)}</p>` : ''}
-        ${l.phone || l.website ? `<p class="pillar-contact">${l.phone ? `<a href="tel:${attr(l.phone.replace(/[^\d+]/g, ''))}">${esc(l.phone)}</a>` : ''}${l.phone && l.website ? ' <span aria-hidden="true">&middot;</span> ' : ''}${l.website ? `<a href="${attr(l.website)}" target="_blank" rel="noopener nofollow">Visit website</a>` : ''}</p>` : ''}
+        <p class="listing-meta">${ratingReviewsHtml}${placeHtml}<span class="pillar-distance" hidden></span></p>
+        ${address ? `<p class="pillar-address">${directionsUrl ? `<a href="${attr(directionsUrl)}" target="_blank" rel="noopener nofollow">${esc(address)}</a>` : esc(address)}</p>` : ''}
+        ${contactHtml}
         <p class="pillar-hours-today">${l.hours ? '' : 'Hours not listed — confirm directly before you go.'}</p>
         <p class="pillar-perfect-for"><strong>${esc(perfectForText(l))}.</strong></p>
         <p class="pillar-blurb">${blurbFor(l, rank, stateName)}</p>
