@@ -2502,6 +2502,8 @@ ${related.map((o) => renderCard(o, { showState: false, showCity: true })).join('
     <div class="tag-row">
 ${nearCities.map((c) => `      <a class="tag tag-link" href="${cityPath(l.state, c.city)}">${esc(c.city)} (${c.count})</a>`).join('\n')}
     </div>` : ''}
+
+    <p style="margin-top:1.5rem"><a class="btn btn-outline" href="/">Search the full map for pumpkin patches near you</a></p>
   </div>
   <aside>
     <div class="card">
