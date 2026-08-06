@@ -10,61 +10,7 @@
   "trail": [{ "label": "Pumpkin Patches" }]
 }
 -->
-<div class="find-tool" id="find-tool">
-  <form class="search-form" id="find-form" role="search">
-    <label class="visually-hidden" for="find-query">Search by business name, city, state or ZIP code</label>
-    <div class="search-field">
-      <input id="find-query" type="text" placeholder="Search by name, city, state or ZIP code..." autocomplete="off">
-      <button class="btn btn-primary" type="submit">Search</button>
-    </div>
-    <button class="toggle-btn" type="button" id="find-geo-btn">Use my location</button>
-  </form>
-
-  <div class="control-group">
-    <label class="control">
-      <span class="control-label">Attraction</span>
-      <select id="find-filter-feature" aria-label="Filter by attraction">
-        <option value="">All</option>
-      </select>
-    </label>
-    <label class="control">
-      <span class="control-label">State</span>
-      <select id="find-filter-state" aria-label="Filter by state">
-        <option value="">All states</option>
-      </select>
-    </label>
-    <label class="control">
-      <span class="control-label">Rating</span>
-      <select id="find-filter-rating" aria-label="Filter by minimum rating">
-        <option value="">Any</option>
-        <option value="4.5">4.5+</option>
-        <option value="4">4.0+</option>
-        <option value="3.5">3.5+</option>
-      </select>
-    </label>
-    <label class="control">
-      <span class="control-label">Sort</span>
-      <select id="find-sort" aria-label="Sort results">
-        <option value="best">Best match</option>
-        <option value="distance">Closest / nearest</option>
-        <option value="rating">Top rated</option>
-        <option value="reviews">Most reviewed</option>
-        <option value="name">Name A-Z</option>
-      </select>
-    </label>
-    <button class="toggle-btn" type="button" id="find-reset-btn">Reset</button>
-  </div>
-
-  <div class="results-head" style="padding:0.85rem 0 0.5rem;background:transparent;border:0">
-    <p class="results-count" id="find-results-count">Loading pumpkin patches…</p>
-    <p class="results-scope" id="find-results-scope">across the United States</p>
-  </div>
-
-  <div class="grid grid-3" id="find-results"></div>
-  <p style="text-align:center;margin-top:1.5rem">
-    <button class="btn btn-outline" type="button" id="find-more-btn" hidden>Show more results</button>
-  </p>
-</div>
+{{PUMPKIN_PATCHES_DIRECTORY}}
 
 <h2 id="attractions" style="margin-top:3rem">Browse by attraction</h2>
 <p>Looking for something specific? Start with the attraction and see every farm that has it.</p>

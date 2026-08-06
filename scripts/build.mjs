@@ -290,40 +290,6 @@ function renderCard(l, { showState = true, showCity = true, headingLevel = 3 } =
 </article>`;
 }
 
-// A horizontal spotlight banner for the top of a state page, above the
-// ranked list. Picks a genuinely claimed/featured listing when one exists
-// in that state (labelled "Featured Farm" — the same claim status shown
-// elsewhere); otherwise picks a deterministic "random" listing from the
-// whole state and labels it "Spotlight" instead, since nothing was
-// actually paid for or claimed and the copy shouldn't imply it was.
-function renderSpotlightBanner(items, seedKey) {
-  if (!items.length) return '';
-  const featuredPool = items.filter((l) => l.featured);
-  const pool = featuredPool.length ? featuredPool : items;
-  const pick = pool[seededHash(seedKey) % pool.length];
-  const isFeatured = featuredPool.length > 0;
-  const place = [pick.city, pick.stateCode].filter(Boolean).join(', ');
-  return `<div class="spotlight-banner">
-  <a class="spotlight-media" href="${listingPath(pick)}" tabindex="-1" aria-hidden="true">
-    ${listingImage(pick, { className: 'spotlight-img', sizes: '(min-width: 900px) 320px, 100vw', size: 'card' })}
-  </a>
-  <div class="spotlight-body">
-    <p class="spotlight-tag">${isFeatured ? 'Featured Farm' : 'Spotlight'}</p>
-    <h2><a href="${listingPath(pick)}">${esc(pick.name)}</a></h2>
-    <p class="listing-meta">
-      ${pick.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(pick.rating)}</span> ${pick.rating.toFixed(1)}</span>` : ''}
-      ${pick.reviews ? `<span>${pick.reviews.toLocaleString('en-US')} reviews</span>` : ''}
-      ${place ? `<span>${esc(place)}</span>` : ''}
-    </p>
-    <p>${blurbFor(pick, 1, '')}</p>
-    <div class="card-actions">
-      <a class="btn btn-primary btn-sm" href="${listingPath(pick)}">View details</a>
-      ${isFeatured ? '' : `<a class="btn btn-outline btn-sm" href="/partners/">Is this your farm? Claim it</a>`}
-    </div>
-  </div>
-</div>`;
-}
-
 // A small gallery of real photos from a page's own listings, deterministically
 // shuffled per page (same seed -> same photos on every rebuild, not a fresh
 // shuffle each time). Skipped entirely on pages with no photographed listings
@@ -1906,6 +1872,62 @@ const tokens = {
   <a class="btn btn-primary" href="/partners/">Claim your listing</a>
 </div>`,
   '{{SEASON_YEAR}}': String(SEASON_YEAR),
+  // The national /pumpkin-patches/ directory — every listing we track, in
+  // the same pillar-list format as the state/city/category pages, with a
+  // state filter added since (unlike those pages) nothing here is already
+  // scoped to one state.
+  '{{PUMPKIN_PATCHES_DIRECTORY}}': (() => {
+    const items = rankListings(listings);
+    const presentCategoriesAll = categories
+      .map((c) => ({ c, n: items.filter((l) => (l.features || []).includes(c.feature)).length }))
+      .filter((x) => x.n > 0);
+    const stateCounts = stateNames.map((s) => ({ state: s, n: (byState.get(s) || []).length }));
+
+    const filterBar = `<div class="find-tool state-filter" id="state-filter">
+  <div class="search-field">
+    <label class="visually-hidden" for="state-filter-q">Search by name, city or state</label>
+    <input id="state-filter-q" type="text" placeholder="Search by name, city or state..." autocomplete="off">
+  </div>
+  <div class="control-group">
+    <label class="control">
+      <span class="control-label">State</span>
+      <select id="state-filter-state" aria-label="Filter by state">
+        <option value="">All states</option>
+${stateCounts.map(({ state, n }) => `        <option value="${attr(state.toLowerCase())}">${esc(state)} (${n})</option>`).join('\n')}
+      </select>
+    </label>
+    <label class="control">
+      <span class="control-label">Attraction</span>
+      <select id="state-filter-feature" aria-label="Filter by attraction">
+        <option value="">All</option>
+${presentCategoriesAll.map(({ c, n }) => `        <option value="${attr(c.feature.toLowerCase())}">${esc(c.name)} (${n})</option>`).join('\n')}
+      </select>
+    </label>
+    <label class="control">
+      <span class="control-label">Sort</span>
+      <select id="state-filter-sort" aria-label="Sort results">
+        <option value="rating">Top rated</option>
+        <option value="reviews">Most reviewed</option>
+        <option value="name">Name A-Z</option>
+        <option value="distance">Nearest to me</option>
+      </select>
+    </label>
+    <button class="toggle-btn" type="button" id="state-filter-reset">Reset</button>
+    <button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button>
+  </div>
+  <div class="results-head" style="padding:0.6rem 0 0;background:transparent;border:0">
+    <p class="results-count" id="state-filter-count">${items.length.toLocaleString('en-US')} pumpkin patches</p>
+  </div>
+</div>`;
+
+    const listHtml = `${filterBar}
+<ol class="pillar-list" id="state-pillar-list">
+${items.map((l, i) => renderPillarEntry(l, i, l.state)).join('\n')}
+</ol>
+<p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search, state or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
+
+    return renderScopedMap(items, listHtml);
+  })(),
 };
 
 function expandTokens(html) {
@@ -2026,7 +2048,7 @@ for (const page of staticPages) {
   }
 
   if (meta.path === '/pumpkin-patches/') {
-    scripts = `<script src="/assets/js/find.js?v=${ASSET_VERSION}" defer></script>`;
+    scripts = `${pageMapScripts}\n<script src="/assets/js/state-filter.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
   }
 
   if (meta.trail) {
@@ -2113,7 +2135,6 @@ ${presentCategories.map(({ c, n }) => `        <option value="${attr(c.feature.t
 </div>`;
 
   const listHtml = `${filterBar}
-${renderSpotlightBanner(items, stateName)}
 <ol class="pillar-list" id="state-pillar-list">
 ${items.map((l, i) => renderPillarEntry(l, i, stateName)).join('\n')}
 </ol>
@@ -2232,7 +2253,6 @@ ${featureCounts.map(({ c, n }) => `        <option value="${attr(c.feature.toLow
 </div>`;
 
   const listHtml = `${filterBar}
-${renderSpotlightBanner(items, key)}
 <ol class="pillar-list" id="state-pillar-list">
 ${items.map((l, i) => renderPillarEntry(l, i, cityName)).join('\n')}
 </ol>
@@ -2342,7 +2362,6 @@ ${statesWith.map((s) => `        <option value="${attr(s.toLowerCase())}">${esc(
 
   const listHtml = items.length
     ? `${filterBar}
-${renderSpotlightBanner(items, cat.slug)}
 <ol class="pillar-list" id="cat-pillar-list">
 ${items.map((l, i) => renderPillarEntry(l, i, cat.name)).join('\n')}
 </ol>
@@ -2614,10 +2633,10 @@ ${categories
 cpSync(join(SRC, 'assets'), join(DIST, 'assets'), { recursive: true });
 mkdirSync(join(DIST, 'data'), { recursive: true });
 
-// The only consumers of this file are map.js and find.js, both driving the
-// homepage/find-page map and card UI — neither needs the full listing
-// record (hours, description, phone, reviewsPerScore, mapsUrl, ids...).
-// Trimming to just the fields those scripts actually read cut this file
+// The only consumer of this file is map.js, driving the homepage map and
+// card UI — it doesn't need the full listing record (hours, description,
+// phone, reviewsPerScore, mapsUrl, ids...). Trimming to just the fields
+// that script actually reads cut this file
 // from ~2.6MB to a fraction of that, which matters more than almost
 // anything else here since it's fetched in full on every homepage/find
 // visit before the map or results list can render at all.

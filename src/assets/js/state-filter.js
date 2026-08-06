@@ -11,6 +11,7 @@
   var list = document.getElementById('state-pillar-list');
   var qInput = document.getElementById('state-filter-q');
   var citySelect = document.getElementById('state-filter-city');
+  var stateSelect = document.getElementById('state-filter-state');
   var featureSelect = document.getElementById('state-filter-feature');
   var sortSelect = document.getElementById('state-filter-sort');
   var resetBtn = document.getElementById('state-filter-reset');
@@ -24,6 +25,7 @@
   function apply() {
     var q = qInput.value.trim().toLowerCase();
     var city = citySelect ? citySelect.value : '';
+    var state = stateSelect ? stateSelect.value : '';
     var feature = featureSelect.value;
     var sortKey = sortSelect.value;
 
@@ -31,11 +33,13 @@
     items.forEach(function (el) {
       var name = el.getAttribute('data-name') || '';
       var cityVal = el.getAttribute('data-city') || '';
+      var stateVal = el.getAttribute('data-state') || '';
       var features = el.getAttribute('data-features') || '';
-      var matchesQuery = !q || name.indexOf(q) !== -1 || cityVal.indexOf(q) !== -1;
+      var matchesQuery = !q || name.indexOf(q) !== -1 || cityVal.indexOf(q) !== -1 || stateVal.indexOf(q) !== -1;
       var matchesCity = !city || cityVal === city;
+      var matchesState = !state || stateVal === state;
       var matchesFeature = !feature || features.split('|').indexOf(feature) !== -1;
-      var show = matchesQuery && matchesCity && matchesFeature;
+      var show = matchesQuery && matchesCity && matchesState && matchesFeature;
       el.hidden = !show;
       if (show) visible++;
     });
@@ -72,6 +76,7 @@
     timer = window.setTimeout(apply, 120);
   });
   if (citySelect) citySelect.addEventListener('change', apply);
+  if (stateSelect) stateSelect.addEventListener('change', apply);
   featureSelect.addEventListener('change', apply);
   sortSelect.addEventListener('change', function () {
     // Picking "Nearest to me" is itself the user gesture that justifies
@@ -88,6 +93,7 @@
   function reset() {
     qInput.value = '';
     if (citySelect) citySelect.value = '';
+    if (stateSelect) stateSelect.value = '';
     featureSelect.value = '';
     sortSelect.value = 'rating';
     apply();
