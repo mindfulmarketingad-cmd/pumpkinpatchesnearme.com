@@ -17,7 +17,8 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "leaflet": "^1.9.4"
+    "leaflet": "^1.9.4",
+    "@supabase/supabase-js": "^2.112.2"
   },
   "dependencies": {
     "xlsx": "^0.18.5"

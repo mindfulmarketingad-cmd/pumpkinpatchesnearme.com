@@ -1,0 +1,82 @@
+<!--meta
+{
+  "path": "/dashboard/",
+  "title": "Site Analytics — Pumpkin Patches Near Me",
+  "description": "Live, public traffic and engagement analytics for pumpkinpatchesnearme.com: sessions, visitors, lead actions and per-listing performance.",
+  "h1": "Site Analytics",
+  "lede": "Live traffic and engagement across the directory — no login required. Numbers update in real time as visitors browse the site.",
+  "nav": "partners",
+  "layout": "wide",
+  "noindex": true,
+  "trail": [{ "label": "Site Analytics" }]
+}
+-->
+<div id="dash-config-warning" class="notice" hidden>
+  <p><strong>Analytics isn't configured for this build.</strong> Set <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> in the site's build environment and run the migration in <code>supabase/migrations/</code>, then rebuild.</p>
+</div>
+
+<div id="dash-app" hidden>
+  <div class="page-toggle-bar">
+    <p class="page-toggle-label">Range</p>
+    <div class="control-group" role="group" aria-label="Date range">
+      <button class="toggle-btn" type="button" data-range="7">Last 7 days</button>
+      <button class="toggle-btn" type="button" data-range="30" aria-pressed="true">Last 30 days</button>
+      <button class="toggle-btn" type="button" data-range="90">Last 90 days</button>
+    </div>
+  </div>
+
+  <div class="dash-stats grid grid-3" style="margin-top:1.25rem">
+    <div class="card dash-stat"><p class="dash-stat-label">Sessions</p><p class="dash-stat-value" id="stat-sessions">—</p></div>
+    <div class="card dash-stat"><p class="dash-stat-label">Unique visitors</p><p class="dash-stat-value" id="stat-visitors">—</p></div>
+    <div class="card dash-stat"><p class="dash-stat-label">Lead actions</p><p class="dash-stat-value" id="stat-lead-actions">—</p></div>
+    <div class="card dash-stat"><p class="dash-stat-label">Searches</p><p class="dash-stat-value" id="stat-searches">—</p></div>
+    <div class="card dash-stat"><p class="dash-stat-label">Page &amp; listing views</p><p class="dash-stat-value" id="stat-impressions">—</p></div>
+    <div class="card dash-stat dash-stat-live">
+      <p class="dash-stat-label">Live — since you opened this page</p>
+      <p class="dash-stat-value" id="dash-live-counter">0</p>
+    </div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:1.5rem;align-items:start">
+    <div class="card">
+      <h3>Actions breakdown</h3>
+      <div id="dash-action-chart" class="dash-chart"></div>
+    </div>
+    <div class="card">
+      <h3>Daily trend</h3>
+      <div id="dash-trend-chart" class="dash-chart"></div>
+      <div id="dash-trend-legend" class="dash-legend"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:1.5rem">
+    <h3>Live activity</h3>
+    <p style="color:var(--muted);font-size:0.88rem;margin-top:-0.4rem">Streaming in real time via Supabase Realtime. Most recent first.</p>
+    <ul id="dash-live-feed" class="dash-live-feed">
+      <li class="dash-live-empty">Waiting for activity&hellip;</li>
+    </ul>
+  </div>
+
+  <div class="card" style="margin-top:1.5rem">
+    <h3>Per-business breakdown</h3>
+    <div class="table-wrap dash-table-wrap">
+      <table class="dash-business-table">
+        <thead>
+          <tr>
+            <th>Business</th>
+            <th>City</th>
+            <th>Directions</th>
+            <th>Phone</th>
+            <th>Reviews</th>
+            <th>Lead actions</th>
+            <th>Views</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="dash-business-table-body">
+          <tr><td colspan="8">Loading&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

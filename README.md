@@ -353,6 +353,61 @@ cp node_modules/leaflet/dist/leaflet.{js,css} src/assets/vendor/leaflet/
 cp node_modules/leaflet/dist/images/*.png src/assets/vendor/leaflet/images/
 ```
 
+Supabase JS is vendored the same way, in `src/assets/vendor/supabase/` (only
+loaded on `/dashboard/`, not site-wide) — see the Analytics section below for
+how to upgrade it.
+
+---
+
+## Analytics dashboard (`/dashboard/`)
+
+This site has no server or API routes, so the analytics dashboard writes and
+reads Supabase directly from the browser with the anon key. Public read
+*and* public insert are intentional here (see the comments in the migration)
+— the tradeoff of doing analytics without a backend, versus a Next.js
+version of this feature that would insert through a service-role API route.
+The table holds no PII, just paths, event types and browser-generated
+session/visitor ids.
+
+**Setup:**
+
+1. Create a Supabase project (or reuse one — the table name
+   (`pumpkinpatchesnearme_dashboard`) is namespaced per directory site
+   specifically so one project can host analytics for several of them).
+2. Run `supabase/migrations/0001_pumpkinpatchesnearme_dashboard.sql` against
+   it (Supabase SQL editor, or `supabase db push` with the CLI). This creates
+   the table, RLS policies, indexes, adds the table to the
+   `supabase_realtime` publication, and creates the four aggregate RPCs the
+   dashboard calls (`..._stats`, `..._daily`, `..._by_action`,
+   `..._by_business`).
+3. In your build environment (Vercel/Netlify project settings, or a local
+   `.env` you export before building), set:
+   ```
+   SUPABASE_URL=https://<your-project>.supabase.co
+   SUPABASE_ANON_KEY=<your-project-anon-key>
+   ```
+4. Rebuild. With both set, every page tracks events and `/dashboard/` goes
+   live; with either unset, `/dashboard/` shows a "not configured" notice
+   and the rest of the site behaves exactly as it does today — analytics is
+   fully opt-in, not a hard dependency.
+
+**What's tracked:** `pageview` (every page load, promoted to `listing_view`
+on a listing's own page), `call_click` (any `tel:` link), `directions_click`
+(any Google Maps directions link), `review_click` (the Google reviews link
+on pillar entries), and `search` (debounced ~700ms on the header search, the
+`/search/` page, and the state/city/category/`/pumpkin-patches/` filter
+boxes — they all share one input id). See `src/assets/js/analytics-client.js`
+for the exact instrumentation and `src/assets/js/dashboard.js` for how the
+dashboard queries and renders it.
+
+**Known limitation:** because inserts go straight from the browser to
+Supabase with no backend to rate-limit them, the table is writable by
+anyone who finds the anon key (which is, by design, visible in the page
+source). The `event_type` CHECK constraint is the only server-side guard.
+This is a reasonable tradeoff for a free analytics feature on a static
+site; if it ever becomes a real abuse vector, move inserts behind a
+Supabase Edge Function that can rate-limit before writing.
+
 ---
 
 ## Before going live

@@ -24,6 +24,18 @@ const ASSET_VERSION = String(Date.now()).slice(-6);
 const BUILD_DATE = new Date().toISOString().slice(0, 10);
 const PLACEHOLDER_IMAGE = '/assets/img/patch-placeholder.svg';
 
+// Analytics is opt-in: set SUPABASE_URL and SUPABASE_ANON_KEY at build time
+// (e.g. in the Vercel/Netlify environment) to turn it on. With neither set,
+// analytics-client.js sees an empty config and no-ops everywhere — the site
+// builds and runs identically either way. The anon key is meant to be public
+// (Supabase's row-level-security policies are what actually gate access, not
+// key secrecy), so embedding it in the built HTML is intentional, not a leak.
+// Table name is namespaced per directory site since one Supabase project can
+// host analytics for several of this operator's directories.
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
+const ANALYTICS_TABLE = 'pumpkinpatchesnearme_dashboard';
+
 /**
  * Programmatic blog posts are backdated 30–60 days before the build date
  * rather than all sharing today's date — publishing 800+ posts with an
@@ -516,7 +528,7 @@ function renderPillarEntry(l, rank, stateName) {
   if (photosUrl) contactParts.push(`<a href="${attr(photosUrl)}" target="_blank" rel="noopener nofollow">${l.photosCount ? `Photos (${l.photosCount.toLocaleString('en-US')})` : 'Photos'}</a>`);
   const contactHtml = contactParts.length ? `<p class="pillar-contact">${contactParts.join(' <span aria-hidden="true">&middot;</span> ')}</p>` : '';
 
-  return `    <li class="pillar-entry" id="${attr(l.slug)}" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-state="${attr((l.state || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}" data-lat="${l.lat ?? ''}" data-lng="${l.lng ?? ''}"${hoursJson ? ` data-hours='${hoursJson}'` : ''}>
+  return `    <li class="pillar-entry" id="${attr(l.slug)}" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-city-label="${attr(l.city || '')}" data-state="${attr((l.state || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}" data-lat="${l.lat ?? ''}" data-lng="${l.lng ?? ''}"${hoursJson ? ` data-hours='${hoursJson}'` : ''}>
       <a class="pillar-media" href="${listingPath(l)}" tabindex="-1" aria-hidden="true">
         ${listingImage(l, { className: 'pillar-img', sizes: '(min-width: 640px) 120px, 96px', size: 'thumb' })}
       </a>
@@ -911,6 +923,11 @@ function render(meta, body, opts = {}) {
     '{{CONTENT}}': banner + layoutContent(meta, body),
     '{{YEAR}}': String(new Date().getFullYear()),
     '{{ASSET_VERSION}}': ASSET_VERSION,
+    '{{ANALYTICS_CONFIG_JSON}}': JSON.stringify({
+      url: SUPABASE_URL,
+      anonKey: SUPABASE_ANON_KEY,
+      table: ANALYTICS_TABLE,
+    }).replace(/</g, '\\u003c'),
   };
 
   // The noindex directive must replace, not stack with, the default robots tag.
@@ -2051,6 +2068,10 @@ for (const page of staticPages) {
     scripts = `${pageMapScripts}\n<script src="/assets/js/state-filter.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
   }
 
+  if (meta.path === '/dashboard/') {
+    scripts = `<script src="/assets/vendor/supabase/supabase.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/dashboard.js?v=${ASSET_VERSION}" defer></script>`;
+  }
+
   if (meta.trail) {
     const crumbs = breadcrumbJsonLd(meta.trail, meta.path);
     jsonld = jsonld || {
@@ -2068,7 +2089,7 @@ for (const page of staticPages) {
   }
 
   writePage(meta.path, render(meta, body, { jsonld, scripts }));
-  addToSitemap(meta.path, meta.path === '/' ? '1.0' : '0.7', meta.path === '/' ? 'daily' : 'monthly');
+  if (!meta.noindex) addToSitemap(meta.path, meta.path === '/' ? '1.0' : '0.7', meta.path === '/' ? 'daily' : 'monthly');
 }
 
 /* --- state pages --------------------------------------------------------- */
