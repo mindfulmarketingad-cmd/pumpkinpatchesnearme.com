@@ -326,6 +326,65 @@ ${picks
 </div>`;
 }
 
+/* ------------------------------------------------------------ AdSense ---
+   Three ad units, each placed where it fits the page's own content shape
+   rather than the same unit repeated everywhere: "in-article" (Google's
+   fluid, reflow-friendly format) inside long-form prose — blog posts and
+   listing descriptions; "vertical" right after a listing's hero image,
+   the highest-visibility spot on a listing page that doesn't compete with
+   the description for attention; "square" spliced natively into the
+   scrolling pillar-list on state/city/category/directory pages, since
+   that list *is* the page for most visitors on mobile. The loader script
+   itself lives once in base.html's <head> — every call site below is just
+   the <ins> unit plus its own push({}).
+*/
+const AD_CLIENT = 'ca-pub-9332749804326149';
+const AD_SLOTS = { vertical: '5282024480', square: '1541306209', inArticle: '4753212343' };
+
+function renderAdSlot(type) {
+  const insAttrs =
+    type === 'inArticle'
+      ? `style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid"`
+      : `style="display:block" data-ad-format="auto" data-full-width-responsive="true"`;
+  return `<div class="ad-slot ad-slot-${type}">
+  <p class="ad-label">Advertisement</p>
+  <ins class="adsbygoogle" ${insAttrs} data-ad-client="${AD_CLIENT}" data-ad-slot="${AD_SLOTS[type]}"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>`;
+}
+
+// Drops an in-article ad right after a post/description's opening
+// paragraph — reading has already started, so it doesn't read as an
+// interstitial, but it's still above almost everything else on the page.
+// A plain string replace on the first "</p>" is deliberate: every post
+// body on this site (hand-authored and programmatic alike) opens with a
+// lede paragraph before its first heading, so this never needs to parse
+// arbitrary HTML to find a safe insertion point.
+function injectInArticleAd(bodyHtml) {
+  const marker = '</p>';
+  const idx = bodyHtml.indexOf(marker);
+  if (idx === -1) return bodyHtml;
+  const cut = idx + marker.length;
+  return bodyHtml.slice(0, cut) + '\n' + renderAdSlot('inArticle') + bodyHtml.slice(cut);
+}
+
+// Splices a square ad directly into a pillar-list's own entries — native
+// to the scroll a mobile visitor is already doing, rather than a banner
+// they scroll past. Skipped on short lists (nothing to interrupt), and
+// doubled up past 20 entries, where a single ad near the top would leave
+// most of a long scroll unmonetized. renderEntry is (listing, index) =>
+// html, already closed over whatever per-page seed a caller's own
+// renderPillarEntry() call needs — this only owns list assembly.
+function pillarEntriesWithAds(items, renderEntry) {
+  const entries = items.map((l, i) => renderEntry(l, i));
+  if (entries.length < 6) return entries.join('\n');
+  const withAds = entries.slice();
+  const adLi = `    <li class="pillar-ad">${renderAdSlot('square')}</li>`;
+  withAds.splice(4, 0, adLi);
+  if (entries.length >= 20) withAds.splice(15, 0, adLi);
+  return withAds.join('\n');
+}
+
 function joinNatural(words) {
   if (words.length <= 1) return words[0] || '';
   if (words.length === 2) return `${words[0]} and ${words[1]}`;
@@ -1043,7 +1102,7 @@ for (const post of handAuthoredPosts) {
     ],
   };
   const byline = renderByline(post.meta.author, post.meta.date, post.meta.readingTime);
-  writePage(meta.path, render(meta, heroHtml + byline + toc + bodyWithIds, { jsonld }));
+  writePage(meta.path, render(meta, heroHtml + byline + toc + injectInArticleAd(bodyWithIds), { jsonld }));
   addToSitemap(meta.path, '0.6', 'monthly', post.meta.updated || post.meta.date);
 }
 
@@ -1203,7 +1262,7 @@ ${closingSummary}`;
   };
   const byline = renderByline(pillarAuthorSlug, postMeta.date, postMeta.readingTime);
   const pillarScripts = `<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
-  writePage(path, render(meta, heroHtml + byline + body, { jsonld, scripts: pillarScripts }));
+  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: pillarScripts }));
   addToSitemap(path, '0.7', 'weekly', postMeta.date);
 }
 
@@ -1253,7 +1312,7 @@ for (const stateName of stateNames) {
 <p><button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button></p>`;
 
   const listHtml = `<ol class="pillar-list">
-${topN.map((l, i) => renderPillarEntry(l, i, stateName)).join('\n')}
+${pillarEntriesWithAds(topN, (l, i) => renderPillarEntry(l, i, stateName))}
 </ol>`;
 
   const faqQa = [
@@ -1366,7 +1425,7 @@ ${closingSummary}`;
   };
   const byline = renderByline(stateAuthorSlug, postMeta.date, postMeta.readingTime);
   const statePostScripts = `<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
-  writePage(path, render(meta, heroHtml + byline + body, { jsonld, scripts: statePostScripts }));
+  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: statePostScripts }));
   addToSitemap(path, '0.6', 'weekly', postMeta.date);
 }
 
@@ -1530,7 +1589,7 @@ ${closingSummary}`;
     ],
   };
   const byline = renderByline(cityAuthorSlug, postMeta.date, postMeta.readingTime);
-  writePage(path, render(meta, heroHtml + byline + body, { jsonld }));
+  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld }));
   addToSitemap(path, '0.6', 'weekly', postMeta.date);
 }
 
@@ -1705,7 +1764,7 @@ ${closingSummary}`;
       ],
     };
     const byline = renderByline(attractionAuthorSlug, postMeta.date, postMeta.readingTime);
-    writePage(path, render(meta, heroHtml + byline + body, { jsonld }));
+    writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld }));
     addToSitemap(path, '0.6', 'weekly', postMeta.date);
   }
 }
@@ -1889,6 +1948,7 @@ const tokens = {
   <a class="btn btn-primary" href="/partners/">Claim your listing</a>
 </div>`,
   '{{SEASON_YEAR}}': String(SEASON_YEAR),
+  '{{AD_SQUARE}}': renderAdSlot('square'),
   // The national /pumpkin-patches/ directory — every listing we track, in
   // the same pillar-list format as the state/city/category pages, with a
   // state filter added since (unlike those pages) nothing here is already
@@ -1939,7 +1999,7 @@ ${presentCategoriesAll.map(({ c, n }) => `        <option value="${attr(c.featur
 
     const listHtml = `${filterBar}
 <ol class="pillar-list" id="state-pillar-list">
-${items.map((l, i) => renderPillarEntry(l, i, l.state)).join('\n')}
+${pillarEntriesWithAds(items, (l, i) => renderPillarEntry(l, i, l.state))}
 </ol>
 <p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search, state or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
 
@@ -2157,7 +2217,7 @@ ${presentCategories.map(({ c, n }) => `        <option value="${attr(c.feature.t
 
   const listHtml = `${filterBar}
 <ol class="pillar-list" id="state-pillar-list">
-${items.map((l, i) => renderPillarEntry(l, i, stateName)).join('\n')}
+${pillarEntriesWithAds(items, (l, i) => renderPillarEntry(l, i, stateName))}
 </ol>
 <p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search, city or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
 
@@ -2275,7 +2335,7 @@ ${featureCounts.map(({ c, n }) => `        <option value="${attr(c.feature.toLow
 
   const listHtml = `${filterBar}
 <ol class="pillar-list" id="state-pillar-list">
-${items.map((l, i) => renderPillarEntry(l, i, cityName)).join('\n')}
+${pillarEntriesWithAds(items, (l, i) => renderPillarEntry(l, i, cityName))}
 </ol>
 <p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
 
@@ -2384,7 +2444,7 @@ ${statesWith.map((s) => `        <option value="${attr(s.toLowerCase())}">${esc(
   const listHtml = items.length
     ? `${filterBar}
 <ol class="pillar-list" id="cat-pillar-list">
-${items.map((l, i) => renderPillarEntry(l, i, cat.name)).join('\n')}
+${pillarEntriesWithAds(items, (l, i) => renderPillarEntry(l, i, cat.name))}
 </ol>
 <p class="empty-state" id="cat-filter-empty" hidden><strong>No matches.</strong> Try a different search or state, or <button type="button" class="btn-link" id="cat-filter-empty-reset">reset the filters</button>.</p>`
     : `<div class="empty-state">
@@ -2512,6 +2572,7 @@ for (const l of listings) {
   ${listingImage(l, { className: 'detail-hero-img', sizes: '(min-width: 900px) 900px, 100vw', size: 'hero' })}
   <figcaption>${l.photo ? `Photo of ${esc(l.name)} via Google` : `Illustration — a real photo is not yet available for ${esc(l.name)}`}</figcaption>
 </figure>
+${renderAdSlot('vertical')}
 <div class="detail-grid">
   <div class="prose">
     <div class="listing-meta">
@@ -2523,6 +2584,8 @@ for (const l of listings) {
     ${l.description
       ? `<p>${esc(l.description)}</p>`
       : `<p>${esc(l.name)} is a listed pumpkin patch${place ? ` in ${esc(place)}` : ''}${l.county ? `, ${esc(l.county)} County` : ''}. We don't yet have a farm-provided description for this listing — if you run or have visited ${esc(l.name)}, <a href="/contact/">let us know</a> what makes it worth a stop and we will add it.</p>`}
+
+    ${renderAdSlot('inArticle')}
 
     ${ratingBarsHtml(l)}
 

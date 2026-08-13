@@ -18,6 +18,20 @@
 
   var items = Array.prototype.slice.call(list.querySelectorAll('.pillar-entry'));
 
+  // See the matching comment in state-filter.js: ad slots spliced into the
+  // list aren't .pillar-entry elements, so re-sorting would otherwise drag
+  // them all to the top after the first interaction. Restore each ad's
+  // original "after the Nth entry" position on every re-sort.
+  var adAnchors = Array.prototype.slice.call(list.querySelectorAll('.pillar-ad')).map(function (adEl) {
+    var precedingCount = 0;
+    var node = adEl.previousSibling;
+    while (node) {
+      if (node.nodeType === 1 && node.classList && node.classList.contains('pillar-entry')) precedingCount++;
+      node = node.previousSibling;
+    }
+    return { el: adEl, precedingCount: precedingCount };
+  });
+
   function apply() {
     var q = qInput.value.trim().toLowerCase();
     var state = stateSelect.value;
@@ -53,6 +67,7 @@
       return Number(b.getAttribute('data-rating')) - Number(a.getAttribute('data-rating'));
     });
     sorted.forEach(function (el) { list.appendChild(el); });
+    adAnchors.forEach(function (anchor) { list.insertBefore(anchor.el, sorted[anchor.precedingCount] || null); });
 
     if (countEl) countEl.textContent = visible.toLocaleString('en-US') + ' listing' + (visible === 1 ? '' : 's');
     if (emptyEl) emptyEl.hidden = visible !== 0;

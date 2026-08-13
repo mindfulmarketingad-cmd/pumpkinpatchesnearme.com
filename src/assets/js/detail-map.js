@@ -57,4 +57,12 @@
     },
   });
   new L.Control.Satellite({ position: 'topright' }).addTo(map);
+
+  // Leaflet sizes its internal tile grid from the container's dimensions
+  // at the moment L.map() runs. This page's fonts load async (see
+  // base.html) and swap in after first paint, which can reflow the aside
+  // column's width after the map has already measured it — leaving
+  // Leaflet's tiles sized for a stale width and overflowing the page.
+  // invalidateSize() re-measures and corrects it without a full reinit.
+  window.setTimeout(function () { map.invalidateSize(); }, 250);
 })();
