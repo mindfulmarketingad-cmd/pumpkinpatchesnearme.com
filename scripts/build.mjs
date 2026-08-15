@@ -1949,6 +1949,220 @@ ${conclusion}`;
   handAuthoredPosts.push({ meta: postMeta, body });
 }
 
+/* --- programmatic per-state attraction listicles (petting zoos, fall
+   festivals) -----------------------------------------------------------
+   Generalizes the U-pick state-listicle pattern above for any category in
+   categories.json: scoped to the real feature tag, skips states with zero
+   matches, and reads singular/plural depending on how many distinctly-named
+   businesses actually qualify (same no-fabrication precedent as every other
+   state-post generator in this file). content.* callbacks supply the
+   category-specific prose while the shared plumbing — TOC, JSON-LD,
+   sitemap, handAuthoredPosts — lives here once. */
+function generateStateAttractionListicles(categorySlug, content) {
+  const cat = categories.find((c) => c.slug === categorySlug);
+  const max = content.max || 5;
+  let postIndex = 0;
+  for (const stateName of stateNames) {
+    const stateItems = byState.get(stateName) || [];
+    const seen = new Set();
+    const distinct = stateItems.filter((l) => {
+      if (!(l.features || []).includes(cat.feature)) return false;
+      const key = l.name.trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    if (!distinct.length) continue;
+
+    const topN = distinct.slice(0, max);
+    const x = topN.length;
+    const names = topN.map((l) => l.name);
+    const linkedNames = topN.map((l) => `<a href="${listingPath(l)}">${esc(l.name)}</a>`);
+    const authorSlug = authors[postIndex++ % authors.length].slug;
+
+    const h1 = x === 1 ? content.titleSingular(stateName) : content.titlePlural(x, stateName);
+    const slug = slugify(h1);
+    const path = `/blog/${slug}/`;
+
+    const heroSrc = (topN.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+    const heroHtml = blogHeroFigureHtml(heroSrc, content.heroAlt(stateName));
+
+    const tocSection = `<p class="listicle-toc"><strong>Jump to:</strong> ${topN
+      .map((l, i) => `<a href="#${attr(l.slug)}">${i + 1}. ${esc(l.name)}</a>`)
+      .join(' <span aria-hidden="true">&middot;</span> ')}</p>`;
+
+    const summaryIntro = content.intro({ topN, x, names, linkedNames, stateName, cat });
+    const listicleHtml = `<ol class="listicle">
+${topN.map((l, i) => renderListicleEntry(l, i + 1, stateName)).join('\n')}
+</ol>`;
+
+    const faqQa = content.faq({ topN, x, names, stateName, cat });
+    const faqHtml = `<h2>Frequently asked questions</h2>
+<div class="faq-list">
+${faqQa
+  .map(
+    (item) => `  <details class="faq-item">
+    <summary>${esc(item.q)}</summary>
+    <div class="faq-answer"><p>${item.a}</p></div>
+  </details>`
+  )
+  .join('\n')}
+</div>`;
+
+    const conclusion = content.conclusion({ topN, x, names, stateName, cat });
+
+    const body = `${tocSection}
+${summaryIntro}
+${listicleHtml}
+${conclusion}
+${faqHtml}`;
+
+    const description = content.description({ topN, x, names, stateName });
+    const postMeta = {
+      path,
+      slug,
+      title: `${h1} | Ranked by Rating`,
+      description,
+      h1,
+      excerpt: description,
+      date: backdatedPostDate(slug),
+      readingTime: content.readingTime || '7 min read',
+      author: authorSlug,
+    };
+
+    const meta = {
+      ...postMeta,
+      nav: 'blog',
+      layout: 'prose',
+      ogType: 'article',
+      trail: [{ label: 'Blog', href: '/blog/' }, { label: h1 }],
+    };
+    const author = authorsBySlug.get(authorSlug);
+    const jsonld = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BlogPosting',
+          headline: h1,
+          description,
+          datePublished: postMeta.date,
+          dateModified: postMeta.date,
+          mainEntityOfPage: SITE_URL + path,
+          image: absImageUrl(heroSrc),
+          author: author
+            ? { '@type': 'Person', name: author.name, url: SITE_URL + authorPath(author), jobTitle: author.title }
+            : { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+          publisher: {
+            '@type': 'Organization',
+            name: SITE_NAME,
+            url: SITE_URL,
+            logo: { '@type': 'ImageObject', url: `${SITE_URL}/assets/img/icon-512.png` },
+          },
+        },
+        {
+          '@type': 'ItemList',
+          numberOfItems: topN.length,
+          itemListElement: topN.map((l, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            url: SITE_URL + listingPath(l),
+            name: l.name,
+          })),
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: faqQa.map((item) => ({
+            '@type': 'Question',
+            name: item.q,
+            acceptedAnswer: { '@type': 'Answer', text: item.a.replace(/<[^>]+>/g, '') },
+          })),
+        },
+        breadcrumbJsonLd(meta.trail, path),
+      ],
+    };
+    const byline = renderByline(authorSlug, postMeta.date, postMeta.readingTime);
+    writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
+    addToSitemap(path, '0.6', 'weekly', postMeta.date);
+    handAuthoredPosts.push({ meta: postMeta, body });
+  }
+}
+
+generateStateAttractionListicles('petting-zoos', {
+  titleSingular: (s) => `Best Pumpkin Patch With a Petting Zoo in ${s}`,
+  titlePlural: (x, s) => `${x} Best Pumpkin Patches With a Petting Zoo in ${s}`,
+  heroAlt: (s) => `Pumpkin patches with a petting zoo in ${s}`,
+  description: ({ x, names, stateName }) =>
+    x === 1
+      ? `The best pumpkin patch with a petting zoo in ${stateName} is ${names[0]}. See its rating, hours and directions before you go.`
+      : `The ${x} best pumpkin patches with a petting zoo in ${stateName}: ${joinNatural(names)}. Ranked by rating and reviews.`,
+  intro: ({ x, linkedNames, stateName, cat }) =>
+    x === 1
+      ? `<p>The best pumpkin patch with a petting zoo in ${esc(stateName)} is ${linkedNames[0]} — the only farm we track statewide tagged for farm animals kids can get close to, alongside the pumpkins. For toddlers and preschoolers especially, an animal barn is often worth more than every other attraction on the farm combined. Here's a closer look at what it offers, how it's rated, and how to get there, followed by answers to the questions we hear most about visiting. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse pumpkin patches with petting zoos in every state on our <a href="${categoryPath(cat)}">Petting Zoos and Farm Animals near me</a> page.</p>`
+      : `<p>The ${x} best pumpkin patches with a petting zoo in ${esc(stateName)} are ${joinNatural(linkedNames)} — farms tagged for farm animals kids can get close to, alongside the pumpkins. For toddlers and preschoolers especially, an animal barn is often worth more than every other attraction on the farm combined. Below, each gets a closer look — what it offers, how it's rated, and how to get there — followed by answers to the questions we hear most about visiting. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse pumpkin patches with petting zoos in every state on our <a href="${categoryPath(cat)}">Petting Zoos and Farm Animals near me</a> page.</p>`,
+  faq: ({ topN, x, stateName }) => [
+    {
+      q: `What is the best pumpkin patch with a petting zoo in ${stateName}?`,
+      a: `Based on rating and review volume, ${esc(topN[0].name)} ranks first among the pumpkin patches with a petting zoo we track in ${esc(stateName)}${topN[0].rating ? `, with a ${topN[0].rating.toFixed(1)}-out-of-5 rating` : ''}. See the full breakdown above, or its <a href="${listingPath(topN[0])}">full listing</a> for hours and directions.`,
+    },
+    {
+      q: `What animals are usually at a pumpkin patch petting zoo?`,
+      a: `It varies by farm, but goats, sheep, alpacas, rabbits and barn cats are the most common. Larger farms sometimes add pigs, ponies or a small aviary. Feed cups are usually available for a dollar or two even when general admission is free.`,
+    },
+    {
+      q: `Is the petting zoo included in admission?`,
+      a: `At most farms, yes — the animal barn is bundled into general admission rather than ticketed separately. It's still worth confirming when you call, since a minority of larger destination farms do charge extra for it.`,
+    },
+    {
+      q: `Are petting zoos safe for toddlers?`,
+      a: `Generally yes, with normal precautions. Well-run farms provide hand-washing stations near the animal area and it's worth using them properly — animal contact areas are a recognized source of E. coli and salmonella exposure in young children. Strollers are frequently not permitted inside the enclosure itself, so plan for carrying.`,
+    },
+    {
+      q: x === 1 ? `Is this pumpkin patch good for young kids?` : `Are these pumpkin patches good for young kids?`,
+      a: `Yes — a petting zoo is one of the two features (alongside a dedicated kids' play area) that most reliably holds a toddler's or preschooler's attention. Check the listings above for hours, and call ahead if you're planning specifically around animal-barn access.`,
+    },
+  ],
+  conclusion: ({ topN, x, names, stateName }) => `<h2>Conclusion</h2>
+<p>${esc(topN[0].name)} is${x > 1 ? ' our top pick' : ' the only farm we currently track'} for a pumpkin patch with a petting zoo in ${esc(stateName)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${x > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and which animals are on site — and whether the barn is open that day — can vary week to week, so always confirm with the farm directly before you drive out. For more options, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`,
+});
+
+generateStateAttractionListicles('fall-festivals', {
+  titleSingular: (s) => `Best Pumpkin Patch Fall Festival in ${s}`,
+  titlePlural: (x, s) => `${x} Best Pumpkin Patch Fall Festivals in ${s}`,
+  heroAlt: (s) => `Fall festivals at pumpkin patches in ${s}`,
+  description: ({ x, names, stateName }) =>
+    x === 1
+      ? `The best pumpkin patch fall festival in ${stateName} is ${names[0]}. See its rating, hours and directions before you go.`
+      : `The ${x} best pumpkin patch fall festivals in ${stateName}: ${joinNatural(names)}. Ranked by rating and reviews.`,
+  intro: ({ x, linkedNames, stateName, cat }) =>
+    x === 1
+      ? `<p>The best pumpkin patch fall festival in ${esc(stateName)} is ${linkedNames[0]} — the only farm we track statewide tagged for a dedicated festival weekend, running its full lineup of attractions, food vendors and live music at once, alongside the pumpkins. Here's a closer look at what it offers, how it's rated, and how to get there, followed by answers to the questions we hear most about visiting. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse fall festivals in every state on our <a href="${categoryPath(cat)}">Fall Festivals near me</a> page.</p>`
+      : `<p>The ${x} best pumpkin patch fall festivals in ${esc(stateName)} are ${joinNatural(linkedNames)} — farms tagged for a dedicated festival weekend, running their full lineup of attractions, food vendors and live music at once, alongside the pumpkins. Below, each gets a closer look — what it offers, how it's rated, and how to get there — followed by answers to the questions we hear most about visiting. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse fall festivals in every state on our <a href="${categoryPath(cat)}">Fall Festivals near me</a> page.</p>`,
+  faq: ({ topN, x, stateName }) => [
+    {
+      q: `What is the best pumpkin patch fall festival in ${stateName}?`,
+      a: `Based on rating and review volume, ${esc(topN[0].name)} ranks first among the pumpkin patch fall festivals we track in ${esc(stateName)}${topN[0].rating ? `, with a ${topN[0].rating.toFixed(1)}-out-of-5 rating` : ''}. See the full breakdown above, or its <a href="${listingPath(topN[0])}">full listing</a> for hours and directions.`,
+    },
+    {
+      q: `What actually happens at a pumpkin patch fall festival?`,
+      a: `A festival weekend is the farm running at full capacity — every attraction open at once, food vendors on site, live music, and frequently a craft or produce market, on top of the regular pumpkin patch. It's the best day to visit for the complete experience, and the busiest day to visit if you'd rather have a quiet field and a short line.`,
+    },
+    {
+      q: `Do fall festivals cost extra?`,
+      a: `Sometimes. Festival weekends are the days a farm is most likely to charge a higher gate price or require advance tickets, since every attraction is running. Confirm current pricing directly with the farm — it's not a field we track, and it changes year to year more than regular admission does.`,
+    },
+    {
+      q: `When are fall festival weekends usually held?`,
+      a: `Typically a handful of specific weekends in the back half of the season, rather than the whole season — often concentrated in October. Exact dates vary farm to farm, so check the listing or the farm's own site directly before planning a trip around one.`,
+    },
+    {
+      q: x === 1 ? `Is this fall festival good for young kids?` : `Are these fall festivals good for young kids?`,
+      a: `Generally yes — festival weekends bundle in the kid-oriented attractions a farm runs alongside everything else. Check the listings above for feature tags like a petting zoo or play area, and call ahead if you're planning specifically around a young child's attention span in a bigger crowd.`,
+    },
+  ],
+  conclusion: ({ topN, x, names, stateName }) => `<h2>Conclusion</h2>
+<p>${esc(topN[0].name)} is${x > 1 ? ' our top pick' : ' the only farm we currently track'} for a pumpkin patch fall festival in ${esc(stateName)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${x > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and festival dates, pricing and what's actually running can shift week to week — always confirm directly with the farm before you drive out. For more options, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`,
+});
+
 /* --- programmatic "5 Best Pumpkin Patches in <City>" posts --------------- */
 // One per town with at least this many listings, generated straight from
 // the dataset — no hand-written source file, so this list grows on its own
