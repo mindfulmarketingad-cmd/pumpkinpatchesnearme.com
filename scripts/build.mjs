@@ -1429,6 +1429,156 @@ ${closingSummary}`;
   addToSitemap(path, '0.6', 'weekly', postMeta.date);
 }
 
+/* --- one-off: "10 Best Pumpkin Fields in Georgia" ------------------------
+   Hand-requested post, not a generic per-state loop like the one above —
+   uses the heavier renderListicleEntry format (H2 business names, full
+   500-word summaries, address and tags) that the city and attraction posts
+   use, rather than the lighter pillar-entry cards. */
+{
+  const stateName = 'Georgia';
+  const stateItems = byState.get(stateName) || [];
+  const seenGaNames = new Set();
+  const gaDistinct = stateItems.filter((l) => {
+    const key = l.name.trim().toLowerCase();
+    if (seenGaNames.has(key)) return false;
+    seenGaNames.add(key);
+    return true;
+  });
+  const top10 = gaDistinct.slice(0, 10);
+  const names = top10.map((l) => l.name);
+  const gaAuthorSlug = authors[0].slug;
+  const h1 = '10 Best Pumpkin Fields in Georgia';
+  const slug = slugify(h1);
+  const path = `/blog/${slug}/`;
+
+  const heroSrc = (top10.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+  const heroHtml = blogHeroFigureHtml(heroSrc, `Pumpkin fields in ${stateName}`);
+
+  const tocSection = `<p class="listicle-toc"><strong>Jump to:</strong> ${top10
+    .map((l, i) => `<a href="#${attr(l.slug)}">${i + 1}. ${esc(l.name)}</a>`)
+    .join(' <span aria-hidden="true">&middot;</span> ')}</p>`;
+
+  const linkedNames = top10.map((l) => `<a href="${listingPath(l)}">${esc(l.name)}</a>`);
+  const summaryIntro = `<p>The 10 best pumpkin fields in Georgia are ${joinNatural(linkedNames)}, ranked by rating and review volume out of the ${esc(stateItems.length.toLocaleString('en-US'))} pumpkin patches we track statewide. Below, each field gets a closer look — what it offers, how it's rated, and how to get there — followed by a table of contents' worth of jumping-off points and answers to the questions we hear most about visiting a Georgia pumpkin field. Want the complete, searchable list? See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or start from our <a href="/pumpkin-patches/">state-by-state directory</a>.</p>`;
+
+  const listicleHtml = `<ol class="listicle">
+${top10.map((l, i) => renderListicleEntry(l, i + 1, stateName)).join('\n')}
+</ol>`;
+
+  const kidFriendlyGa = top10.filter((l) => (l.features || []).some((f) => ['Petting zoo', 'Kids play area'].includes(f)));
+  const kidAnswerGa = kidFriendlyGa.length
+    ? `${joinNatural(kidFriendlyGa.map((l) => esc(l.name)))} ${kidFriendlyGa.length === 1 ? 'stands' : 'stand'} out for younger children on this list, with a petting zoo or a dedicated play area. Hours and what's running can change week to week, so confirm directly before you go.`
+    : `None of the fields on this list are tagged with a dedicated kids' play area or petting zoo in our data, though most pumpkin fields are stroller- and toddler-friendly at a basic level. Call ahead if young kids need specific attractions.`;
+
+  const faqQa = [
+    {
+      q: 'What is the highest-rated pumpkin field in Georgia?',
+      a: `${esc(top10[0].name)}${top10[0].city ? ` in ${esc(top10[0].city)}` : ''} tops this list${top10[0].rating ? `, rated ${top10[0].rating.toFixed(1)} out of 5${top10[0].reviews ? ` from ${top10[0].reviews.toLocaleString('en-US')} reviews` : ''}` : ''}. Ratings reflect public data at the time of writing and can shift over time.`,
+    },
+    {
+      q: 'When do pumpkin fields in Georgia open for the season?',
+      a: 'Most Georgia pumpkin fields open in mid-to-late September and run through the first days of November, though exact dates shift year to year with weather and how the pumpkin crop comes in. Check the individual listings above, or call ahead, to confirm current dates.',
+    },
+    {
+      q: 'How much does it cost to visit a pumpkin field in Georgia?',
+      a: 'It varies by farm. Some charge only for the pumpkins you pick, priced individually or by weight; others charge a flat gate admission that bundles in attractions like a corn maze or hayride. See the admission details on each listing above where we have them, or call the farm directly.',
+    },
+    { q: 'Which Georgia pumpkin field is best for young kids?', a: kidAnswerGa },
+    {
+      q: 'Are Georgia pumpkin fields open on weekdays?',
+      a: 'Many are, though weekday hours are often shorter than weekends, and some smaller farms only open Friday through Sunday during the season. Weekday mornings are also the quietest time to visit if your schedule allows it.',
+    },
+  ];
+  const faqHtml = `<h2>Frequently asked questions</h2>
+<div class="faq-list">
+${faqQa
+  .map(
+    (item) => `  <details class="faq-item">
+    <summary>${esc(item.q)}</summary>
+    <div class="faq-answer"><p>${esc(item.a)}</p></div>
+  </details>`
+  )
+  .join('\n')}
+</div>`;
+
+  const conclusion = `<h2>Conclusion</h2>
+<p>${esc(top10[0].name)} tops our list of Georgia pumpkin fields${top10[0].rating ? `, rated ${top10[0].rating.toFixed(1)} out of 5` : ''}, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the top ten. Ratings and review counts reflect public data at the time of writing and can change, and hours, admission and what's actually running on a given day can vary week to week during the season — always confirm with the field directly before you drive out. For the full, ranked, searchable list, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`;
+
+  const body = `${tocSection}
+${summaryIntro}
+${listicleHtml}
+${conclusion}
+${faqHtml}`;
+
+  const description = `The 10 best pumpkin fields in Georgia, ranked by rating and reviews: ${joinNatural(names)}.`;
+  const postMeta = {
+    path,
+    slug,
+    title: `${h1} | Ranked by Rating`,
+    description,
+    h1,
+    excerpt: description,
+    date: backdatedPostDate(slug),
+    readingTime: '9 min read',
+    author: gaAuthorSlug,
+  };
+
+  const meta = {
+    ...postMeta,
+    nav: 'blog',
+    layout: 'prose',
+    ogType: 'article',
+    trail: [{ label: 'Blog', href: '/blog/' }, { label: h1 }],
+  };
+  const gaAuthor = authorsBySlug.get(gaAuthorSlug);
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BlogPosting',
+        headline: h1,
+        description,
+        datePublished: postMeta.date,
+        dateModified: postMeta.date,
+        mainEntityOfPage: SITE_URL + path,
+        image: absImageUrl(heroSrc),
+        author: gaAuthor
+          ? { '@type': 'Person', name: gaAuthor.name, url: SITE_URL + authorPath(gaAuthor), jobTitle: gaAuthor.title }
+          : { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+        publisher: {
+          '@type': 'Organization',
+          name: SITE_NAME,
+          url: SITE_URL,
+          logo: { '@type': 'ImageObject', url: `${SITE_URL}/assets/img/icon-512.png` },
+        },
+      },
+      {
+        '@type': 'ItemList',
+        numberOfItems: top10.length,
+        itemListElement: top10.map((l, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          url: SITE_URL + listingPath(l),
+          name: l.name,
+        })),
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: faqQa.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      },
+      breadcrumbJsonLd(meta.trail, path),
+    ],
+  };
+  const byline = renderByline(gaAuthorSlug, postMeta.date, postMeta.readingTime);
+  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld }));
+  addToSitemap(path, '0.6', 'weekly', postMeta.date);
+  handAuthoredPosts.push({ meta: postMeta, body });
+}
+
 /* --- programmatic "5 Best Pumpkin Patches in <City>" posts --------------- */
 // One per town with at least this many listings, generated straight from
 // the dataset — no hand-written source file, so this list grows on its own
