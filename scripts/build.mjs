@@ -1758,6 +1758,197 @@ ${faqHtml}`;
   handAuthoredPosts.push({ meta: postMeta, body });
 }
 
+/* --- programmatic "What Are The Prices Of Pumpkins At a Pumpkin Patch in
+   <State>?" posts -----------------------------------------------------------
+   An educational cost guide, not a business ranking — every tracked state
+   gets one (stateNames already guarantees at least one listing). Pricing
+   itself isn't a field in the Outscraper data — no listing anywhere in the
+   dataset has an admission figure — so this deliberately never states a
+   dollar figure as if it were this site's own verified data for that
+   state. It's framed the same honest way the existing national
+   /blog/how-much-does-a-pumpkin-patch-cost/ guide already is: real,
+   widely-known pricing models and typical nationwide ranges, explicitly
+   applied to a first-timer's question about a specific state rather than
+   invented as state-specific statistics. What IS genuinely state-specific
+   is real: the count of farms this site tracks there, and links to that
+   state's own directory and any per-state posts it qualifies for. */
+for (const stateName of stateNames) {
+  const stateItems = byState.get(stateName) || [];
+  const priceAuthorSlug = authors[(stateNames.indexOf(stateName) + 1) % authors.length].slug;
+  const h1 = `What Are The Prices Of Pumpkins At a Pumpkin Patch in ${stateName}?`;
+  const slug = slugify(h1);
+  const path = `/blog/${slug}/`;
+
+  const heroSrc = (stateItems.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+  const heroHtml = blogHeroFigureHtml(heroSrc, `Pumpkin patch pricing in ${stateName}`);
+
+  const upickCount = new Set(
+    stateItems.filter((l) => (l.features || []).includes(UPICK_CATEGORY.feature)).map((l) => l.name.trim().toLowerCase())
+  ).size;
+  const qualifiesForStatePost = stateItems.length >= STATE_POST_MIN_LISTINGS;
+
+  const intro = `<p>If you've never been to a pumpkin patch before, the honest answer is: it depends entirely on which one you walk into. A family of four can spend $18 at one farm in ${esc(stateName)} and $140 at another on the same Saturday, and neither farm is doing anything wrong — they're just running different kinds of businesses. We track ${esc(stateItems.length.toLocaleString('en-US'))} pumpkin patch${stateItems.length === 1 ? '' : 'es'} in ${esc(stateName)}, and we don't collect pricing as a data field (farms change it too often, season to season, for us to promise it's current) — but the pricing <em>models</em> themselves are consistent and predictable nationwide, and knowing which one you're walking into is really the whole trick. Here's what to expect, what to bring, and what actually drives the total.</p>`;
+
+  const modelsSection = `<h2>How pumpkin patch pricing actually works</h2>
+<p>Almost every pumpkin patch in the country, ${esc(stateName)} included, prices itself one of three ways. Knowing which one a farm uses before you drive out tells you more about your total cost than almost anything else.</p>
+<h3>1. Free entry, pay for pumpkins</h3>
+<p>Typical of smaller working farms and roadside u-pick operations. There's no gate fee — you walk the field, cut what you want, and pay at a stand on the way out. Pumpkins are priced either <strong>per pumpkin</strong> (commonly $5–$12 for a carving-size pumpkin, $2–$4 for pie pumpkins and gourds) or <strong>by the pound</strong> (commonly $0.49–$0.89 per pound, which puts a 20-pound carver around $10–$18). A typical family of four spends <strong>$25–$50</strong> here.</p>
+<h3>2. Flat admission, pumpkins extra</h3>
+<p>The agritourism model — a gate price that bundles the corn maze, hayride, play areas and animal barn, with pumpkins sold separately at the exit. Weekend admission commonly runs <strong>$10–$25 per person</strong>, often half that on weekdays. A typical family of four spends <strong>$70–$140</strong> including a couple of pumpkins and some food.</p>
+<h3>3. Wristbands and à la carte</h3>
+<p>A middle path: free or cheap entry, with individual attractions priced separately and an all-access wristband — usually $20–$30 — for anyone who wants everything. A typical family of four spends <strong>$30–$110</strong> depending on how much they do.</p>
+<p>None of this is specific to ${esc(stateName)} — it's how the industry works nationwide — but it's exactly what determines whether your day costs $20 or $130, wherever you go. <a href="/blog/how-much-does-a-pumpkin-patch-cost/">See the full national cost breakdown</a> for more on all three, including what catches first-timers off guard.</p>`;
+
+  const extrasSection = `<h2>What else costs extra</h2>
+<ul>
+  <li><strong>Corn mazes and haunted attractions</strong> are frequently priced separately from daytime admission, and a haunted trail is almost always a different evening time slot — don't assume a daytime wristband covers it.</li>
+  <li><strong>Food</strong> is priced like festival food. Cider donuts, kettle corn and hot cider add up fast; budget $30–$50 for a family of four if you're not eating beforehand.</li>
+  <li><strong>Photo sessions.</strong> Some larger farms now charge separately for professional photography on the property, sometimes with rules about tripods or professional gear without a booked slot.</li>
+  <li><strong>Parking</strong> is usually free but is a $5–$10 add-on at a minority of bigger operations.</li>
+</ul>`;
+
+  const paymentSection = `<h2>Cash or card?</h2>
+<p>Bring both, but lean on cash as your backup. Card readers are common at the main farm store, but wagon rides, field admission and satellite stands are still frequently cash-only — and cell service at rural farms is often too weak for a card reader to work reliably even when a farm intends to accept one. $40–$60 in small bills covers most visits without a trip back to the car.</p>`;
+
+  const budgetSection = `<h2>What a family of four typically spends</h2>
+<p>Pulling the three models together: a bare-bones u-pick visit runs <strong>$25–$50</strong>, a full agritourism day with a maze and hayride runs <strong>$70–$140</strong>, and an à la carte visit lands <strong>$30–$110</strong> depending on what you add. If your actual goal is a pumpkin on the porch and a nice photo, the free-entry u-pick route delivers that for a fraction of the flat-admission price — often in a prettier field, too.</p>`;
+
+  const savingSection = `<h2>How to spend less in ${esc(stateName)}</h2>
+<ul>
+  <li><strong>Go on a weekday.</strong> The single biggest saving available — often 40–50% off weekend admission.</li>
+  <li><strong>Call ahead and ask which pricing model a farm uses.</strong> Two minutes on the phone is the difference between planning a $25 day and a $130 one.</li>
+  <li><strong>Buy pumpkins on your way out</strong> rather than carrying them around the farm for three hours.</li>
+  <li><strong>Check for a season pass</strong> if you're planning more than one visit — it frequently breaks even on the second trip.</li>
+  <li><strong>Visit late in the season.</strong> Farms clearing a field in the last days of October often sell pumpkins at a flat, cheap rate or by the carload.</li>
+</ul>`;
+
+  const upickPostSlug = upickCount === 1
+    ? slugify(`Best Pumpkin Patch To Pick Your Own Pumpkin in ${stateName}`)
+    : upickCount > 1
+      ? slugify(`${Math.min(upickCount, 5)} Best Pumpkin Patches To Pick Your Own Pumpkin in ${stateName}`)
+      : null;
+  const fieldsPostSlug = qualifiesForStatePost ? slugify(`${STATE_POST_COUNT} Best Pumpkin Fields in ${stateName}`) : null;
+  const farmsPostSlug = qualifiesForStatePost ? slugify(`${STATE_POST_COUNT} Best Pumpkin Farms in ${stateName}`) : null;
+  const relatedLinks = [
+    `<a href="${statePath(stateName)}">Every pumpkin patch we track in ${esc(stateName)}</a>`,
+    qualifiesForStatePost ? `<a href="/blog/${fieldsPostSlug}/">${STATE_POST_COUNT} Best Pumpkin Fields in ${esc(stateName)}</a>` : null,
+    qualifiesForStatePost ? `<a href="/blog/${farmsPostSlug}/">${STATE_POST_COUNT} Best Pumpkin Farms in ${esc(stateName)}</a>` : null,
+    upickPostSlug ? `<a href="/blog/${upickPostSlug}/">Where to pick your own pumpkin in ${esc(stateName)}</a>` : null,
+    `<a href="${categoryPath(UPICK_CATEGORY)}">U-Pick Pumpkin Patches near me</a>`,
+  ].filter(Boolean);
+
+  const trackedSection = `<h2>Pumpkin patches we track in ${esc(stateName)}</h2>
+<p>We track ${esc(stateItems.length.toLocaleString('en-US'))} pumpkin patch${stateItems.length === 1 ? '' : 'es'} in ${esc(stateName)}${upickCount ? `, ${esc(String(upickCount))} of which ${upickCount === 1 ? 'is' : 'are'} tagged for true u-pick (cutting straight from the vine, not a pre-picked pile)` : ''}. None of them list a price with us — that's exactly why calling ahead matters — but you can see ratings, addresses, hours and directions for every one:</p>
+<ul>
+${relatedLinks.map((l) => `  <li>${l}</li>`).join('\n')}
+</ul>`;
+
+  const faqQa = [
+    {
+      q: `Do pumpkin patches in ${stateName} charge admission?`,
+      a: `Some do and some don't — it's genuinely split roughly into the three pricing models above. Smaller u-pick farms are frequently free to enter with pumpkins priced individually, while larger agritourism-style farms almost always charge a gate fee. Call ahead or check the farm's own website or social media, since we don't track pricing directly.`,
+    },
+    {
+      q: 'Is it cheaper to pick your own pumpkin than to buy one at the entrance?',
+      a: "Usually, yes, and it's also typically a better experience — you're choosing from the full field rather than a pre-picked pile. U-pick farms also tend to run the free-entry pricing model, which keeps the total lower even before you factor that in.",
+    },
+    {
+      q: 'Do kids get in free?',
+      a: 'At flat-admission farms, very young children (usually under 2 or under 3) are commonly free, with everyone older paying the same per-head price as adults. It varies by farm, so confirm the age cutoff when you call.',
+    },
+    {
+      q: `What's the cheapest way to visit a pumpkin patch in ${stateName}?`,
+      a: 'A weekday visit to a free-entry u-pick farm, paying only for the pumpkin itself, is consistently the least expensive version of this trip — often a third of the cost of a weekend visit to a flat-admission farm with a corn maze and hayride included.',
+    },
+    {
+      q: 'Are prices different on weekends?',
+      a: "Often significantly — frequently double at flat-admission farms. If your schedule allows any flexibility, a weekday visit in mid-October is both cheaper and noticeably quieter than the same week's Saturday.",
+    },
+  ];
+  const faqHtml = `<h2>Frequently asked questions</h2>
+<div class="faq-list">
+${faqQa
+  .map(
+    (item) => `  <details class="faq-item">
+    <summary>${esc(item.q)}</summary>
+    <div class="faq-answer"><p>${item.a}</p></div>
+  </details>`
+  )
+  .join('\n')}
+</div>`;
+
+  const conclusion = `<h2>Conclusion</h2>
+<p>There's no single answer to "what does a pumpkin patch cost in ${esc(stateName)}" because the honest answer depends on which of the three pricing models the farm you pick actually runs — not on the state you're in. A free-entry u-pick farm and a full agritourism destination can sit five miles apart and charge wildly different totals for what is, at its core, the same afternoon out. Decide which kind of day you actually want — a cheap pumpkin and a nice photo, or a few hours of maze-and-hayride entertainment — and call ahead to confirm which model the farm uses before you go. For the full national breakdown of what catches people out, see <a href="/blog/how-much-does-a-pumpkin-patch-cost/">How Much Does a Pumpkin Patch Cost?</a>, and for help matching a specific farm to your group, see <a href="/blog/how-to-choose-a-pumpkin-patch/">How to Choose the Right Pumpkin Patch</a>.</p>`;
+
+  const body = `${intro}
+${modelsSection}
+${extrasSection}
+${paymentSection}
+${budgetSection}
+${savingSection}
+${trackedSection}
+${faqHtml}
+${conclusion}`;
+
+  const description = `What pumpkins and admission actually cost at a pumpkin patch in ${stateName}: the three pricing models, typical ranges, cash-vs-card, and how to spend less.`;
+  const postMeta = {
+    path,
+    slug,
+    title: `${h1} | Cost Guide`,
+    description,
+    h1,
+    excerpt: `A first-timer's guide to pumpkin patch pricing in ${stateName} — the three pricing models, what things typically cost, and how to spend less.`,
+    date: backdatedPostDate(slug),
+    readingTime: '8 min read',
+    author: priceAuthorSlug,
+  };
+
+  const meta = {
+    ...postMeta,
+    nav: 'blog',
+    layout: 'prose',
+    ogType: 'article',
+    trail: [{ label: 'Blog', href: '/blog/' }, { label: h1 }],
+  };
+  const priceAuthor = authorsBySlug.get(priceAuthorSlug);
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BlogPosting',
+        headline: h1,
+        description,
+        datePublished: postMeta.date,
+        dateModified: postMeta.date,
+        mainEntityOfPage: SITE_URL + path,
+        image: absImageUrl(heroSrc),
+        author: priceAuthor
+          ? { '@type': 'Person', name: priceAuthor.name, url: SITE_URL + authorPath(priceAuthor), jobTitle: priceAuthor.title }
+          : { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+        publisher: {
+          '@type': 'Organization',
+          name: SITE_NAME,
+          url: SITE_URL,
+          logo: { '@type': 'ImageObject', url: `${SITE_URL}/assets/img/icon-512.png` },
+        },
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: faqQa.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a.replace(/<[^>]+>/g, '') },
+        })),
+      },
+      breadcrumbJsonLd(meta.trail, path),
+    ],
+  };
+  const byline = renderByline(priceAuthorSlug, postMeta.date, postMeta.readingTime);
+  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld }));
+  addToSitemap(path, '0.6', 'weekly', postMeta.date);
+  handAuthoredPosts.push({ meta: postMeta, body });
+}
+
 /* --- programmatic "5 Best Pumpkin Patches in <City>" posts --------------- */
 // One per town with at least this many listings, generated straight from
 // the dataset — no hand-written source file, so this list grows on its own
