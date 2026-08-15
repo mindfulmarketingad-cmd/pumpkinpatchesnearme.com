@@ -521,7 +521,10 @@ function renderListicleEntry(l, rank, stateName) {
     <p class="listicle-blurb">${blurbFor(l, rank - 1, stateName)}</p>
     ${l.street ? `<p class="listing-address">${esc(l.street)}${l.postalCode ? `, ${esc(l.postalCode)}` : ''}</p>` : ''}
     ${tags.length ? `<div class="tag-row">${tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
-    ${businessSummaryHtml(l, rank, stateName)}
+    <button class="listicle-toggle" type="button" aria-expanded="false">Read full write-up<span class="listicle-toggle-icon" aria-hidden="true"></span></button>
+    <div class="listicle-more" hidden>
+      ${businessSummaryHtml(l, rank, stateName)}
+    </div>
     <div class="card-actions">
       <a class="btn btn-primary btn-sm" href="${listingPath(l)}">View details</a>
       <a class="btn btn-outline btn-sm" href="https://www.google.com/maps/dir/?api=1&amp;destination=${l.lat},${l.lng}" target="_blank" rel="noopener nofollow">Directions</a>
@@ -1429,25 +1432,30 @@ ${closingSummary}`;
   addToSitemap(path, '0.6', 'weekly', postMeta.date);
 }
 
-/* --- one-off: "10 Best Pumpkin Fields in Georgia" ------------------------
-   Hand-requested post, not a generic per-state loop like the one above —
-   uses the heavier renderListicleEntry format (H2 business names, full
+/* --- programmatic "10 Best Pumpkin Fields in <State>" posts --------------
+   Same per-state gate as the "10 Best Pumpkin Patches" posts above
+   (STATE_POST_MIN_LISTINGS), but a distinct title ("Fields" vs "Patches")
+   and the heavier renderListicleEntry format (H2 business names, full
    500-word summaries, address and tags) that the city and attraction posts
-   use, rather than the lighter pillar-entry cards. */
-{
-  const stateName = 'Georgia';
+   use, rather than the lighter pillar-entry cards — started as a
+   hand-requested one-off for Georgia, then generalized to every
+   qualifying state. */
+let fieldsPostIndex = 0;
+for (const stateName of stateNames) {
   const stateItems = byState.get(stateName) || [];
-  const seenGaNames = new Set();
-  const gaDistinct = stateItems.filter((l) => {
+  if (stateItems.length < STATE_POST_MIN_LISTINGS) continue;
+
+  const seenFieldNames = new Set();
+  const fieldsDistinct = stateItems.filter((l) => {
     const key = l.name.trim().toLowerCase();
-    if (seenGaNames.has(key)) return false;
-    seenGaNames.add(key);
+    if (seenFieldNames.has(key)) return false;
+    seenFieldNames.add(key);
     return true;
   });
-  const top10 = gaDistinct.slice(0, 10);
+  const top10 = fieldsDistinct.slice(0, STATE_POST_COUNT);
   const names = top10.map((l) => l.name);
-  const gaAuthorSlug = authors[0].slug;
-  const h1 = '10 Best Pumpkin Fields in Georgia';
+  const fieldsAuthorSlug = authors[fieldsPostIndex++ % authors.length].slug;
+  const h1 = `${STATE_POST_COUNT} Best Pumpkin Fields in ${stateName}`;
   const slug = slugify(h1);
   const path = `/blog/${slug}/`;
 
@@ -1459,33 +1467,33 @@ ${closingSummary}`;
     .join(' <span aria-hidden="true">&middot;</span> ')}</p>`;
 
   const linkedNames = top10.map((l) => `<a href="${listingPath(l)}">${esc(l.name)}</a>`);
-  const summaryIntro = `<p>The 10 best pumpkin fields in Georgia are ${joinNatural(linkedNames)}, ranked by rating and review volume out of the ${esc(stateItems.length.toLocaleString('en-US'))} pumpkin patches we track statewide. Below, each field gets a closer look — what it offers, how it's rated, and how to get there — followed by a table of contents' worth of jumping-off points and answers to the questions we hear most about visiting a Georgia pumpkin field. Want the complete, searchable list? See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or start from our <a href="/pumpkin-patches/">state-by-state directory</a>.</p>`;
+  const summaryIntro = `<p>The ${STATE_POST_COUNT} best pumpkin fields in ${esc(stateName)} are ${joinNatural(linkedNames)}, ranked by rating and review volume out of the ${esc(stateItems.length.toLocaleString('en-US'))} pumpkin patches we track statewide. Below, each field gets a closer look — what it offers, how it's rated, and how to get there — followed by a table of contents' worth of jumping-off points and answers to the questions we hear most about visiting a ${esc(stateName)} pumpkin field. Want the complete, searchable list? See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or start from our <a href="/pumpkin-patches/">state-by-state directory</a>.</p>`;
 
   const listicleHtml = `<ol class="listicle">
 ${top10.map((l, i) => renderListicleEntry(l, i + 1, stateName)).join('\n')}
 </ol>`;
 
-  const kidFriendlyGa = top10.filter((l) => (l.features || []).some((f) => ['Petting zoo', 'Kids play area'].includes(f)));
-  const kidAnswerGa = kidFriendlyGa.length
-    ? `${joinNatural(kidFriendlyGa.map((l) => esc(l.name)))} ${kidFriendlyGa.length === 1 ? 'stands' : 'stand'} out for younger children on this list, with a petting zoo or a dedicated play area. Hours and what's running can change week to week, so confirm directly before you go.`
+  const kidFriendlyFields = top10.filter((l) => (l.features || []).some((f) => ['Petting zoo', 'Kids play area'].includes(f)));
+  const kidAnswerFields = kidFriendlyFields.length
+    ? `${joinNatural(kidFriendlyFields.map((l) => esc(l.name)))} ${kidFriendlyFields.length === 1 ? 'stands' : 'stand'} out for younger children on this list, with a petting zoo or a dedicated play area. Hours and what's running can change week to week, so confirm directly before you go.`
     : `None of the fields on this list are tagged with a dedicated kids' play area or petting zoo in our data, though most pumpkin fields are stroller- and toddler-friendly at a basic level. Call ahead if young kids need specific attractions.`;
 
   const faqQa = [
     {
-      q: 'What is the highest-rated pumpkin field in Georgia?',
+      q: `What is the highest-rated pumpkin field in ${stateName}?`,
       a: `${esc(top10[0].name)}${top10[0].city ? ` in ${esc(top10[0].city)}` : ''} tops this list${top10[0].rating ? `, rated ${top10[0].rating.toFixed(1)} out of 5${top10[0].reviews ? ` from ${top10[0].reviews.toLocaleString('en-US')} reviews` : ''}` : ''}. Ratings reflect public data at the time of writing and can shift over time.`,
     },
     {
-      q: 'When do pumpkin fields in Georgia open for the season?',
-      a: 'Most Georgia pumpkin fields open in mid-to-late September and run through the first days of November, though exact dates shift year to year with weather and how the pumpkin crop comes in. Check the individual listings above, or call ahead, to confirm current dates.',
+      q: `When do pumpkin fields in ${stateName} open for the season?`,
+      a: `Most ${stateName} pumpkin fields open in mid-to-late September and run through the first days of November, though exact dates shift year to year with weather and how the pumpkin crop comes in. Check the individual listings above, or call ahead, to confirm current dates.`,
     },
     {
-      q: 'How much does it cost to visit a pumpkin field in Georgia?',
+      q: `How much does it cost to visit a pumpkin field in ${stateName}?`,
       a: 'It varies by farm. Some charge only for the pumpkins you pick, priced individually or by weight; others charge a flat gate admission that bundles in attractions like a corn maze or hayride. See the admission details on each listing above where we have them, or call the farm directly.',
     },
-    { q: 'Which Georgia pumpkin field is best for young kids?', a: kidAnswerGa },
+    { q: `Which ${stateName} pumpkin field is best for young kids?`, a: kidAnswerFields },
     {
-      q: 'Are Georgia pumpkin fields open on weekdays?',
+      q: `Are ${stateName} pumpkin fields open on weekdays?`,
       a: 'Many are, though weekday hours are often shorter than weekends, and some smaller farms only open Friday through Sunday during the season. Weekday mornings are also the quietest time to visit if your schedule allows it.',
     },
   ];
@@ -1502,7 +1510,7 @@ ${faqQa
 </div>`;
 
   const conclusion = `<h2>Conclusion</h2>
-<p>${esc(top10[0].name)} tops our list of Georgia pumpkin fields${top10[0].rating ? `, rated ${top10[0].rating.toFixed(1)} out of 5` : ''}, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the top ten. Ratings and review counts reflect public data at the time of writing and can change, and hours, admission and what's actually running on a given day can vary week to week during the season — always confirm with the field directly before you drive out. For the full, ranked, searchable list, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`;
+<p>${esc(top10[0].name)} tops our list of ${esc(stateName)} pumpkin fields${top10[0].rating ? `, rated ${top10[0].rating.toFixed(1)} out of 5` : ''}, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the top ${STATE_POST_COUNT}. Ratings and review counts reflect public data at the time of writing and can change, and hours, admission and what's actually running on a given day can vary week to week during the season — always confirm with the field directly before you drive out. For the full, ranked, searchable list, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`;
 
   const body = `${tocSection}
 ${summaryIntro}
@@ -1510,7 +1518,7 @@ ${listicleHtml}
 ${conclusion}
 ${faqHtml}`;
 
-  const description = `The 10 best pumpkin fields in Georgia, ranked by rating and reviews: ${joinNatural(names)}.`;
+  const description = `The ${STATE_POST_COUNT} best pumpkin fields in ${stateName}, ranked by rating and reviews: ${joinNatural(names)}.`;
   const postMeta = {
     path,
     slug,
@@ -1520,7 +1528,7 @@ ${faqHtml}`;
     excerpt: description,
     date: backdatedPostDate(slug),
     readingTime: '9 min read',
-    author: gaAuthorSlug,
+    author: fieldsAuthorSlug,
   };
 
   const meta = {
@@ -1530,7 +1538,7 @@ ${faqHtml}`;
     ogType: 'article',
     trail: [{ label: 'Blog', href: '/blog/' }, { label: h1 }],
   };
-  const gaAuthor = authorsBySlug.get(gaAuthorSlug);
+  const fieldsAuthor = authorsBySlug.get(fieldsAuthorSlug);
   const jsonld = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -1542,8 +1550,8 @@ ${faqHtml}`;
         dateModified: postMeta.date,
         mainEntityOfPage: SITE_URL + path,
         image: absImageUrl(heroSrc),
-        author: gaAuthor
-          ? { '@type': 'Person', name: gaAuthor.name, url: SITE_URL + authorPath(gaAuthor), jobTitle: gaAuthor.title }
+        author: fieldsAuthor
+          ? { '@type': 'Person', name: fieldsAuthor.name, url: SITE_URL + authorPath(fieldsAuthor), jobTitle: fieldsAuthor.title }
           : { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
         publisher: {
           '@type': 'Organization',
@@ -1573,8 +1581,8 @@ ${faqHtml}`;
       breadcrumbJsonLd(meta.trail, path),
     ],
   };
-  const byline = renderByline(gaAuthorSlug, postMeta.date, postMeta.readingTime);
-  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld }));
+  const byline = renderByline(fieldsAuthorSlug, postMeta.date, postMeta.readingTime);
+  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
   addToSitemap(path, '0.6', 'weekly', postMeta.date);
   handAuthoredPosts.push({ meta: postMeta, body });
 }
@@ -1739,7 +1747,7 @@ ${closingSummary}`;
     ],
   };
   const byline = renderByline(cityAuthorSlug, postMeta.date, postMeta.readingTime);
-  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld }));
+  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
   addToSitemap(path, '0.6', 'weekly', postMeta.date);
 }
 
@@ -1914,7 +1922,7 @@ ${closingSummary}`;
       ],
     };
     const byline = renderByline(attractionAuthorSlug, postMeta.date, postMeta.readingTime);
-    writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld }));
+    writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
     addToSitemap(path, '0.6', 'weekly', postMeta.date);
   }
 }

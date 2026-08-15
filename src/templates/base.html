@@ -48,6 +48,10 @@
      fallbacks, so text is never invisible while this loads. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all';this.onload=null;">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"></noscript>
+<!-- Listicle write-ups collapse behind a JS toggle by default (see
+     listicle-toggle.js); with JS disabled there's no way to open them, so
+     force them open and hide the now-useless button instead. -->
+<noscript><style>.listicle-more[hidden]{display:block !important}.listicle-toggle{display:none !important}</style></noscript>
 {{HEAD_EXTRA}}
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9332749804326149" crossorigin="anonymous"></script>
 <script type="application/ld+json">{{JSONLD}}</script>

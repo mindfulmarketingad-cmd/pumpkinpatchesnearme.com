@@ -457,6 +457,20 @@ a.pillar-reviews-link:hover span:not(.rating):not(.stars) { text-decoration: und
 .listicle-summary p { margin: 0 0 0.75rem; color: var(--ink-2); font-size: 0.97rem; line-height: 1.65; }
 .listicle-summary p:last-child { margin-bottom: 0; }
 
+.listicle-toggle {
+  display: inline-flex; align-items: center; gap: 0.4rem; margin: 0.15rem 0 0;
+  background: none; border: 0; padding: 0; color: var(--orange-700); font-weight: 600;
+  font-size: 0.92rem; cursor: pointer; font-family: var(--font-body);
+}
+.listicle-toggle:hover { color: var(--orange-900); text-decoration: underline; }
+.listicle-toggle-icon {
+  width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: rotate(45deg); transition: transform 0.15s ease; margin-top: -3px;
+}
+.listicle-toggle[aria-expanded="true"] .listicle-toggle-icon { transform: rotate(-135deg); margin-top: 3px; }
+.listicle-more { margin-top: 0.85rem; }
+.listicle-more[hidden] { display: none; }
+
 .pillar-list {
   list-style: none; margin: 0 0 2rem; padding-left: 0; counter-reset: pillar-rank;
   display: flex; flex-direction: column; gap: 1.1rem;
