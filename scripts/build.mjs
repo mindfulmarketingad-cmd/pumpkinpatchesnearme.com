@@ -1595,6 +1595,169 @@ ${faqHtml}`;
 generateStateNounListicles('field');
 generateStateNounListicles('farm');
 
+/* --- programmatic "5 Best Pumpkin Patches To Pick Your Own Pumpkin in
+   <State>" posts -----------------------------------------------------------
+   Scoped to the real "U-pick pumpkins" feature tag, not every pumpkin
+   patch in the state — only 35 of 48 states have any listing carrying it.
+   Generated with at least one distinctly-named u-pick farm (same
+   ATTRACTION_POST_MIN_LISTINGS=1 precedent as the per-city attraction
+   posts), capped at 5, with the title/count reading singular for a state
+   that only has one rather than a misleading fixed "5 Best". */
+const UPICK_CATEGORY = categories.find((c) => c.slug === 'u-pick-pumpkin-patches');
+const UPICK_POST_MAX = 5;
+let upickPostIndex = 0;
+for (const stateName of stateNames) {
+  const stateItems = byState.get(stateName) || [];
+  const seenUpickNames = new Set();
+  const upickDistinct = stateItems.filter((l) => {
+    if (!(l.features || []).includes(UPICK_CATEGORY.feature)) return false;
+    const key = l.name.trim().toLowerCase();
+    if (seenUpickNames.has(key)) return false;
+    seenUpickNames.add(key);
+    return true;
+  });
+  if (!upickDistinct.length) continue;
+
+  const topN = upickDistinct.slice(0, UPICK_POST_MAX);
+  const x = topN.length;
+  const names = topN.map((l) => l.name);
+  const upickAuthorSlug = authors[upickPostIndex++ % authors.length].slug;
+  const h1 = x === 1
+    ? `Best Pumpkin Patch To Pick Your Own Pumpkin in ${stateName}`
+    : `${x} Best Pumpkin Patches To Pick Your Own Pumpkin in ${stateName}`;
+  const slug = slugify(h1);
+  const path = `/blog/${slug}/`;
+
+  const heroSrc = (topN.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+  const heroHtml = blogHeroFigureHtml(heroSrc, `U-pick pumpkin patches in ${stateName}`);
+
+  const tocSection = `<p class="listicle-toc"><strong>Jump to:</strong> ${topN
+    .map((l, i) => `<a href="#${attr(l.slug)}">${i + 1}. ${esc(l.name)}</a>`)
+    .join(' <span aria-hidden="true">&middot;</span> ')}</p>`;
+
+  const linkedNames = topN.map((l) => `<a href="${listingPath(l)}">${esc(l.name)}</a>`);
+  const summaryIntro = x === 1
+    ? `<p>The best place to pick your own pumpkin in ${esc(stateName)} is ${linkedNames[0]} — the only farm we track statewide that's tagged for true u-pick, where you cut a pumpkin straight from the vine instead of choosing from a pile by the barn. Here's a closer look at what it offers, how it's rated, and how to get there, followed by answers to the questions we hear most about visiting. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse u-pick farms in every state on our <a href="${categoryPath(UPICK_CATEGORY)}">U-Pick Pumpkin Patches near me</a> page.</p>`
+    : `<p>The ${x} best places to pick your own pumpkin in ${esc(stateName)} are ${joinNatural(linkedNames)} — farms tagged for true u-pick, where you cut a pumpkin straight from the vine instead of choosing from a pile by the barn. Below, each gets a closer look — what it offers, how it's rated, and how to get there — followed by answers to the questions we hear most about visiting. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse u-pick farms in every state on our <a href="${categoryPath(UPICK_CATEGORY)}">U-Pick Pumpkin Patches near me</a> page.</p>`;
+
+  const listicleHtml = `<ol class="listicle">
+${topN.map((l, i) => renderListicleEntry(l, i + 1, stateName)).join('\n')}
+</ol>`;
+
+  const faqQa = [
+    {
+      q: `What is the best pumpkin patch to pick your own pumpkin in ${stateName}?`,
+      a: `Based on rating and review volume, ${esc(topN[0].name)} ranks first among the u-pick pumpkin patches we track in ${esc(stateName)}${topN[0].rating ? `, with a ${topN[0].rating.toFixed(1)}-out-of-5 rating` : ''}. See the full breakdown above, or its <a href="${listingPath(topN[0])}">full listing</a> for hours and directions.`,
+    },
+    {
+      q: `What does "u-pick" actually mean at a pumpkin patch?`,
+      a: `True u-pick means walking into a growing field and cutting a pumpkin off the vine yourself, rather than choosing from a pile of pumpkins trucked in and arranged near the barn. Both are common — if cutting from the vine matters to you, call ahead and ask whether the field is still open, especially late in the season.`,
+    },
+    {
+      q: `When is u-pick season in ${stateName}?`,
+      a: `Most u-pick fields open alongside the rest of the pumpkin season, roughly mid-to-late September through the first days of November, and smaller growers can pick out and switch to a pre-picked pile before the season officially ends. Check the listings above or call ahead to confirm the field is still open.`,
+    },
+    {
+      q: `What should I bring to pick my own pumpkin?`,
+      a: `Gloves and, ideally, your own shears — pumpkin vines are prickly, and a cleanly cut stem two to four inches long keeps a pumpkin fresh far longer than one twisted off by hand. Wear shoes you don't mind getting muddy, since fields are working farmland, not paved lots.`,
+    },
+    {
+      q: x === 1 ? `Is this u-pick patch good for young kids?` : `Are these u-pick patches good for young kids?`,
+      a: `It depends on the farm and how far the field is from parking. Check the individual listing pages above for feature tags like a petting zoo or kids' play area, and call ahead if you're planning around young children or strollers.`,
+    },
+  ];
+  const faqHtml = `<h2>Frequently asked questions</h2>
+<div class="faq-list">
+${faqQa
+  .map(
+    (item) => `  <details class="faq-item">
+    <summary>${esc(item.q)}</summary>
+    <div class="faq-answer"><p>${esc(item.a)}</p></div>
+  </details>`
+  )
+  .join('\n')}
+</div>`;
+
+  const conclusion = `<h2>Conclusion</h2>
+<p>${esc(topN[0].name)} is${x > 1 ? ' our top pick' : ' the only farm we currently track'} for picking your own pumpkin in ${esc(stateName)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${x > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and hours, admission and what's actually running on a given day can vary week to week during the season — always confirm with the farm directly, and ask specifically whether the field is still open for cutting, before you drive out. For more options, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a> or browse <a href="${categoryPath(UPICK_CATEGORY)}">u-pick pumpkin patches near you</a>.</p>`;
+
+  const body = `${tocSection}
+${summaryIntro}
+${listicleHtml}
+${conclusion}
+${faqHtml}`;
+
+  const description = x === 1
+    ? `The best pumpkin patch to pick your own pumpkin in ${stateName} is ${names[0]}. See its rating, hours and directions before you go.`
+    : `The ${x} best pumpkin patches to pick your own pumpkin in ${stateName}: ${joinNatural(names)}. Ranked by rating and reviews.`;
+  const postMeta = {
+    path,
+    slug,
+    title: `${h1} | Ranked by Rating`,
+    description,
+    h1,
+    excerpt: description,
+    date: backdatedPostDate(slug),
+    readingTime: '7 min read',
+    author: upickAuthorSlug,
+  };
+
+  const meta = {
+    ...postMeta,
+    nav: 'blog',
+    layout: 'prose',
+    ogType: 'article',
+    trail: [{ label: 'Blog', href: '/blog/' }, { label: h1 }],
+  };
+  const upickAuthor = authorsBySlug.get(upickAuthorSlug);
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BlogPosting',
+        headline: h1,
+        description,
+        datePublished: postMeta.date,
+        dateModified: postMeta.date,
+        mainEntityOfPage: SITE_URL + path,
+        image: absImageUrl(heroSrc),
+        author: upickAuthor
+          ? { '@type': 'Person', name: upickAuthor.name, url: SITE_URL + authorPath(upickAuthor), jobTitle: upickAuthor.title }
+          : { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+        publisher: {
+          '@type': 'Organization',
+          name: SITE_NAME,
+          url: SITE_URL,
+          logo: { '@type': 'ImageObject', url: `${SITE_URL}/assets/img/icon-512.png` },
+        },
+      },
+      {
+        '@type': 'ItemList',
+        numberOfItems: topN.length,
+        itemListElement: topN.map((l, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          url: SITE_URL + listingPath(l),
+          name: l.name,
+        })),
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: faqQa.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      },
+      breadcrumbJsonLd(meta.trail, path),
+    ],
+  };
+  const byline = renderByline(upickAuthorSlug, postMeta.date, postMeta.readingTime);
+  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
+  addToSitemap(path, '0.6', 'weekly', postMeta.date);
+  handAuthoredPosts.push({ meta: postMeta, body });
+}
+
 /* --- programmatic "5 Best Pumpkin Patches in <City>" posts --------------- */
 // One per town with at least this many listings, generated straight from
 // the dataset — no hand-written source file, so this list grows on its own
