@@ -143,6 +143,10 @@ function stars(rating) {
 const statePath = (stateName) => `/${slugify(stateName)}/`;
 const cityPath = (stateName, cityName) => `/${slugify(stateName)}/${slugify(cityName)}/`;
 const categoryPath = (category) => `/${category.slug}/`;
+// City-scoped service page, e.g. /hayrides/calhoun-ga/ — same "city-state
+// code" slug shape the per-city blog posts already use, so URLs read
+// consistently across the site.
+const categoryCityPath = (category, cityName, stateCode) => `/${category.slug}/${slugify(`${cityName} ${stateCode}`)}/`;
 
 // Shared by every state and city page's List/Map toggle.
 const pageMapScripts = `<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css">
@@ -306,6 +310,20 @@ function addCategoryStateGuideLink(catSlug, stateName, title, href) {
 function addCategoryCityGuideLink(catSlug, stateName, cityName, title, href, n) {
   if (!categoryCityGuideLinks.has(catSlug)) categoryCityGuideLinks.set(catSlug, []);
   categoryCityGuideLinks.get(catSlug).push({ stateName, cityName, title, href, n });
+}
+
+// Separate from the guide registries above: these track the actual
+// city-scoped directory pages (/hayrides/<city>-<state>/ and friends),
+// not the blog posts about them — so a city's directory page can link to
+// its own local service page, and a category hub can list its own city
+// sub-pages, distinct from linking to blog content.
+const categoryCityPageLinks = new Map(); // "catSlug|state|city" -> { title, href }
+const categoryCityPageList = new Map(); // catSlug -> [{ stateName, cityName, title, href, n }]
+
+function addCategoryCityPage(catSlug, stateName, cityName, title, href, n) {
+  categoryCityPageLinks.set(`${catSlug}|${stateName}|${cityName}`, { title, href });
+  if (!categoryCityPageList.has(catSlug)) categoryCityPageList.set(catSlug, []);
+  categoryCityPageList.get(catSlug).push({ stateName, cityName, title, href, n });
 }
 
 /* ------------------------------------------------------- shared fragments */
@@ -2553,6 +2571,255 @@ ${closingSummary}`;
 // all read from `posts` and don't need to know which kind a given entry is.
 const posts = [...handAuthoredPosts, ...pillarPosts, ...statePosts, ...cityPosts, ...attractionCityPosts].sort((a, b) => (b.meta.date || '').localeCompare(a.meta.date || ''));
 
+/* --- category + city service pages (e.g. /hayrides/<city>-<state>/) -----
+   Distinct from both the city directory page (every business in a town)
+   and the category page (one attraction, every state): this is the
+   service+location combination page — just the businesses in one city
+   carrying one specific attraction tag, at a clean city-scoped URL under
+   that attraction's own path. Complements, rather than replaces, the
+   "Best <Attraction> in <City>" blog posts above (those are curated
+   editorial write-ups; these are plain ranked directory pages, the same
+   pillar-list format the state/city/category pages use). Only generated
+   for a category once explicitly requested — call
+   generateCategoryCityPages for each one that should get these. */
+function generateCategoryCityPages(catOrSlug, { minListings = 1, itemFilter = null } = {}) {
+  const cat = typeof catOrSlug === 'string' ? categories.find((c) => c.slug === catOrSlug) : catOrSlug;
+  const test = itemFilter || ((l) => (l.features || []).includes(cat.feature));
+
+  // Precompute every qualifying city before writing any page, so each
+  // page can list its sibling towns in the same state regardless of Map
+  // iteration order.
+  const qualifying = [];
+  for (const [key, items] of byCity) {
+    const [stateName, cityName] = key.split('|');
+    const seen = new Set();
+    const distinct = items.filter((l) => {
+      if (!test(l)) return false;
+      const k = l.name.trim().toLowerCase();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    if (distinct.length < minListings) continue;
+    qualifying.push({ stateName, cityName, stateCode: items[0].stateCode || '', distinct });
+  }
+
+  for (const { stateName, cityName, stateCode, distinct } of qualifying) {
+    const label = `${cityName}, ${stateCode}`;
+    const path = categoryCityPath(cat, cityName, stateCode);
+    const n = distinct.length;
+    const h1 = `${cat.name} in ${label}`;
+
+    // cat.feature is null for the "farms" virtual category (every listing
+    // qualifies — there's no attraction being offered), so it reads as a
+    // plain roster rather than "N patches offer pumpkin farm."
+    const description = cat.feature
+      ? `Find ${cat.name.toLowerCase()} in ${label} — ${n} pumpkin patch${n === 1 ? '' : 'es'} we track with ${cat.singular}, ranked by rating, with address, hours and directions.`
+      : `${n} ${cat.singular}${n === 1 ? '' : 's'} in ${label}, ranked by rating, with address, hours and directions for each.`;
+    const lede = cat.feature
+      ? `${n} pumpkin patch${n === 1 ? '' : 'es'} we track in ${label} ${n === 1 ? 'offers' : 'offer'} ${cat.singular}, ranked by rating and review volume.`
+      : `${n} ${cat.singular}${n === 1 ? '' : 's'} we track in ${label}, ranked by rating and review volume.`;
+    const meta = {
+      path,
+      title: `${h1} | ${n} Farm${n === 1 ? '' : 's'}, Ranked (${SEASON_YEAR})`,
+      description,
+      h1,
+      lede,
+      nav: cat.slug === 'corn-mazes' ? 'corn-mazes' : cat.slug === 'hayrides' ? 'hayrides' : 'pumpkin-patches',
+      layout: 'wide',
+      trail: [
+        { label: 'Pumpkin Patches', href: '/pumpkin-patches/' },
+        { label: cat.name, href: categoryPath(cat) },
+        { label },
+      ],
+    };
+
+    const heroSrc = (distinct.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+    const heroHtml = blogHeroFigureHtml(heroSrc, `${cat.name} in ${label}`);
+
+    const listHtml = `<p><button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button></p>
+<ol class="pillar-list">
+${pillarEntriesWithAds(distinct, (l, i) => renderPillarEntry(l, i, cityName))}
+</ol>`;
+
+    const relatedGuide = (cityGuideLinks.get(`${stateName}|${cityName}`) || []).find((g) => g.catSlug === cat.slug);
+    const siblings = qualifying.filter((q) => q.stateName === stateName && q.cityName !== cityName);
+
+    const body = `${heroHtml}
+${renderScopedMap(distinct, listHtml)}
+<div class="section" style="padding-bottom:0">
+  <p>Want everything ${esc(label)} has to offer, not just ${esc(cat.name.toLowerCase())}? See <a href="${cityPath(stateName, cityName)}">every pumpkin patch we track in ${esc(label)}</a>, or browse ${esc(cat.name.toLowerCase())} in every state on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>
+  ${relatedGuide ? `<p>Want the full write-up? Read <a href="${relatedGuide.href}">${esc(relatedGuide.title)}</a>.</p>` : ''}
+
+  ${siblings.length ? `<h2>${esc(cat.name)} in other ${esc(stateName)} towns</h2>
+  <div class="tag-row">
+${siblings.map((s) => `    <a class="tag tag-link" href="${categoryCityPath(cat, s.cityName, s.stateCode)}">${esc(s.cityName)} (${s.distinct.length})</a>`).join('\n')}
+  </div>` : ''}
+
+  <p style="margin-top:1.5rem">
+    <a class="btn btn-primary" href="/">Search the map by ZIP code</a>
+    <a class="btn btn-outline" href="${statePath(stateName)}">All ${esc(stateName)} pumpkin patches</a>
+  </p>
+  ${renderPhotoGallery(distinct, path, label)}
+</div>`;
+
+    const jsonld = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'CollectionPage', name: meta.title, description: meta.description, url: SITE_URL + path },
+        {
+          '@type': 'ItemList',
+          numberOfItems: distinct.length,
+          itemListElement: distinct.slice(0, 25).map((l, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            url: SITE_URL + listingPath(l),
+            name: l.name,
+          })),
+        },
+        breadcrumbJsonLd(meta.trail, path),
+      ],
+    };
+
+    const scripts = `${pageMapScripts}\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
+    writePage(path, render(meta, body, { jsonld, scripts }));
+    addToSitemap(path, '0.6', 'weekly');
+    addCategoryCityPage(cat.slug, stateName, cityName, h1, path, n);
+  }
+}
+
+generateCategoryCityPages('hayrides');
+generateCategoryCityPages('corn-mazes');
+
+/* --- /farms/ hub and /farms/<city>-<state>/ pages -------------------------
+   "Pumpkin farm" is real, distinct search phrasing from "pumpkin patch" —
+   the same reasoning that already justified separate "10 Best Pumpkin
+   Fields/Farms" state posts alongside "10 Best Pumpkin Patches" ones,
+   ranking the same real businesses under different wording rather than
+   inventing new ones. /farms/ is a second full-catalog hub next to
+   /pumpkin-patches/ with that framing; /farms/<city>-<state>/ reuses the
+   same city-service-page generator as the attraction pages above, just
+   with every listing in a city counting (no feature required) and a
+   higher bar (CITY_POST_MIN_LISTINGS, the same gate the "5 Best Pumpkin
+   Patches in <City>" post uses) so it doesn't produce a near-duplicate of
+   every single /state/city/ page — only towns with real inventory. */
+const farmsHub = {
+  slug: 'farms',
+  feature: null,
+  name: 'Pumpkin Farms',
+  singular: 'pumpkin farm',
+  title: 'Pumpkin Farms Near Me — Find a Pumpkin Farm in Your State',
+  description: 'Find pumpkin farms near you. Browse every pumpkin farm we track across all 50 states, with addresses, hours, ratings and directions.',
+  lede: 'Real, working farms growing and selling pumpkins — browse every one we track near you, from small roadside stands to full agritourism destinations.',
+  intro: `<p>"Pumpkin farm," "pumpkin patch" and "pumpkin field" all describe the same kind of place, and people search for all three — so we cover all three. Every listing here is a real, working farm or seasonal lot pulled from public business data: address, hours, rating and what's actually on site, in one page.</p>
+<p>Some are small roadside operations selling pumpkins from a stand or a field; others run a full fall program with a corn maze, hayrides and a petting zoo alongside the pumpkins. Filter by state or attraction below, or search by name or town.</p>`,
+};
+
+{
+  const items = rankListings(listings);
+  const presentCategoriesAll = categories
+    .map((c) => ({ c, n: items.filter((l) => (l.features || []).includes(c.feature)).length }))
+    .filter((x) => x.n > 0);
+  const stateCounts = stateNames.map((s) => ({ state: s, n: (byState.get(s) || []).length }));
+
+  const meta = {
+    path: '/farms/',
+    title: farmsHub.title,
+    description: farmsHub.description,
+    h1: `${farmsHub.name} Near Me`,
+    lede: farmsHub.lede,
+    nav: 'pumpkin-patches',
+    layout: 'wide',
+    trail: [{ label: 'Pumpkin Patches', href: '/pumpkin-patches/' }, { label: farmsHub.name }],
+  };
+
+  const heroSrc = (items.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+  const heroHtml = blogHeroFigureHtml(heroSrc, `${farmsHub.name} near you`);
+
+  const filterBar = `<div class="find-tool state-filter" id="state-filter">
+  <div class="search-field">
+    <label class="visually-hidden" for="state-filter-q">Search by name, city or state</label>
+    <input id="state-filter-q" type="text" placeholder="Search by name, city or state..." autocomplete="off">
+  </div>
+  <div class="control-group">
+    <label class="control">
+      <span class="control-label">State</span>
+      <select id="state-filter-state" aria-label="Filter by state">
+        <option value="">All states</option>
+${stateCounts.map(({ state, n }) => `        <option value="${attr(state.toLowerCase())}">${esc(state)} (${n})</option>`).join('\n')}
+      </select>
+    </label>
+    <label class="control">
+      <span class="control-label">Attraction</span>
+      <select id="state-filter-feature" aria-label="Filter by attraction">
+        <option value="">All</option>
+${presentCategoriesAll.map(({ c, n }) => `        <option value="${attr(c.feature.toLowerCase())}">${esc(c.name)} (${n})</option>`).join('\n')}
+      </select>
+    </label>
+    <label class="control">
+      <span class="control-label">Sort</span>
+      <select id="state-filter-sort" aria-label="Sort results">
+        <option value="rating">Top rated</option>
+        <option value="reviews">Most reviewed</option>
+        <option value="name">Name A-Z</option>
+        <option value="distance">Nearest to me</option>
+      </select>
+    </label>
+    <button class="toggle-btn" type="button" id="state-filter-reset">Reset</button>
+    <button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button>
+  </div>
+  <div class="results-head" style="padding:0.6rem 0 0;background:transparent;border:0">
+    <p class="results-count" id="state-filter-count">${items.length.toLocaleString('en-US')} pumpkin farms</p>
+  </div>
+</div>`;
+
+  const listHtml = `${filterBar}
+<ol class="pillar-list" id="state-pillar-list">
+${pillarEntriesWithAds(items, (l, i) => renderPillarEntry(l, i, l.state))}
+</ol>
+<p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search, state or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
+
+  const body = `${heroHtml}
+${farmsHub.intro}
+${renderScopedMap(items, listHtml)}
+<div class="section" style="padding-bottom:0">
+  <h2>${esc(farmsHub.name)} by state</h2>
+  <div class="state-grid">
+${stateCounts.map(({ state, n }) => `    <a class="state-link" href="${statePath(state)}">${esc(state)} <span>${n}</span></a>`).join('\n')}
+  </div>
+  <p style="margin-top:1.5rem"><a class="btn btn-outline" href="/pumpkin-patches/">Browse the full pumpkin patch directory</a></p>
+</div>`;
+
+  const jsonld = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'CollectionPage', name: meta.title, description: meta.description, url: SITE_URL + meta.path },
+      {
+        '@type': 'ItemList',
+        numberOfItems: items.length,
+        itemListElement: items.slice(0, 25).map((l, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          url: SITE_URL + listingPath(l),
+          name: l.name,
+        })),
+      },
+      breadcrumbJsonLd(meta.trail, meta.path),
+    ],
+  };
+
+  const scripts = `${pageMapScripts}\n<script src="/assets/js/state-filter.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
+  writePage(meta.path, render(meta, body, { jsonld, scripts }));
+  addToSitemap(meta.path, '0.7', 'weekly');
+}
+
+// CITY_POST_MIN_LISTINGS (5) turned out far too strict for an unfiltered
+// count — only 4 towns nationwide have 5+ distinctly-named farms. 2 keeps
+// these pages meaningfully different from a single-card duplicate of the
+// city directory page while still producing real coverage (~230 towns).
+const FARMS_CITY_MIN_LISTINGS = 2;
+generateCategoryCityPages(farmsHub, { itemFilter: () => true, minListings: FARMS_CITY_MIN_LISTINGS });
+
 /* --- author pages ---------------------------------------------------------
    /authors/ lists every writer; /authors/<slug>/ gives each their own page
    with bio and a list of what they've written. Bios describe general,
@@ -3143,7 +3410,13 @@ ${pillarEntriesWithAds(items, (l, i) => renderPillarEntry(l, i, cityName))}
 <div class="section" style="padding-bottom:0">
   ${featureCounts.length ? `<h2>What ${esc(cityName)} farms offer</h2>
   <div class="tag-row">
-${featureCounts.map(({ c, n }) => `    <a class="tag tag-link" href="${categoryPath(c)}">${esc(c.name)} (${n})</a>`).join('\n')}
+${featureCounts.map(({ c, n }) => {
+  // Link straight to this city's own service page (e.g. /hayrides/calhoun-ga/)
+  // when one was generated, rather than the generic statewide category page —
+  // it's the more precise match for someone browsing this city specifically.
+  const cityPage = categoryCityPageLinks.get(`${c.slug}|${stateName}|${cityName}`);
+  return `    <a class="tag tag-link" href="${cityPage ? cityPage.href : categoryPath(c)}">${esc(c.name)} (${n})</a>`;
+}).join('\n')}
   </div>` : ''}
 
   <h2>Visiting a pumpkin patch near ${esc(cityName)}</h2>
@@ -3265,6 +3538,19 @@ ${pillarEntriesWithAds(items, (l, i) => renderPillarEntry(l, i, cat.name))}
   // grid above and each state/city page's own guide links are how the
   // long tail stays reachable).
   const CATEGORY_CITY_GUIDE_CAP = 24;
+  // The category's own city-scoped service pages (e.g. /hayrides/<city>-<state>/),
+  // when that category has them — separate from catCityGuides below, which
+  // links to blog posts about the same cities, not the directory pages.
+  const catCityPages = (categoryCityPageList.get(cat.slug) || [])
+    .slice()
+    .sort((a, b) => b.n - a.n)
+    .slice(0, CATEGORY_CITY_GUIDE_CAP);
+  const catCityPagesSection = catCityPages.length
+    ? `<h2>${esc(cat.name)} by city</h2>
+  <ul class="link-list grid grid-2">
+${catCityPages.map((g) => `    <li><a href="${g.href}">${esc(g.title)}</a></li>`).join('\n')}
+  </ul>`
+    : '';
   const catStateGuides = categoryStateGuideLinks.get(cat.slug) || [];
   const catCityGuides = (categoryCityGuideLinks.get(cat.slug) || [])
     .slice()
@@ -3297,6 +3583,8 @@ ${statesWith
   })
   .join('\n')}
   </div>` : ''}
+
+  ${catCityPagesSection}
 
   ${catGuidesSection}
 
