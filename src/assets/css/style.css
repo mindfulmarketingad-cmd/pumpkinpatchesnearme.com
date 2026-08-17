@@ -845,6 +845,10 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 .fact-list li { display: flex; gap: 0.75rem; padding: 0.7rem 0; border-bottom: 1px solid var(--line); font-size: 0.95rem; }
 .fact-list li:last-child { border-bottom: 0; }
 .fact-list b { min-width: 92px; color: var(--muted); font-weight: 500; }
+.link-list { list-style: none; margin: 0; padding: 0; gap: 0.6rem 1.5rem; }
+.link-list li { padding: 0.55rem 0; border-bottom: 1px solid var(--line); font-size: 0.95rem; }
+.link-list:not(.grid) li:last-child { border-bottom: 0; }
+.link-list a { font-weight: 600; }
 .hours-table { width: 100%; border-collapse: collapse; font-size: 0.94rem; }
 .hours-table td { padding: 0.45rem 0; border-bottom: 1px solid var(--line); }
 .hours-table td:first-child { color: var(--muted); width: 45%; }

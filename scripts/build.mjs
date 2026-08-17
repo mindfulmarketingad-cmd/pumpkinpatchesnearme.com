@@ -273,6 +273,41 @@ const stats = {
   cities: cityCount,
 };
 
+/* --- pillar/cluster link registries --------------------------------------
+   Every programmatic blog post below registers itself here as it's
+   written, so the state, city, category and listing pages generated later
+   in this file can link back down to their own cluster content — without
+   re-deriving slugs independently in four separate places (the bug class
+   that already bit the pricing-guide post once). */
+// catSlug is null for posts that aren't scoped to one attraction (the
+// overview "10 Best," Fields/Farms and pricing-guide posts) and set to the
+// category slug for posts that are (U-Pick, Petting Zoo, Fall Festival,
+// and every "Best <Attraction> in <City>" post) — lets the listing-page
+// picker below match a guide to a business's own feature tags instead of
+// just grabbing whichever post happens to be first.
+const stateGuideLinks = new Map(); // stateName -> [{ title, href, catSlug }]
+const cityGuideLinks = new Map(); // "state|city" -> [{ title, href, catSlug }]
+const categoryStateGuideLinks = new Map(); // cat.slug -> [{ stateName, title, href }]
+const categoryCityGuideLinks = new Map(); // cat.slug -> [{ stateName, cityName, title, href, n }]
+
+function addStateGuideLink(stateName, title, href, catSlug = null) {
+  if (!stateGuideLinks.has(stateName)) stateGuideLinks.set(stateName, []);
+  stateGuideLinks.get(stateName).push({ title, href, catSlug });
+}
+function addCityGuideLink(stateName, cityName, title, href, catSlug = null) {
+  const key = `${stateName}|${cityName}`;
+  if (!cityGuideLinks.has(key)) cityGuideLinks.set(key, []);
+  cityGuideLinks.get(key).push({ title, href, catSlug });
+}
+function addCategoryStateGuideLink(catSlug, stateName, title, href) {
+  if (!categoryStateGuideLinks.has(catSlug)) categoryStateGuideLinks.set(catSlug, []);
+  categoryStateGuideLinks.get(catSlug).push({ stateName, title, href });
+}
+function addCategoryCityGuideLink(catSlug, stateName, cityName, title, href, n) {
+  if (!categoryCityGuideLinks.has(catSlug)) categoryCityGuideLinks.set(catSlug, []);
+  categoryCityGuideLinks.get(catSlug).push({ stateName, cityName, title, href, n });
+}
+
 /* ------------------------------------------------------- shared fragments */
 
 function renderCard(l, { showState = true, showCity = true, headingLevel = 3 } = {}) {
@@ -1430,6 +1465,7 @@ ${closingSummary}`;
   const statePostScripts = `<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
   writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: statePostScripts }));
   addToSitemap(path, '0.6', 'weekly', postMeta.date);
+  addStateGuideLink(stateName, h1, path);
 }
 
 /* --- programmatic "10 Best Pumpkin Fields/Farms in <State>" posts --------
@@ -1589,6 +1625,7 @@ ${faqHtml}`;
     writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
     addToSitemap(path, '0.6', 'weekly', postMeta.date);
     handAuthoredPosts.push({ meta: postMeta, body });
+    addStateGuideLink(stateName, h1, path);
   }
 }
 
@@ -1756,6 +1793,8 @@ ${faqHtml}`;
   writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
   addToSitemap(path, '0.6', 'weekly', postMeta.date);
   handAuthoredPosts.push({ meta: postMeta, body });
+  addStateGuideLink(stateName, h1, path, UPICK_CATEGORY.slug);
+  addCategoryStateGuideLink(UPICK_CATEGORY.slug, stateName, h1, path);
 }
 
 /* --- programmatic "What Are The Prices Of Pumpkins At a Pumpkin Patch in
@@ -1947,6 +1986,7 @@ ${conclusion}`;
   writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld }));
   addToSitemap(path, '0.6', 'weekly', postMeta.date);
   handAuthoredPosts.push({ meta: postMeta, body });
+  addStateGuideLink(stateName, h1, path);
 }
 
 /* --- programmatic per-state attraction listicles (petting zoos, fall
@@ -2084,6 +2124,8 @@ ${faqHtml}`;
     writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
     addToSitemap(path, '0.6', 'weekly', postMeta.date);
     handAuthoredPosts.push({ meta: postMeta, body });
+    addStateGuideLink(stateName, h1, path, cat.slug);
+    addCategoryStateGuideLink(cat.slug, stateName, h1, path);
   }
 }
 
@@ -2325,6 +2367,7 @@ ${closingSummary}`;
   const byline = renderByline(cityAuthorSlug, postMeta.date, postMeta.readingTime);
   writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
   addToSitemap(path, '0.6', 'weekly', postMeta.date);
+  addCityGuideLink(stateName, cityName, postMeta.h1, path);
 }
 
 /* --- programmatic "X Best <Attraction> in <City>" posts ------------------
@@ -2500,6 +2543,8 @@ ${closingSummary}`;
     const byline = renderByline(attractionAuthorSlug, postMeta.date, postMeta.readingTime);
     writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
     addToSitemap(path, '0.6', 'weekly', postMeta.date);
+    addCityGuideLink(stateName, cityName, h1, path, cat.slug);
+    addCategoryCityGuideLink(cat.slug, stateName, cityName, h1, path, distinct.length);
   }
 }
 
@@ -2968,10 +3013,24 @@ ${presentCategories.map(({ c, n }) => `  <a class="tag tag-link" href="${categor
 </div>`
     : '';
 
+  // Links down to every blog post generated specifically for this state
+  // (the state's own "10 Best" pillar post, Fields/Farms, U-Pick, Petting
+  // Zoo, Fall Festival and pricing-guide posts, whichever qualify) — so the
+  // state page, as the geographic pillar, actually surfaces its own
+  // cluster content instead of dead-ending at the directory list.
+  const stateGuides = stateGuideLinks.get(stateName) || [];
+  const guidesSection = stateGuides.length
+    ? `<h2>${esc(stateName)} pumpkin patch guides</h2>
+<ul class="link-list">
+${stateGuides.map((g) => `  <li><a href="${g.href}">${esc(g.title)}</a></li>`).join('\n')}
+</ul>`
+    : '';
+
   const body = `${renderScopedMap(items, listHtml)}
 <div class="section" style="padding-bottom:0">
 ${citySection}
 ${catSection}
+${guidesSection}
 <h2>Planning a ${esc(stateName)} pumpkin patch trip</h2>
 <p>Pumpkin patch season in ${esc(stateName)} generally runs from mid-September through the first weekend of November, with the busiest weekends falling in mid-October. Weekday mornings are the quietest time to visit, and many farms charge admission only on weekends when the corn maze, hayrides and food stands are all running.</p>
 <p>Bring cash — plenty of family farms still run cash-only gates or wagon rides — and check whether the patch charges by the pumpkin, by the pound or as a flat admission. Call ahead after heavy rain, since field access is the first thing farms close.</p>
@@ -3037,6 +3096,12 @@ for (const [key, items] of byCity) {
 
   const siblings = citiesInState(stateName).filter((c) => c !== cityName);
 
+  // This city's own blog posts — its "5 Best Pumpkin Patches" listicle and
+  // any "Best <Attraction> in <City>" posts — so the city page (the
+  // smallest geographic pillar) links straight down to its cluster
+  // content instead of leaving it only reachable from /blog/.
+  const cityGuides = cityGuideLinks.get(`${stateName}|${cityName}`) || [];
+
   const filterBar = `<div class="find-tool state-filter" id="state-filter">
   <div class="search-field">
     <label class="visually-hidden" for="state-filter-q">Search by name</label>
@@ -3091,6 +3156,11 @@ ${siblings
   .map((c) => `    <a class="state-link" href="${cityPath(stateName, c)}">${esc(c)} <span>${(byCity.get(`${stateName}|${c}`) || []).length}</span></a>`)
   .join('\n')}
   </div>` : ''}
+
+  ${cityGuides.length ? `<h2>${esc(cityName)} pumpkin patch guides</h2>
+  <ul class="link-list">
+${cityGuides.map((g) => `    <li><a href="${g.href}">${esc(g.title)}</a></li>`).join('\n')}
+  </ul>` : ''}
 
   <p style="margin-top:1.5rem">
     <a class="btn btn-primary" href="/">Search the map by ZIP code</a>
@@ -3187,6 +3257,31 @@ ${pillarEntriesWithAds(items, (l, i) => renderPillarEntry(l, i, cat.name))}
   <a class="btn btn-primary" href="/add-a-listing/">Submit a farm</a>
 </div>`;
 
+  // This category's own in-depth guides: a full per-state listicle series
+  // exists for some categories (U-Pick, Petting Zoos, Fall Festivals); for
+  // the rest, fall back to the strongest per-city "Best <Attraction> in
+  // <City>" posts (there can be well over a hundred of these per category,
+  // so cap it rather than dumping every one on a single page — the state
+  // grid above and each state/city page's own guide links are how the
+  // long tail stays reachable).
+  const CATEGORY_CITY_GUIDE_CAP = 24;
+  const catStateGuides = categoryStateGuideLinks.get(cat.slug) || [];
+  const catCityGuides = (categoryCityGuideLinks.get(cat.slug) || [])
+    .slice()
+    .sort((a, b) => b.n - a.n)
+    .slice(0, CATEGORY_CITY_GUIDE_CAP);
+  const catGuidesSection = catStateGuides.length
+    ? `<h2>${esc(cat.name)} guides by state</h2>
+  <ul class="link-list grid grid-2">
+${catStateGuides.map((g) => `    <li><a href="${g.href}">${esc(g.title)}</a></li>`).join('\n')}
+  </ul>`
+    : catCityGuides.length
+      ? `<h2>${esc(cat.name)} guides by city</h2>
+  <ul class="link-list grid grid-2">
+${catCityGuides.map((g) => `    <li><a href="${g.href}">${esc(g.title)}</a></li>`).join('\n')}
+  </ul>`
+      : '';
+
   const body = `${catHeroHtml}
 ${cat.intro}
 
@@ -3202,6 +3297,8 @@ ${statesWith
   })
   .join('\n')}
   </div>` : ''}
+
+  ${catGuidesSection}
 
   <h2>Find a ${esc(cat.singular)} near you</h2>
   <p>The fastest way to find a farm with a ${esc(cat.singular)} nearby is the map: enter your ZIP code, then set the feature filter to ${esc(cat.name.toLowerCase())}. Results re-sort by distance from your location.</p>
@@ -3291,6 +3388,23 @@ for (const l of listings) {
   const related = (sameStateByFeature.length ? sameStateByFeature : sameStateOthers).slice(0, 3);
   const nearCities = l.state && l.city ? nearbyCities(l.state, l.city, 8) : [];
 
+  // Editorial guides relevant to this specific listing: its city's own
+  // "Best Pumpkin Patches" roundup, a "Best <Attraction> in <City>" post
+  // matching one of its feature tags if one exists, and a state-level guide
+  // (preferring one matching a feature tag, falling back to the general
+  // one) — every listing page ends up pointing at real blog content
+  // instead of dead-ending in directory pages alone.
+  const featureCatSlugs = new Set(categories.filter((c) => (l.features || []).includes(c.feature)).map((c) => c.slug));
+  const listingCityGuides = cityGuideLinks.get(`${l.state}|${l.city}`) || [];
+  const listingStateGuides = stateGuideLinks.get(l.state) || [];
+  const listingGuides = [
+    listingCityGuides.find((g) => !g.catSlug),
+    listingCityGuides.find((g) => g.catSlug && featureCatSlugs.has(g.catSlug)),
+    listingStateGuides.find((g) => g.catSlug && featureCatSlugs.has(g.catSlug)) || listingStateGuides.find((g) => !g.catSlug),
+  ]
+    .filter(Boolean)
+    .filter((g, i, arr) => arr.findIndex((x) => x.href === g.href) === i);
+
   const address = l.fullAddress || [l.street, place, l.postalCode].filter(Boolean).join(', ');
   const hoursRows = l.hours
     ? DAYS.map(
@@ -3366,6 +3480,11 @@ ${related.map((o) => renderCard(o, { showState: false, showCity: true })).join('
     <div class="tag-row">
 ${nearCities.map((c) => `      <a class="tag tag-link" href="${cityPath(l.state, c.city)}">${esc(c.city)} (${c.count})</a>`).join('\n')}
     </div>` : ''}
+
+    ${listingGuides.length ? `<h2>Read more</h2>
+    <ul class="link-list">
+${listingGuides.map((g) => `      <li><a href="${g.href}">${esc(g.title)}</a></li>`).join('\n')}
+    </ul>` : ''}
 
     <p style="margin-top:1.5rem"><a class="btn btn-outline" href="/">Search the full map for pumpkin patches near you</a></p>
   </div>
