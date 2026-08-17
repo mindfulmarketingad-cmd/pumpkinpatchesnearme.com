@@ -147,6 +147,8 @@ const categoryPath = (category) => `/${category.slug}/`;
 // code" slug shape the per-city blog posts already use, so URLs read
 // consistently across the site.
 const categoryCityPath = (category, cityName, stateCode) => `/${category.slug}/${slugify(`${cityName} ${stateCode}`)}/`;
+// State-scoped service page, e.g. /hayrides/georgia/.
+const categoryStatePath = (category, stateName) => `/${category.slug}/${slugify(stateName)}/`;
 
 // Shared by every state and city page's List/Map toggle.
 const pageMapScripts = `<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css">
@@ -324,6 +326,13 @@ function addCategoryCityPage(catSlug, stateName, cityName, title, href, n) {
   categoryCityPageLinks.set(`${catSlug}|${stateName}|${cityName}`, { title, href });
   if (!categoryCityPageList.has(catSlug)) categoryCityPageList.set(catSlug, []);
   categoryCityPageList.get(catSlug).push({ stateName, cityName, title, href, n });
+}
+
+// Same idea, one level up: /hayrides/<state>/ etc.
+const categoryStatePageLinks = new Map(); // "catSlug|state" -> { title, href }
+
+function addCategoryStatePage(catSlug, stateName, title, href) {
+  categoryStatePageLinks.set(`${catSlug}|${stateName}`, { title, href });
 }
 
 /* ------------------------------------------------------- shared fragments */
@@ -2688,8 +2697,116 @@ ${siblings.map((s) => `    <a class="tag tag-link" href="${categoryCityPath(cat,
   }
 }
 
+/* --- category + state service pages (e.g. /hayrides/<state>/) -----------
+   One level up from the city pages above: every business in a whole state
+   carrying one attraction tag, at /<category>/<state>/ — sits between the
+   category hub (every state) and the city page (one town). Call this for
+   a category AFTER generateCategoryCityPages has already run for it, so
+   this page can list its own city sub-pages (from categoryCityPageList)
+   without caring about Map iteration order. */
+function generateCategoryStatePages(catOrSlug, { minListings = 1, itemFilter = null } = {}) {
+  const cat = typeof catOrSlug === 'string' ? categories.find((c) => c.slug === catOrSlug) : catOrSlug;
+  const test = itemFilter || ((l) => (l.features || []).includes(cat.feature));
+
+  for (const stateName of stateNames) {
+    const stateItems = byState.get(stateName) || [];
+    const seen = new Set();
+    const distinct = stateItems.filter((l) => {
+      if (!test(l)) return false;
+      const k = l.name.trim().toLowerCase();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    if (distinct.length < minListings) continue;
+
+    const path = categoryStatePath(cat, stateName);
+    const n = distinct.length;
+    const h1 = `${cat.name} in ${stateName}`;
+    const cities = [...new Set(distinct.map((l) => l.city).filter(Boolean))].sort();
+
+    const description = cat.feature
+      ? `Find ${cat.name.toLowerCase()} in ${stateName} — ${n} pumpkin patch${n === 1 ? '' : 'es'} we track statewide with ${cat.singular}, ranked by rating, with address, hours and directions.`
+      : `${n} ${cat.singular}${n === 1 ? '' : 's'} in ${stateName}, ranked by rating, with address, hours and directions for each.`;
+    const lede = cat.feature
+      ? `${n} pumpkin patch${n === 1 ? '' : 'es'} we track in ${stateName} ${n === 1 ? 'offers' : 'offer'} ${cat.singular}, ranked by rating and review volume across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'}.`
+      : `${n} ${cat.singular}${n === 1 ? '' : 's'} we track in ${stateName}, ranked by rating and review volume across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'}.`;
+
+    const meta = {
+      path,
+      title: `${h1} | ${n} Farm${n === 1 ? '' : 's'}, Ranked (${SEASON_YEAR})`,
+      description,
+      h1,
+      lede,
+      nav: cat.slug === 'corn-mazes' ? 'corn-mazes' : cat.slug === 'hayrides' ? 'hayrides' : 'pumpkin-patches',
+      layout: 'wide',
+      trail: [
+        { label: 'Pumpkin Patches', href: '/pumpkin-patches/' },
+        { label: cat.name, href: categoryPath(cat) },
+        { label: stateName },
+      ],
+    };
+
+    const heroSrc = (distinct.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+    const heroHtml = blogHeroFigureHtml(heroSrc, `${cat.name} in ${stateName}`);
+
+    const listHtml = `<p><button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button></p>
+<ol class="pillar-list">
+${pillarEntriesWithAds(distinct, (l, i) => renderPillarEntry(l, i, stateName))}
+</ol>`;
+
+    const cityPages = cities
+      .map((city) => categoryCityPageLinks.get(`${cat.slug}|${stateName}|${city}`))
+      .filter(Boolean);
+    const stateGuide = (stateGuideLinks.get(stateName) || []).find((g) => g.catSlug === cat.slug);
+
+    const body = `${heroHtml}
+${renderScopedMap(distinct, listHtml)}
+<div class="section" style="padding-bottom:0">
+  <p>Want everything ${esc(stateName)} has to offer, not just ${esc(cat.name.toLowerCase())}? See <a href="${statePath(stateName)}">every pumpkin patch we track in ${esc(stateName)}</a>, or browse ${esc(cat.name.toLowerCase())} in every state on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>
+  ${stateGuide ? `<p>Want the full write-up? Read <a href="${stateGuide.href}">${esc(stateGuide.title)}</a>.</p>` : ''}
+
+  ${cityPages.length ? `<h2>${esc(cat.name)} by town in ${esc(stateName)}</h2>
+  <div class="tag-row">
+${cityPages.map((c) => `    <a class="tag tag-link" href="${c.href}">${esc(c.title.replace(`${cat.name} in `, ''))}</a>`).join('\n')}
+  </div>` : ''}
+
+  <p style="margin-top:1.5rem">
+    <a class="btn btn-primary" href="/">Search the map by ZIP code</a>
+    <a class="btn btn-outline" href="${categoryPath(cat)}">All ${esc(cat.name)}</a>
+  </p>
+  ${renderPhotoGallery(distinct, path, stateName)}
+</div>`;
+
+    const jsonld = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'CollectionPage', name: meta.title, description: meta.description, url: SITE_URL + path },
+        {
+          '@type': 'ItemList',
+          numberOfItems: distinct.length,
+          itemListElement: distinct.slice(0, 25).map((l, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            url: SITE_URL + listingPath(l),
+            name: l.name,
+          })),
+        },
+        breadcrumbJsonLd(meta.trail, path),
+      ],
+    };
+
+    const scripts = `${pageMapScripts}\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
+    writePage(path, render(meta, body, { jsonld, scripts }));
+    addToSitemap(path, '0.7', 'weekly');
+    addCategoryStatePage(cat.slug, stateName, h1, path);
+  }
+}
+
 generateCategoryCityPages('hayrides');
 generateCategoryCityPages('corn-mazes');
+generateCategoryStatePages('hayrides');
+generateCategoryStatePages('corn-mazes');
 
 /* --- /farms/ hub and /farms/<city>-<state>/ pages -------------------------
    "Pumpkin farm" is real, distinct search phrasing from "pumpkin patch" —
@@ -3276,7 +3393,12 @@ ${renderCityLinks(stateName)}`
   const catSection = presentCategories.length
     ? `<h2>${esc(stateName)} farms by attraction</h2>
 <div class="tag-row">
-${presentCategories.map(({ c, n }) => `  <a class="tag tag-link" href="${categoryPath(c)}">${esc(c.name)} (${n})</a>`).join('\n')}
+${presentCategories.map(({ c, n }) => {
+  // Prefer this state's own service page (e.g. /hayrides/georgia/) over
+  // the generic nationwide category page, when one was generated.
+  const statePage = categoryStatePageLinks.get(`${c.slug}|${stateName}`);
+  return `  <a class="tag tag-link" href="${statePage ? statePage.href : categoryPath(c)}">${esc(c.name)} (${n})</a>`;
+}).join('\n')}
 </div>`
     : '';
 
@@ -3579,7 +3701,8 @@ ${renderScopedMap(items, listHtml)}
 ${statesWith
   .map((s) => {
     const n = items.filter((l) => l.state === s).length;
-    return `    <a class="state-link" href="${statePath(s)}">${esc(s)} <span>${n}</span></a>`;
+    const statePage = categoryStatePageLinks.get(`${cat.slug}|${s}`);
+    return `    <a class="state-link" href="${statePage ? statePage.href : statePath(s)}">${esc(s)} <span>${n}</span></a>`;
   })
   .join('\n')}
   </div>` : ''}
