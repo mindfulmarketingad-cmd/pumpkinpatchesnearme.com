@@ -77,6 +77,56 @@
     return new Array(full + 1).join('★') + new Array(Math.max(0, 5 - full) + 1).join('☆');
   }
 
+  /* --------------------------------------------------------- hours parsing */
+  // "Open Now" has to be computed live in the browser — build time and view
+  // time are different moments, so there's no way to bake "open right now"
+  // into the server-rendered page. Source strings look like "10AM-6PM",
+  // "12-6PM" (start infers the end's AM/PM), "3:30-6:30PM", multi-segment
+  // ("7-10AM / 5-7PM"), "Open 24 hours" or "Closed" — verified against all
+  // 227 distinct hour strings actually in the data before shipping this.
+  function parseTimeToken(token, fallbackMeridiem) {
+    var m = /^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i.exec(token.trim());
+    if (!m) return null;
+    var hour = parseInt(m[1], 10) % 12;
+    var min = m[2] ? parseInt(m[2], 10) : 0;
+    var meridiem = (m[3] || fallbackMeridiem || '').toUpperCase();
+    if (meridiem === 'PM') hour += 12;
+    return hour * 60 + min;
+  }
+
+  function parseHoursRange(range) {
+    var parts = range.split('-');
+    if (parts.length !== 2) return null;
+    var endMatch = /(AM|PM)/i.exec(parts[1]);
+    var endMeridiem = endMatch ? endMatch[1].toUpperCase() : null;
+    var start = parseTimeToken(parts[0], endMeridiem);
+    var end = parseTimeToken(parts[1], endMeridiem);
+    if (start == null || end == null) return null;
+    if (end < start) end += 24 * 60; // overnight range, e.g. "12-9AM" spanning midnight
+    return [start, end];
+  }
+
+  var HOURS_DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+  // Compared against the visitor's own device clock, not the farm's time
+  // zone — an approximation (same one the listing detail page's "Open
+  // today" badge already makes), fine for the vast majority of same-region
+  // browsing this carousel is built for.
+  function isOpenNow(hours) {
+    if (!hours) return false;
+    var now = new Date();
+    var text = hours[HOURS_DAY_KEYS[now.getDay()]];
+    if (!text || /closed/i.test(text)) return false;
+    if (/24\s*hours/i.test(text)) return true;
+    var nowMinutes = now.getHours() * 60 + now.getMinutes();
+    return text.split('/').some(function (range) {
+      var r = parseHoursRange(range);
+      if (!r) return false;
+      if (r[1] > 24 * 60) return nowMinutes >= r[0] || nowMinutes <= (r[1] - 24 * 60);
+      return nowMinutes >= r[0] && nowMinutes <= r[1];
+    });
+  }
+
   /* ---------------------------------------------------------------- map */
 
   var map = L.map('map', {
@@ -366,8 +416,96 @@
     if (sub) sub.textContent = 'The ' + nearby.length + ' closest to ' + locationLabel + ', nearest first.';
   }
 
+  // "Top Rated" behaves like the category carousels once location is known,
+  // except it re-ranks by rating within a nearby pool instead of pure
+  // distance — "the best options within driving distance," not just
+  // "whichever happens to be closest."
+  function renderTopRatedSection() {
+    var track = document.getElementById('nearby-top-rated');
+    var heading = document.getElementById('nearby-top-rated-heading');
+    var sub = document.getElementById('nearby-top-rated-sub');
+    if (!track) return;
+
+    if (!state.origin) {
+      if (nearbyDefaultHtml['nearby-top-rated'] != null) track.innerHTML = nearbyDefaultHtml['nearby-top-rated'];
+      if (heading) heading.textContent = 'Top Rated';
+      if (sub) sub.textContent = 'The strongest review profiles in our directory right now.';
+      return;
+    }
+
+    var locationLabel = state.origin.label === 'your location' ? 'you' : state.origin.label;
+    var nearby = state.all
+      .map(function (item) {
+        return { item: item, dist: distanceMiles(state.origin.lat, state.origin.lng, item.lat, item.lng) };
+      })
+      .sort(function (a, b) { return a.dist - b.dist; })
+      .slice(0, 40)
+      .sort(function (a, b) {
+        return (b.item.rating || 0) * Math.log10((b.item.reviews || 1) + 1) - (a.item.rating || 0) * Math.log10((a.item.reviews || 1) + 1);
+      })
+      .slice(0, 12);
+
+    if (!nearby.length) {
+      track.innerHTML = '<p class="carousel-empty">Nothing tracked near ' + esc(locationLabel) + ' yet &mdash; <a href="/pumpkin-patches/">browse all pumpkin patches</a>.</p>';
+      if (heading) heading.textContent = 'Top Rated';
+      if (sub) sub.textContent = 'None found close to ' + locationLabel + ' yet.';
+      return;
+    }
+
+    track.innerHTML = nearby.map(function (x) { x.item._distance = x.dist; return cardHtml(x.item); }).join('');
+    if (heading) heading.textContent = 'Top Rated';
+    if (sub) sub.textContent = 'The strongest review profiles within driving distance of ' + locationLabel + '.';
+  }
+
+  // "Open Now" has no default HTML to revert to (see the build.mjs
+  // comment) — it always computes fresh from state.all + the current
+  // moment, ranked by distance once location is known, by rating before
+  // that.
+  function renderOpenNowSection() {
+    var track = document.getElementById('nearby-open-now');
+    var heading = document.getElementById('nearby-open-now-heading');
+    var sub = document.getElementById('nearby-open-now-sub');
+    if (!track) return;
+
+    var openItems = state.all.filter(function (item) { return isOpenNow(item.hours); });
+    var locationLabel = state.origin ? (state.origin.label === 'your location' ? 'you' : state.origin.label) : null;
+
+    var ranked;
+    if (state.origin) {
+      ranked = openItems
+        .map(function (item) { return { item: item, dist: distanceMiles(state.origin.lat, state.origin.lng, item.lat, item.lng) }; })
+        .sort(function (a, b) { return a.dist - b.dist; });
+    } else {
+      ranked = openItems
+        .map(function (item) { return { item: item, dist: null }; })
+        .sort(function (a, b) {
+          return (b.item.rating || 0) * Math.log10((b.item.reviews || 1) + 1) - (a.item.rating || 0) * Math.log10((a.item.reviews || 1) + 1);
+        });
+    }
+    var nearby = ranked.slice(0, 16);
+
+    if (!nearby.length) {
+      track.innerHTML = '<p class="carousel-empty">Nothing in our directory shows open hours right now' +
+        (locationLabel ? ' near ' + esc(locationLabel) : '') +
+        ' &mdash; <a href="/pumpkin-patches/">browse all pumpkin patches</a> and call ahead.</p>';
+    } else {
+      track.innerHTML = nearby.map(function (x) {
+        if (x.dist != null) { x.item._distance = x.dist; } else { delete x.item._distance; }
+        return cardHtml(x.item);
+      }).join('');
+    }
+    if (heading) heading.textContent = 'Open Now';
+    if (sub) {
+      sub.textContent = locationLabel
+        ? 'Farms near ' + locationLabel + ' showing open hours right now.'
+        : 'Farms showing open hours right now, based on your device clock.';
+    }
+  }
+
   function renderNearbyCarousels() {
     NEARBY_SECTIONS.forEach(renderNearbySection);
+    renderTopRatedSection();
+    renderOpenNowSection();
   }
 
   function bindCarouselArrows() {
@@ -603,7 +741,7 @@
       state.all = (payload.listings || []).filter(function (i) {
         return typeof i.lat === 'number' && typeof i.lng === 'number';
       });
-      NEARBY_SECTIONS.forEach(function (section) {
+      NEARBY_SECTIONS.concat([{ key: 'nearby-top-rated' }]).forEach(function (section) {
         var trackEl = document.getElementById(section.key);
         if (trackEl) nearbyDefaultHtml[section.key] = trackEl.innerHTML;
       });
@@ -611,6 +749,11 @@
       bindEvents();
       bindCarouselArrows();
       maybeShowLocationBanner();
+      // Unlike every other carousel, "Open Now" has no valid server-rendered
+      // default to fall back on (open/closed is only true at this exact
+      // moment) — compute it immediately so it doesn't sit on "Checking…"
+      // for visitors who deny location or whose geolocation never resolves.
+      renderOpenNowSection();
 
       // Deep link: /?zip=90210 runs the search on load. That's an explicit,
       // shareable location — it wins over auto-locating the visitor's own

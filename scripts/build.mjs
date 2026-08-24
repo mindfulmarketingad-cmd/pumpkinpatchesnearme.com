@@ -3063,6 +3063,32 @@ function topRated(items, count = 12) {
 }
 const topRatedAll = topRated(listings);
 
+// The two carousels that sit directly under the map/results, ahead of the
+// per-category ones. "Open Now" has no valid *server-rendered* content —
+// open/closed is only true at the exact moment someone loads the page, so
+// items is null here and the client fills it in live (see isOpenNow in
+// map.js); the placeholder text is what shows for the instant before that
+// JS runs (and permanently for a no-JS visitor).
+const homepagePrioritySections = [
+  {
+    key: 'nearby-open-now',
+    title: 'Open Now',
+    href: '/pumpkin-patches/',
+    cta: 'Browse all pumpkin patches',
+    sub: 'Farms showing open hours right now.',
+    items: null,
+    footnote: "Based on each farm's listed hours and your device clock — hours change by season, always confirm before you go.",
+  },
+  {
+    key: 'nearby-top-rated',
+    title: 'Top Rated',
+    href: '/pumpkin-patches/',
+    cta: 'Browse all pumpkin patches',
+    sub: 'The strongest review profiles in our directory right now.',
+    items: topRatedAll,
+  },
+];
+
 // One "Near Me" carousel per real attraction category, plus two virtual
 // ones (Farms, Pumpkin Patches) that cover the same full dataset under
 // different wording, same as the /farms/ and /pumpkin-patches/ pages.
@@ -3079,25 +3105,32 @@ const homepageNearbySections = [
 
 function renderNearbyCarouselSection(section, altBg) {
   const label = section.title.replace(/ Near Me$/, '');
+  const subText = section.sub || `Top-rated ${label.toLowerCase()} in our directory right now.`;
+  const ctaText = section.cta || `See all ${label.toLowerCase()} near me`;
+  const trackInner = section.items
+    ? section.items.map((l) => renderCard(l)).join('\n')
+    : '<p class="carousel-empty">Checking which farms are open right now&hellip;</p>';
   return `<section class="section${altBg ? ' section-alt' : ''}">
   <div class="wrap">
     <div class="section-head">
       <span class="eyebrow">Near you</span>
       <h2 id="${section.key}-heading">${esc(section.title)}</h2>
-      <p id="${section.key}-sub">Top-rated ${esc(label.toLowerCase())} in our directory right now.</p>
+      <p id="${section.key}-sub">${esc(subText)}</p>
     </div>
     <div class="carousel-wrap">
       <button class="carousel-arrow" type="button" data-dir="prev" data-target="${section.key}" aria-label="Scroll left">&larr;</button>
       <div class="carousel-track" id="${section.key}">
-${section.items.map((l) => renderCard(l)).join('\n')}
+${trackInner}
       </div>
       <button class="carousel-arrow" type="button" data-dir="next" data-target="${section.key}" aria-label="Scroll right">&rarr;</button>
     </div>
-    <p style="margin-top:1.1rem"><a class="btn btn-outline" href="${section.href}">See all ${esc(label.toLowerCase())} near me &rarr;</a></p>
+    ${section.footnote ? `<p class="carousel-overflow-note">${esc(section.footnote)}</p>` : ''}
+    <p style="margin-top:1.1rem"><a class="btn btn-outline" href="${section.href}">${esc(ctaText)} &rarr;</a></p>
   </div>
 </section>`;
 }
 
+const nearbyPriorityCarouselsHtml = homepagePrioritySections.map((s, i) => renderNearbyCarouselSection(s, i % 2 === 0)).join('\n\n');
 const nearbyCarouselsHtml = homepageNearbySections.map((s, i) => renderNearbyCarouselSection(s, i % 2 === 0)).join('\n\n');
 
 const staticPages = readPageFiles(join(SRC, 'pages'));
@@ -3130,6 +3163,7 @@ const tokens = {
   // Homepage "Near Me" carousels — one per real category plus Farms/Pumpkin
   // Patches, nationwide top-rated by default, replaced client-side with a
   // real distance-sorted set once location is known.
+  '{{NEARBY_PRIORITY_CAROUSELS}}': nearbyPriorityCarouselsHtml,
   '{{NEARBY_CAROUSELS}}': nearbyCarouselsHtml,
   '{{STAT_LISTINGS}}': stats.listings.toLocaleString('en-US'),
   '{{STAT_STATES}}': String(stats.states),
@@ -4029,15 +4063,18 @@ cpSync(join(SRC, 'assets'), join(DIST, 'assets'), { recursive: true });
 mkdirSync(join(DIST, 'data'), { recursive: true });
 
 // The only consumer of this file is map.js, driving the homepage map and
-// card UI — it doesn't need the full listing record (hours, description,
-// phone, reviewsPerScore, mapsUrl, ids...). Trimming to just the fields
-// that script actually reads cut this file
-// from ~2.6MB to a fraction of that, which matters more than almost
-// anything else here since it's fetched in full on every homepage/find
-// visit before the map or results list can render at all.
+// card UI — it doesn't need the full listing record (description, phone,
+// reviewsPerScore, mapsUrl, ids...). Trimming to just the fields that
+// script actually reads cut this file from ~2.6MB to a fraction of that,
+// which matters more than almost anything else here since it's fetched in
+// full on every homepage/find visit before the map or results list can
+// render at all. `hours` is back on the list — the homepage's "Open Now"
+// carousel needs it client-side to compute open/closed live in the
+// visitor's browser (there's no way to pre-render "open right now" at
+// build time; it's true or false only at the moment someone loads the page).
 const CLIENT_LISTING_FIELDS = [
   'slug', 'name', 'street', 'city', 'county', 'state', 'stateCode', 'postalCode',
-  'lat', 'lng', 'rating', 'reviews', 'photo', 'features', 'featured', 'sample', 'url',
+  'lat', 'lng', 'rating', 'reviews', 'photo', 'features', 'featured', 'sample', 'url', 'hours',
 ];
 const clientListings = listings.map((l) => {
   const out = {};
