@@ -403,6 +403,35 @@ a.pillar-reviews-link:hover span:not(.rating):not(.stars) { text-decoration: und
   letter-spacing: 0.06em; text-transform: uppercase; padding: 0.3rem 1.1rem;
 }
 
+/* ----------------------------------------------------- homepage carousels */
+/* Horizontally scrolling "Near Me" rows — native scroll + snap rather than
+   a JS slider library, so it works with no JS and degrades to a normal
+   swipeable/drag-scrollable row everywhere. */
+.carousel-wrap { position: relative; margin: 0 -0.1rem; }
+.carousel-track {
+  display: flex; gap: 1.1rem; overflow-x: auto; padding: 0.15rem 0.1rem 0.9rem;
+  scroll-snap-type: x proximity; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;
+}
+.carousel-track > .listing-card {
+  flex: 0 0 250px; scroll-snap-align: start;
+}
+@media (min-width: 640px) { .carousel-track > .listing-card { flex-basis: 290px; } }
+.carousel-track::-webkit-scrollbar { height: 8px; }
+.carousel-track::-webkit-scrollbar-track { background: transparent; }
+.carousel-track::-webkit-scrollbar-thumb { background: var(--line); border-radius: var(--r-pill); }
+.carousel-arrow {
+  display: none; position: absolute; top: 40%; transform: translateY(-50%);
+  z-index: 2; width: 2.4rem; height: 2.4rem; border-radius: 50%;
+  background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-md);
+  font-size: 1.2rem; line-height: 1; color: var(--ink); cursor: pointer;
+  align-items: center; justify-content: center;
+}
+.carousel-arrow:hover { background: var(--orange-50); border-color: var(--orange-100); }
+.carousel-arrow[data-dir="prev"] { left: -0.75rem; }
+.carousel-arrow[data-dir="next"] { right: -0.75rem; }
+@media (min-width: 900px) { .carousel-arrow { display: flex; } }
+.carousel-empty { color: var(--muted); padding: 0.5rem 0 1rem; }
+
 .page-toggle-bar {
   display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
   gap: 0.75rem; margin-bottom: 1.5rem;

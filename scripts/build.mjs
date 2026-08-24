@@ -3051,10 +3051,19 @@ ${authors
 
 /* --- static pages -------------------------------------------------------- */
 
-const featured = [...listings]
-  .filter((l) => l.rating)
-  .sort((a, b) => (b.rating || 0) * Math.log10((b.reviews || 1) + 1) - (a.rating || 0) * Math.log10((a.reviews || 1) + 1))
-  .slice(0, 6);
+// Weighted rating*reviews ranking, used as the server-rendered (nationwide,
+// no location known yet) default for each homepage "Near Me" carousel —
+// swapped client-side for a real distance-sorted set the moment a visitor's
+// location is known (auto-locate on load, ZIP search, or "Use my location").
+function topRated(items, count = 12) {
+  return [...items]
+    .filter((l) => l.rating)
+    .sort((a, b) => (b.rating || 0) * Math.log10((b.reviews || 1) + 1) - (a.rating || 0) * Math.log10((a.reviews || 1) + 1))
+    .slice(0, count);
+}
+const topRatedAll = topRated(listings);
+const topRatedCornMazes = topRated(byCategory.get('corn-mazes') || []);
+const topRatedHayrides = topRated(byCategory.get('hayrides') || []);
 
 const staticPages = readPageFiles(join(SRC, 'pages'));
 
@@ -3083,7 +3092,12 @@ const tokens = {
 </article>`;
     })
     .join('\n'),
-  '{{FEATURED_CARDS}}': featured.map((l) => renderCard(l)).join('\n'),
+  // Homepage "Near Me" carousels — nationwide top-rated by default, replaced
+  // client-side with a real distance-sorted set once location is known.
+  '{{NEARBY_CORN_MAZES_CARDS}}': topRatedCornMazes.map((l) => renderCard(l)).join('\n'),
+  '{{NEARBY_HAYRIDES_CARDS}}': topRatedHayrides.map((l) => renderCard(l)).join('\n'),
+  '{{NEARBY_FARMS_CARDS}}': topRatedAll.map((l) => renderCard(l)).join('\n'),
+  '{{NEARBY_PUMPKIN_PATCHES_CARDS}}': topRatedAll.map((l) => renderCard(l)).join('\n'),
   '{{STAT_LISTINGS}}': stats.listings.toLocaleString('en-US'),
   '{{STAT_STATES}}': String(stats.states),
   '{{STAT_CITIES}}': String(stats.cities),

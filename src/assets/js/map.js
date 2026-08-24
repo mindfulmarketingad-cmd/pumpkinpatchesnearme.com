@@ -290,44 +290,79 @@
     state.origin = null;
     if (originMarker) { map.removeLayer(originMarker); originMarker = null; }
     applyFilters();
-    renderFeaturedNearby();
+    renderNearbyCarousels();
     map.setView([39.5, -98.35], 4);
   }
 
-  /* ------------------------------------------- "highly rated near you" -- */
-  // The homepage's "Highly rated pumpkin patches" grid is server-rendered
-  // with the top-rated farms nationwide by default (so it's real content on
-  // first load, no JS required). Once a visitor's location is known — ZIP
-  // search or "Use my location" — it switches to the highest-rated farms
-  // near that location instead, and reverts to the default set on reset.
-  var featuredDefaultHtml = null;
+  /* ---------------------------------------------------- "near me" carousels */
+  // Four homepage carousels (Corn Mazes, Hayrides, Farms, Pumpkin Patches),
+  // each server-rendered with the top-rated listings nationwide by default
+  // (real content on first load, no JS required). Once a visitor's location
+  // is known — auto-locate on load, ZIP search or "Use my location" — every
+  // one switches to a real distance-sorted set for that location instead,
+  // nearest first, and reverts to the default set on reset. Farms and
+  // Pumpkin Patches cover the same underlying data (no feature separates
+  // them, same as the /farms/ and /pumpkin-patches/ pages) — different
+  // framing of one real dataset, not two different result sets.
+  var NEARBY_SECTIONS = [
+    { key: 'nearby-corn-mazes', feature: 'Corn maze', label: 'Corn Mazes', href: '/corn-mazes/' },
+    { key: 'nearby-hayrides', feature: 'Hayrides', label: 'Hayrides', href: '/hayrides/' },
+    { key: 'nearby-farms', feature: null, label: 'Farms', href: '/farms/' },
+    { key: 'nearby-pumpkin-patches', feature: null, label: 'Pumpkin Patches', href: '/pumpkin-patches/' },
+  ];
+  var nearbyDefaultHtml = {};
 
-  function renderFeaturedNearby() {
-    var grid = document.getElementById('featured-grid');
-    var heading = document.getElementById('featured-heading');
-    var sub = document.getElementById('featured-sub');
-    if (!grid) return;
+  function renderNearbySection(section) {
+    var track = document.getElementById(section.key);
+    var heading = document.getElementById(section.key + '-heading');
+    var sub = document.getElementById(section.key + '-sub');
+    if (!track) return;
 
     if (!state.origin) {
-      if (featuredDefaultHtml != null) grid.innerHTML = featuredDefaultHtml;
-      if (heading) heading.textContent = 'Highly rated pumpkin patches';
-      if (sub) sub.textContent = 'Farms with the strongest review profiles in our directory right now.';
+      if (nearbyDefaultHtml[section.key] != null) track.innerHTML = nearbyDefaultHtml[section.key];
+      if (heading) heading.textContent = section.label + ' Near Me';
+      if (sub) sub.textContent = 'Top-rated ' + section.label.toLowerCase() + ' in our directory right now.';
       return;
     }
 
-    var nearby = state.all
+    var pool = section.feature
+      ? state.all.filter(function (item) { return (item.features || []).indexOf(section.feature) !== -1; })
+      : state.all;
+    var nearby = pool
       .map(function (item) {
         return { item: item, dist: distanceMiles(state.origin.lat, state.origin.lng, item.lat, item.lng) };
       })
       .sort(function (a, b) { return a.dist - b.dist; })
-      .slice(0, 30)
-      .sort(function (a, b) { return (b.item.rating || 0) - (a.item.rating || 0) || (b.item.reviews || 0) - (a.item.reviews || 0); })
-      .slice(0, 6);
+      .slice(0, 16);
 
-    if (!nearby.length) return;
-    grid.innerHTML = nearby.map(function (x) { x.item._distance = x.dist; return cardHtml(x.item); }).join('');
-    if (heading) heading.textContent = 'Highly rated pumpkin patches near ' + state.origin.label;
-    if (sub) sub.textContent = 'The strongest review profiles within driving distance of ' + state.origin.label + '.';
+    var locationLabel = state.origin.label === 'your location' ? 'you' : state.origin.label;
+
+    if (!nearby.length) {
+      track.innerHTML = '<p class="carousel-empty">No ' + esc(section.label.toLowerCase()) + ' tracked near ' + esc(locationLabel) +
+        ' yet &mdash; <a href="' + section.href + '">browse all ' + esc(section.label.toLowerCase()) + '</a>.</p>';
+      if (heading) heading.textContent = section.label + ' Near Me';
+      if (sub) sub.textContent = 'None found close to ' + locationLabel + ' yet.';
+      return;
+    }
+
+    track.innerHTML = nearby.map(function (x) { x.item._distance = x.dist; return cardHtml(x.item); }).join('');
+    if (heading) heading.textContent = section.label + ' Near ' + (locationLabel === 'you' ? 'You' : locationLabel);
+    if (sub) sub.textContent = 'The ' + nearby.length + ' closest to ' + locationLabel + ', nearest first.';
+  }
+
+  function renderNearbyCarousels() {
+    NEARBY_SECTIONS.forEach(renderNearbySection);
+  }
+
+  function bindCarouselArrows() {
+    document.addEventListener('click', function (event) {
+      var btn = event.target.closest('.carousel-arrow');
+      if (!btn) return;
+      var track = document.getElementById(btn.getAttribute('data-target'));
+      if (!track) return;
+      var amount = Math.round(track.clientWidth * 0.85);
+      track.scrollBy({ left: btn.getAttribute('data-dir') === 'prev' ? -amount : amount, behavior: 'smooth' });
+    });
   }
 
   /* --------------------------------------------------------- ZIP lookup */
@@ -373,11 +408,22 @@
         state.origin = origin;
         els.sort.value = 'distance';
         applyFilters();
-        renderFeaturedNearby();
+        renderNearbyCarousels();
       })
       .catch(function () {
         els.scope.textContent = 'We could not find ZIP ' + zip + '. Try another ZIP code.';
       });
+  }
+
+  // Shared by the manual "Use my location" button and the silent auto-locate
+  // on page load: sets the origin, re-sorts/re-renders the list (nearest
+  // first), and re-frames the map on it (renderMarkers already fitBounds
+  // to the origin plus its ten nearest results whenever state.origin is set).
+  function applyOrigin(pos, label) {
+    state.origin = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: label };
+    els.sort.value = 'distance';
+    applyFilters();
+    renderNearbyCarousels();
   }
 
   function useMyLocation() {
@@ -388,15 +434,28 @@
     els.scope.textContent = 'Finding your location…';
     navigator.geolocation.getCurrentPosition(
       function (pos) {
-        state.origin = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: 'your location' };
         els.zip.value = '';
-        els.sort.value = 'distance';
-        applyFilters();
-        renderFeaturedNearby();
+        applyOrigin(pos, 'your location');
       },
       function () {
         els.scope.textContent = 'Location permission denied — search by ZIP code instead';
       },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+    );
+  }
+
+  // Auto-locate on page load: same request as clicking "Use my location,"
+  // just fired automatically so a first-time visitor sees the map zoomed to
+  // their area and the #1 nearest patch first without an extra click. Silent
+  // on denial/unavailability — the nationwide default view already showing
+  // (rendered before this resolves) is exactly the right fallback, so
+  // there's nothing to say and nothing to undo.
+  function autoLocate() {
+    if (!navigator.geolocation) return;
+    els.scope.textContent = 'Finding pumpkin patches near you…';
+    navigator.geolocation.getCurrentPosition(
+      function (pos) { applyOrigin(pos, 'your location'); },
+      function () { els.scope.textContent = 'across the United States'; },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
     );
   }
@@ -537,13 +596,18 @@
       state.all = (payload.listings || []).filter(function (i) {
         return typeof i.lat === 'number' && typeof i.lng === 'number';
       });
-      var featuredGridEl = document.getElementById('featured-grid');
-      if (featuredGridEl) featuredDefaultHtml = featuredGridEl.innerHTML;
+      NEARBY_SECTIONS.forEach(function (section) {
+        var trackEl = document.getElementById(section.key);
+        if (trackEl) nearbyDefaultHtml[section.key] = trackEl.innerHTML;
+      });
       populateFilters();
       bindEvents();
+      bindCarouselArrows();
       maybeShowLocationBanner();
 
-      // Deep link: /?zip=90210 runs the search on load.
+      // Deep link: /?zip=90210 runs the search on load. That's an explicit,
+      // shareable location — it wins over auto-locating the visitor's own
+      // position, so auto-locate only fires when there's no zip param.
       var params = new URLSearchParams(window.location.search);
       var zipParam = params.get('zip');
       if (zipParam && /^\d{5}$/.test(zipParam.trim())) {
@@ -552,6 +616,7 @@
         searchZip();
       } else {
         applyFilters();
+        autoLocate();
       }
     })
     .catch(function () {
