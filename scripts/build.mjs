@@ -922,7 +922,7 @@ ${cities
  * opening the map costs no extra request. Leaflet itself only initialises
  * when a visitor actually clicks "Map".
  */
-function renderScopedMap(items, listHtml) {
+function renderScopedMap(items, listHtml, { singular = 'pumpkin patch', plural = 'pumpkin patches' } = {}) {
   const mappable = items.filter((l) => Number.isFinite(l.lat) && Number.isFinite(l.lng));
   if (!mappable.length) return listHtml;
 
@@ -942,7 +942,7 @@ function renderScopedMap(items, listHtml) {
   const json = JSON.stringify(mapData).replace(/</g, '\\u003c');
 
   return `<div class="page-toggle-bar">
-  <p class="page-toggle-label">${mappable.length.toLocaleString('en-US')} pumpkin patch${mappable.length === 1 ? '' : 'es'} on this page</p>
+  <p class="page-toggle-label">${mappable.length.toLocaleString('en-US')} ${mappable.length === 1 ? singular : plural} on this page</p>
   <div class="control-group">
     <button class="toggle-btn" type="button" id="page-view-list" aria-pressed="true">List</button>
     <button class="toggle-btn" type="button" id="page-view-map" aria-pressed="false">Map</button>
@@ -2232,6 +2232,49 @@ generateStateAttractionListicles('fall-festivals', {
 <p>${esc(topN[0].name)} is${x > 1 ? ' our top pick' : ' the only farm we currently track'} for a pumpkin patch fall festival in ${esc(stateName)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${x > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and festival dates, pricing and what's actually running can shift week to week — always confirm directly with the farm before you drive out. For more options, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`,
 });
 
+// Backed by real Search Console demand: "haunted attractions near me" and
+// city-modified variants ("haunted attractions sacramento," "haunted corn
+// maze sacramento") show real impressions with no dedicated state-level
+// page to serve them, the same gap Petting Zoos/Fall Festivals filled
+// above. 59 listings across 25 states support it (same 1+ gate as those).
+generateStateAttractionListicles('haunted-attractions', {
+  titleSingular: (s) => `Best Haunted Attraction at a Pumpkin Patch in ${s}`,
+  titlePlural: (x, s) => `${x} Best Haunted Attractions at Pumpkin Patches in ${s}`,
+  heroAlt: (s) => `Haunted attractions at pumpkin patches in ${s}`,
+  description: ({ x, names, stateName }) =>
+    x === 1
+      ? `The best haunted attraction at a pumpkin patch in ${stateName} is ${names[0]}. See its rating, hours and directions before you go.`
+      : `The ${x} best haunted attractions at pumpkin patches in ${stateName}: ${joinNatural(names)}. Ranked by rating and reviews.`,
+  intro: ({ x, linkedNames, stateName, cat }) =>
+    x === 1
+      ? `<p>The best haunted attraction at a pumpkin patch in ${esc(stateName)} is ${linkedNames[0]} — the only farm we track statewide running a haunted hayride, haunted corn maze or haunted trail after dark, alongside the daytime pumpkin patch. Here's a closer look at what it offers, how it's rated, and how to get there, followed by answers to the questions we hear most about visiting. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse haunted attractions in every state on our <a href="${categoryPath(cat)}">Haunted Attractions near me</a> page.</p>`
+      : `<p>The ${x} best haunted attractions at pumpkin patches in ${esc(stateName)} are ${joinNatural(linkedNames)} — farms running a haunted hayride, haunted corn maze or haunted trail after dark, alongside the daytime pumpkin patch. Below, each gets a closer look — what it offers, how it's rated, and how to get there — followed by answers to the questions we hear most about visiting. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse haunted attractions in every state on our <a href="${categoryPath(cat)}">Haunted Attractions near me</a> page.</p>`,
+  faq: ({ topN, x, stateName }) => [
+    {
+      q: `What is the best haunted attraction at a pumpkin patch in ${stateName}?`,
+      a: `Based on rating and review volume, ${esc(topN[0].name)} ranks first among the haunted attractions we track in ${esc(stateName)}${topN[0].rating ? `, with a ${topN[0].rating.toFixed(1)}-out-of-5 rating` : ''}. See the full breakdown above, or its <a href="${listingPath(topN[0])}">full listing</a> for hours and directions.`,
+    },
+    {
+      q: `Are farm haunted attractions ticketed separately from daytime admission?`,
+      a: `Almost always, yes. Haunted hayrides, haunted corn mazes and haunted trails run in the evening — usually Friday and Saturday from late September — on a separate ticket from the daytime pumpkin patch, and frequently on a different visit entirely rather than the same trip.`,
+    },
+    {
+      q: `Are these haunted attractions appropriate for young kids?`,
+      a: `It varies far more than at a commercial haunted house. Some are mild walk-throughs suitable for ten-year-olds; others involve actors who make contact and carry a minimum recommended age. Ask the farm directly what age they recommend and whether actors touch guests before booking for a family with young children.`,
+    },
+    {
+      q: `Do I need to buy tickets in advance?`,
+      a: `Many farms have moved to timed entry to control lines, especially on the two weekends before Halloween, when queues run longest. Check the farm's own site for whether tickets are timed and buy ahead if a specific night matters to you.`,
+    },
+    {
+      q: x === 1 ? `When does this haunted attraction run?` : `When do these haunted attractions run?`,
+      a: `Typically evenings only, Friday and Saturday from late September through Halloween weekend, separate from the farm's regular daytime hours. Check the listings above or the farm's own site for the current schedule, since haunt nights are more limited than regular pumpkin-patch hours.`,
+    },
+  ],
+  conclusion: ({ topN, x, names, stateName }) => `<h2>Conclusion</h2>
+<p>${esc(topN[0].name)} is${x > 1 ? ' our top pick' : ' the only farm we currently track'} for a haunted attraction at a pumpkin patch in ${esc(stateName)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${x > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and haunt nights, ticketing and intensity level vary a lot farm to farm — always confirm directly before you go, especially if you're planning around young kids. For more options, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`,
+});
+
 /* --- programmatic "5 Best Pumpkin Patches in <City>" posts --------------- */
 // One per town with at least this many listings, generated straight from
 // the dataset — no hand-written source file, so this list grows on its own
@@ -2655,7 +2698,7 @@ ${pillarEntriesWithAds(distinct, (l, i) => renderPillarEntry(l, i, cityName))}
     const siblings = qualifying.filter((q) => q.stateName === stateName && q.cityName !== cityName);
 
     const body = `${heroHtml}
-${renderScopedMap(distinct, listHtml)}
+${renderScopedMap(distinct, listHtml, { singular: cat.singular, plural: cat.name.toLowerCase() })}
 <div class="section" style="padding-bottom:0">
   <p>Want everything ${esc(label)} has to offer, not just ${esc(cat.name.toLowerCase())}? See <a href="${cityPath(stateName, cityName)}">every pumpkin patch we track in ${esc(label)}</a>, or browse ${esc(cat.name.toLowerCase())} in every state on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>
   ${relatedGuide ? `<p>Want the full write-up? Read <a href="${relatedGuide.href}">${esc(relatedGuide.title)}</a>.</p>` : ''}
@@ -2761,7 +2804,7 @@ ${pillarEntriesWithAds(distinct, (l, i) => renderPillarEntry(l, i, stateName))}
     const stateGuide = (stateGuideLinks.get(stateName) || []).find((g) => g.catSlug === cat.slug);
 
     const body = `${heroHtml}
-${renderScopedMap(distinct, listHtml)}
+${renderScopedMap(distinct, listHtml, { singular: cat.singular, plural: cat.name.toLowerCase() })}
 <div class="section" style="padding-bottom:0">
   <p>Want everything ${esc(stateName)} has to offer, not just ${esc(cat.name.toLowerCase())}? See <a href="${statePath(stateName)}">every pumpkin patch we track in ${esc(stateName)}</a>, or browse ${esc(cat.name.toLowerCase())} in every state on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>
   ${stateGuide ? `<p>Want the full write-up? Read <a href="${stateGuide.href}">${esc(stateGuide.title)}</a>.</p>` : ''}
@@ -2898,7 +2941,7 @@ ${pillarEntriesWithAds(items, (l, i) => renderPillarEntry(l, i, l.state))}
 
   const body = `${heroHtml}
 ${farmsHub.intro}
-${renderScopedMap(items, listHtml)}
+${renderScopedMap(items, listHtml, { singular: farmsHub.singular, plural: farmsHub.name.toLowerCase() })}
 <div class="section" style="padding-bottom:0">
   <h2>${esc(farmsHub.name)} by state</h2>
   <div class="state-grid">
@@ -3405,11 +3448,18 @@ for (const stateName of stateNames) {
   const path = statePath(stateName);
   const cities = [...new Set(items.map((l) => l.city).filter(Boolean))].sort();
 
+  // Title/H1 lead with "Near Me" rather than just "in <State>" — checked
+  // real Search Console query data behind these pages before this change:
+  // "pumpkin patch(es) near me" outweighs "pumpkin patch(es) in <state>"
+  // by roughly 10 to 1 in impressions on state pages specifically (e.g. 57
+  // + 29 impressions for the two "near me" variants vs. 5 for "georgia
+  // pumpkin patches" and 2 for "pumpkin patch in georgia" on /georgia/
+  // alone), so the literal query phrase wasn't in the title/H1 at all.
   const meta = {
     path,
-    title: `${items.length} ${patchWord(items.length)} in ${stateName}, Ranked (${SEASON_YEAR})`,
-    description: `Every pumpkin patch we track in ${stateName} — ${items.length} listing${items.length === 1 ? '' : 's'} across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'}, ranked by rating, with search and filter. Updated for ${SEASON_YEAR}.`,
-    h1: `${items.length} ${patchWord(items.length)} in ${stateName}`,
+    title: `${items.length} ${patchWord(items.length)} Near Me in ${stateName}, Ranked (${SEASON_YEAR})`,
+    description: `Pumpkin patches near me in ${stateName} — every one we track, ${items.length} listing${items.length === 1 ? '' : 's'} across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'}, ranked by rating, with search and filter. Updated for ${SEASON_YEAR}.`,
+    h1: `${items.length} ${patchWord(items.length)} Near Me in ${stateName}`,
     lede: `Every pumpkin patch we track in ${stateName}, ranked by rating and review volume across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'}. Search by name or town, or filter by attraction. Always confirm hours before you drive out — most patches open late September and close in early November.`,
     nav: 'find',
     layout: 'wide',
@@ -3680,7 +3730,10 @@ for (const cat of categories) {
   const meta = {
     path,
     title: cat.title,
-    description: cat.description,
+    // A real freshness signal in the description (not just the title, which
+    // several of these are already close to the 60-char safe length) —
+    // "near me" searchers skew toward wanting current-season results.
+    description: truncateMetaDescription(`${cat.description} Updated for ${SEASON_YEAR}.`),
     h1: `${cat.name} Near Me`,
     lede: cat.lede,
     nav: cat.slug === 'corn-mazes' ? 'corn-mazes' : cat.slug === 'hayrides' ? 'hayrides' : 'pumpkin-patches',
@@ -3771,10 +3824,25 @@ ${catCityGuides.map((g) => `    <li><a href="${g.href}">${esc(g.title)}</a></li>
   </ul>`
       : '';
 
+  const catFaqHtml = cat.faq && cat.faq.length
+    ? `<h2>Frequently asked questions</h2>
+  <div class="faq-list">
+${cat.faq
+  .map(
+    (item) => `    <details class="faq-item">
+      <summary>${esc(item.q)}</summary>
+      <div class="faq-answer"><p>${item.a}</p></div>
+    </details>`
+  )
+  .join('\n')}
+  </div>`
+    : '';
+
   const body = `${catHeroHtml}
 ${cat.intro}
+${cat.extraIntro || ''}
 
-${renderScopedMap(items, listHtml)}
+${renderScopedMap(items, listHtml, { singular: cat.singular, plural: cat.name.toLowerCase() })}
 
 <div class="section" style="padding-bottom:0">
   ${statesWith.length ? `<h2>${esc(cat.name)} by state</h2>
@@ -3791,6 +3859,8 @@ ${statesWith
   ${catCityPagesSection}
 
   ${catGuidesSection}
+
+  ${catFaqHtml}
 
   <h2>Find a ${esc(cat.singular)} near you</h2>
   <p>The fastest way to find a farm with a ${esc(cat.singular)} nearby is the map: enter your ZIP code, then set the feature filter to ${esc(cat.name.toLowerCase())}. Results re-sort by distance from your location.</p>
@@ -3815,6 +3885,18 @@ ${statesWith
           name: l.name,
         })),
       },
+      ...(cat.faq && cat.faq.length
+        ? [
+            {
+              '@type': 'FAQPage',
+              mainEntity: cat.faq.map((item) => ({
+                '@type': 'Question',
+                name: item.q,
+                acceptedAnswer: { '@type': 'Answer', text: item.a.replace(/<[^>]+>/g, '') },
+              })),
+            },
+          ]
+        : []),
       breadcrumbJsonLd(meta.trail, path),
     ],
   };
