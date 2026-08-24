@@ -2858,6 +2858,7 @@ generateCategoryCityPages('hayrides');
 generateCategoryCityPages('corn-mazes');
 generateCategoryStatePages('hayrides');
 generateCategoryStatePages('corn-mazes');
+generateCategoryStatePages('haunted-attractions');
 
 /* --- /farms/ hub and /farms/<city>-<state>/ pages -------------------------
    "Pumpkin farm" is real, distinct search phrasing from "pumpkin patch" —
