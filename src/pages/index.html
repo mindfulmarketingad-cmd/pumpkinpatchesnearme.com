@@ -14,7 +14,7 @@
   <button type="button" class="location-banner-close" id="location-banner-close" aria-label="Dismiss">&times;</button>
 </div>
 
-<section class="hero-app" id="search-app" data-view="map" aria-label="Pumpkin patch search map">
+<section class="hero-app" id="search-app" aria-label="Pumpkin patch search map">
   <div class="hero-bar">
     <h1 class="hero-title">Find Pumpkin Patches <span class="accent">Near Me</span></h1>
 
@@ -60,26 +60,31 @@
         </select>
       </label>
       <button class="toggle-btn" type="button" id="reset-btn">Reset</button>
-      <button class="toggle-btn view-switch" type="button" id="view-list" aria-pressed="false">List</button>
-      <button class="toggle-btn view-switch" type="button" id="view-map" aria-pressed="true">Map</button>
     </div>
   </div>
 
-  <div class="hero-split">
-    <div class="results-panel">
-      <div class="results-head">
-        <p class="results-count" id="results-count">Loading pumpkin patches…</p>
-        <p class="results-scope" id="results-scope">across the United States</p>
-      </div>
-      <div class="results-list" id="results-list"></div>
+  <div class="map-panel">
+    <div id="map" role="application" aria-label="Map of pumpkin patches in the United States"></div>
+    <div class="map-tools">
+      <button class="toggle-btn" type="button" id="satellite-toggle" aria-pressed="false">Satellite</button>
     </div>
-    <div class="map-panel">
-      <div id="map" role="application" aria-label="Map of pumpkin patches in the United States"></div>
-      <div class="map-tools">
-        <button class="toggle-btn" type="button" id="satellite-toggle" aria-pressed="false">Satellite</button>
-      </div>
-      <p class="map-note">Zoom and pan the map, then click a marker for details</p>
+    <p class="map-note">Zoom and pan the map, then click a marker for details</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Search results</span>
+      <h2 id="results-count" class="results-count">Loading pumpkin patches…</h2>
+      <p id="results-scope" class="results-scope">across the United States</p>
     </div>
+    <div class="carousel-wrap">
+      <button class="carousel-arrow" type="button" data-dir="prev" data-target="results-list" aria-label="Scroll left">&larr;</button>
+      <div class="carousel-track" id="results-list"></div>
+      <button class="carousel-arrow" type="button" data-dir="next" data-target="results-list" aria-label="Scroll right">&rarr;</button>
+    </div>
+    <p class="carousel-overflow-note" id="results-overflow-note" hidden></p>
   </div>
 </section>
 
@@ -119,88 +124,7 @@
 {{AD_SQUARE}}
 </div>
 
-<section class="section section-alt">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="eyebrow">Near you</span>
-      <h2 id="nearby-corn-mazes-heading">Corn Mazes Near Me</h2>
-      <p id="nearby-corn-mazes-sub">Top-rated corn mazes in our directory right now.</p>
-    </div>
-    <div class="carousel-wrap">
-      <button class="carousel-arrow" type="button" data-dir="prev" data-target="nearby-corn-mazes" aria-label="Scroll left">&larr;</button>
-      <div class="carousel-track" id="nearby-corn-mazes">
-{{NEARBY_CORN_MAZES_CARDS}}
-      </div>
-      <button class="carousel-arrow" type="button" data-dir="next" data-target="nearby-corn-mazes" aria-label="Scroll right">&rarr;</button>
-    </div>
-    <p style="margin-top:1.1rem"><a class="btn btn-outline" href="/corn-mazes/">See all corn mazes near me &rarr;</a></p>
-  </div>
-</section>
-
-<section class="section">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="eyebrow">Near you</span>
-      <h2 id="nearby-hayrides-heading">Hayrides Near Me</h2>
-      <p id="nearby-hayrides-sub">Top-rated hayrides in our directory right now.</p>
-    </div>
-    <div class="carousel-wrap">
-      <button class="carousel-arrow" type="button" data-dir="prev" data-target="nearby-hayrides" aria-label="Scroll left">&larr;</button>
-      <div class="carousel-track" id="nearby-hayrides">
-{{NEARBY_HAYRIDES_CARDS}}
-      </div>
-      <button class="carousel-arrow" type="button" data-dir="next" data-target="nearby-hayrides" aria-label="Scroll right">&rarr;</button>
-    </div>
-    <p style="margin-top:1.1rem"><a class="btn btn-outline" href="/hayrides/">See all hayrides near me &rarr;</a></p>
-  </div>
-</section>
-
-<section class="section section-alt">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="eyebrow">Near you</span>
-      <h2 id="nearby-farms-heading">Farms Near Me</h2>
-      <p id="nearby-farms-sub">Top-rated pumpkin farms in our directory right now.</p>
-    </div>
-    <div class="carousel-wrap">
-      <button class="carousel-arrow" type="button" data-dir="prev" data-target="nearby-farms" aria-label="Scroll left">&larr;</button>
-      <div class="carousel-track" id="nearby-farms">
-{{NEARBY_FARMS_CARDS}}
-      </div>
-      <button class="carousel-arrow" type="button" data-dir="next" data-target="nearby-farms" aria-label="Scroll right">&rarr;</button>
-    </div>
-    <p style="margin-top:1.1rem"><a class="btn btn-outline" href="/farms/">See all farms near me &rarr;</a></p>
-  </div>
-</section>
-
-<section class="section">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="eyebrow">Near you</span>
-      <h2 id="nearby-pumpkin-patches-heading">Pumpkin Patches Near Me</h2>
-      <p id="nearby-pumpkin-patches-sub">Top-rated pumpkin patches in our directory right now.</p>
-    </div>
-    <div class="carousel-wrap">
-      <button class="carousel-arrow" type="button" data-dir="prev" data-target="nearby-pumpkin-patches" aria-label="Scroll left">&larr;</button>
-      <div class="carousel-track" id="nearby-pumpkin-patches">
-{{NEARBY_PUMPKIN_PATCHES_CARDS}}
-      </div>
-      <button class="carousel-arrow" type="button" data-dir="next" data-target="nearby-pumpkin-patches" aria-label="Scroll right">&rarr;</button>
-    </div>
-    <p style="margin-top:1.1rem"><a class="btn btn-outline" href="/pumpkin-patches/">See all pumpkin patches near me &rarr;</a></p>
-  </div>
-</section>
-
-<section class="section">
-  <div class="wrap">
-    <div class="section-head">
-      <span class="eyebrow">Browse by attraction</span>
-      <h2>Looking for something specific?</h2>
-      <p>Corn mazes, hayrides, haunted attractions and more — jump straight to farms with the feature you want.</p>
-    </div>
-{{CATEGORY_GRID}}
-  </div>
-</section>
+{{NEARBY_CAROUSELS}}
 
 <section class="section">
   <div class="wrap">

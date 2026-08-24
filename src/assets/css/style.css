@@ -291,30 +291,13 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
 .toggle-btn:hover { border-color: var(--orange-100); background: var(--orange-50); }
 .toggle-btn[aria-pressed="true"] { background: var(--orange); border-color: var(--orange); color: #fff; }
 
-.hero-split {
-  flex: 1; display: grid; grid-template-columns: minmax(340px, 36%) 1fr;
-  min-height: 0;
-}
-
-.results-panel {
-  display: flex; flex-direction: column; min-height: 0;
-  background: var(--cream); border-right: 1px solid var(--line);
-}
-.results-head {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem;
-  padding: 0.75rem 1.1rem 0.55rem; border-bottom: 1px solid var(--line); background: #fff;
-}
+/* The search results themselves live in a carousel below the map now (see
+   .carousel-track), not a side panel — the map gets the whole hero-app. */
 .results-count { font-family: var(--font-display); font-weight: 600; font-size: 1rem; }
 .results-count b { color: var(--orange-700); }
 .results-scope { font-size: 0.85rem; color: var(--muted); }
-.results-list {
-  flex: 1; overflow-y: auto; overscroll-behavior: contain;
-  padding: 0.85rem; display: flex; flex-direction: column; gap: 0.85rem;
-}
-/* Cards keep their natural height instead of shrinking to fit the panel. */
-.results-list > * { flex: 0 0 auto; }
 
-.map-panel { position: relative; min-height: 0; }
+.map-panel { position: relative; flex: 1; min-height: 0; }
 #map { position: absolute; inset: 0; background: #dfe7e2; }
 .map-tools {
   position: absolute; top: 12px; right: 12px; z-index: 500;
@@ -328,18 +311,10 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
   box-shadow: var(--shadow-sm);
 }
 
-.view-switch { display: none; }
-
 @media (max-width: 900px) {
   .hero-app { height: auto; min-height: 0; }
-  .hero-split { grid-template-columns: 1fr; }
-  .results-panel { border-right: 0; }
   .map-panel { height: 62vh; }
   #map { position: absolute; inset: 0; }
-  .results-list { max-height: none; overflow: visible; }
-  .view-switch { display: inline-flex; }
-  .hero-app[data-view="map"] .results-panel { display: none; }
-  .hero-app[data-view="list"] .map-panel { display: none; }
   .hero-title { width: 100%; }
 }
 
@@ -431,6 +406,7 @@ a.pillar-reviews-link:hover span:not(.rating):not(.stars) { text-decoration: und
 .carousel-arrow[data-dir="next"] { right: -0.75rem; }
 @media (min-width: 900px) { .carousel-arrow { display: flex; } }
 .carousel-empty { color: var(--muted); padding: 0.5rem 0 1rem; }
+.carousel-overflow-note { color: var(--muted); font-size: 0.9rem; margin-top: 0.75rem; }
 
 .page-toggle-bar {
   display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;

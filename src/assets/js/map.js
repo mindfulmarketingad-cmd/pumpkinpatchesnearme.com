@@ -1,8 +1,9 @@
 /* =====================================================================
    Homepage search map: Leaflet with individual (unclustered) pumpkin pins,
-   ZIP search, filters, sort, list/map toggle and satellite basemap toggle.
-   Zoom is restricted to the +/- controls — no scroll-wheel, double-click or
-   pinch zoom — so the page scrolls normally over the map.
+   full-width above a carousel of results, with ZIP search, filters, sort
+   and satellite basemap toggle. Zoom is restricted to the +/- controls —
+   no scroll-wheel, double-click or pinch zoom — so the page scrolls
+   normally over the map.
    ===================================================================== */
 (function () {
   'use strict';
@@ -11,6 +12,7 @@
     app: document.getElementById('search-app'),
     map: document.getElementById('map'),
     list: document.getElementById('results-list'),
+    overflowNote: document.getElementById('results-overflow-note'),
     count: document.getElementById('results-count'),
     scope: document.getElementById('results-scope'),
     form: document.getElementById('zip-form'),
@@ -22,8 +24,6 @@
     sort: document.getElementById('sort-select'),
     reset: document.getElementById('reset-btn'),
     satellite: document.getElementById('satellite-toggle'),
-    viewList: document.getElementById('view-list'),
-    viewMap: document.getElementById('view-map'),
   };
 
   if (!els.map || typeof L === 'undefined') return;
@@ -179,13 +179,19 @@
     }
 
     var shown = items.slice(0, MAX_CARDS);
-    var html = shown.map(cardHtml).join('');
-    if (items.length > shown.length) {
-      html += '<p style="text-align:center;color:var(--muted);font-size:0.9rem">' +
-        'Showing the closest ' + shown.length + ' of ' + items.length.toLocaleString('en-US') +
-        ' results. Zoom the map or search a ZIP code to narrow it down.</p>';
+    els.list.innerHTML = shown.map(cardHtml).join('');
+    // Kept outside the carousel track (its own paragraph below the row)
+    // rather than appended inline, so it doesn't become an odd-shaped flex
+    // item in the horizontally scrolling carousel.
+    if (els.overflowNote) {
+      if (items.length > shown.length) {
+        els.overflowNote.hidden = false;
+        els.overflowNote.textContent = 'Showing the closest ' + shown.length + ' of ' + items.length.toLocaleString('en-US') +
+          ' results. Zoom the map or search a ZIP code to narrow it down.';
+      } else {
+        els.overflowNote.hidden = true;
+      }
     }
-    els.list.innerHTML = html;
   }
 
   function renderMarkers() {
@@ -231,17 +237,19 @@
     Array.prototype.forEach.call(els.list.querySelectorAll('.listing-card'), function (card) {
       card.classList.toggle('is-active', card.getAttribute('data-slug') === slug);
       if (card.getAttribute('data-slug') === slug) {
-        card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        card.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
       }
     });
     var marker = state.markers[slug];
-    if (marker) {
-      if (pan) {
-        map.setView(marker.getLatLng(), Math.max(map.getZoom(), 12));
-        marker.openPopup();
-      }
-      if (els.app.getAttribute('data-view') === 'list' && window.innerWidth <= 900) {
-        setView('map');
+    if (marker && pan) {
+      map.setView(marker.getLatLng(), Math.max(map.getZoom(), 12));
+      marker.openPopup();
+      // The map sits above the results carousel now (no more list/map
+      // toggle) — on a small screen the card that was just clicked can be
+      // well below the fold, so bring the map back into view to show the
+      // pan actually happened.
+      if (window.innerWidth <= 900) {
+        els.map.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
     }
   }
@@ -295,18 +303,26 @@
   }
 
   /* ---------------------------------------------------- "near me" carousels */
-  // Four homepage carousels (Corn Mazes, Hayrides, Farms, Pumpkin Patches),
-  // each server-rendered with the top-rated listings nationwide by default
-  // (real content on first load, no JS required). Once a visitor's location
-  // is known — auto-locate on load, ZIP search or "Use my location" — every
-  // one switches to a real distance-sorted set for that location instead,
-  // nearest first, and reverts to the default set on reset. Farms and
-  // Pumpkin Patches cover the same underlying data (no feature separates
-  // them, same as the /farms/ and /pumpkin-patches/ pages) — different
-  // framing of one real dataset, not two different result sets.
+  // One homepage carousel per real attraction category, plus Farms and
+  // Pumpkin Patches (no feature separates those two — same underlying
+  // dataset as the /farms/ and /pumpkin-patches/ pages, just framed two
+  // ways). Every one is server-rendered with the top-rated listings
+  // nationwide by default (real content on first load, no JS required).
+  // Once a visitor's location is known — auto-locate on load, ZIP search
+  // or "Use my location" — every one switches to a real distance-sorted
+  // set for that location instead, nearest first, and reverts to the
+  // default set on reset. Keys and hrefs must match the section ids and
+  // links build.mjs renders for {{NEARBY_CAROUSELS}} — see
+  // homepageNearbySections there.
   var NEARBY_SECTIONS = [
     { key: 'nearby-corn-mazes', feature: 'Corn maze', label: 'Corn Mazes', href: '/corn-mazes/' },
+    { key: 'nearby-u-pick-pumpkin-patches', feature: 'U-pick pumpkins', label: 'U-Pick Pumpkin Patches', href: '/u-pick-pumpkin-patches/' },
     { key: 'nearby-hayrides', feature: 'Hayrides', label: 'Hayrides', href: '/hayrides/' },
+    { key: 'nearby-haunted-attractions', feature: 'Haunted attraction', label: 'Haunted Attractions', href: '/haunted-attractions/' },
+    { key: 'nearby-petting-zoos', feature: 'Petting zoo', label: 'Petting Zoos and Farm Animals', href: '/petting-zoos/' },
+    { key: 'nearby-apple-picking', feature: 'Apple picking', label: 'Apple Picking', href: '/apple-picking/' },
+    { key: 'nearby-sunflower-fields', feature: 'Sunflower field', label: 'Sunflower Fields', href: '/sunflower-fields/' },
+    { key: 'nearby-fall-festivals', feature: 'Fall festival', label: 'Fall Festivals', href: '/fall-festivals/' },
     { key: 'nearby-farms', feature: null, label: 'Farms', href: '/farms/' },
     { key: 'nearby-pumpkin-patches', feature: null, label: 'Pumpkin Patches', href: '/pumpkin-patches/' },
   ];
@@ -462,13 +478,6 @@
 
   /* ------------------------------------------------------------- toggles */
 
-  function setView(view) {
-    els.app.setAttribute('data-view', view);
-    els.viewList.setAttribute('aria-pressed', String(view === 'list'));
-    els.viewMap.setAttribute('aria-pressed', String(view === 'map'));
-    if (view === 'map') window.setTimeout(function () { map.invalidateSize(); }, 60);
-  }
-
   function toggleSatellite() {
     var on = els.satellite.getAttribute('aria-pressed') === 'true';
     if (on) {
@@ -519,8 +528,6 @@
     els.sort.addEventListener('change', applyFilters);
     els.reset.addEventListener('click', resetAll);
     els.satellite.addEventListener('click', toggleSatellite);
-    els.viewList.addEventListener('click', function () { setView('list'); });
-    els.viewMap.addEventListener('click', function () { setView('map'); });
 
     els.list.addEventListener('click', function (event) {
       var trigger = event.target.closest('[data-focus]');

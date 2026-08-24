@@ -3062,8 +3062,43 @@ function topRated(items, count = 12) {
     .slice(0, count);
 }
 const topRatedAll = topRated(listings);
-const topRatedCornMazes = topRated(byCategory.get('corn-mazes') || []);
-const topRatedHayrides = topRated(byCategory.get('hayrides') || []);
+
+// One "Near Me" carousel per real attraction category, plus two virtual
+// ones (Farms, Pumpkin Patches) that cover the same full dataset under
+// different wording, same as the /farms/ and /pumpkin-patches/ pages.
+const homepageNearbySections = [
+  ...categories.map((c) => ({
+    key: `nearby-${c.slug}`,
+    title: `${c.name} Near Me`,
+    href: categoryPath(c),
+    items: topRated(byCategory.get(c.slug) || []),
+  })),
+  { key: 'nearby-farms', title: 'Farms Near Me', href: '/farms/', items: topRatedAll },
+  { key: 'nearby-pumpkin-patches', title: 'Pumpkin Patches Near Me', href: '/pumpkin-patches/', items: topRatedAll },
+];
+
+function renderNearbyCarouselSection(section, altBg) {
+  const label = section.title.replace(/ Near Me$/, '');
+  return `<section class="section${altBg ? ' section-alt' : ''}">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Near you</span>
+      <h2 id="${section.key}-heading">${esc(section.title)}</h2>
+      <p id="${section.key}-sub">Top-rated ${esc(label.toLowerCase())} in our directory right now.</p>
+    </div>
+    <div class="carousel-wrap">
+      <button class="carousel-arrow" type="button" data-dir="prev" data-target="${section.key}" aria-label="Scroll left">&larr;</button>
+      <div class="carousel-track" id="${section.key}">
+${section.items.map((l) => renderCard(l)).join('\n')}
+      </div>
+      <button class="carousel-arrow" type="button" data-dir="next" data-target="${section.key}" aria-label="Scroll right">&rarr;</button>
+    </div>
+    <p style="margin-top:1.1rem"><a class="btn btn-outline" href="${section.href}">See all ${esc(label.toLowerCase())} near me &rarr;</a></p>
+  </div>
+</section>`;
+}
+
+const nearbyCarouselsHtml = homepageNearbySections.map((s, i) => renderNearbyCarouselSection(s, i % 2 === 0)).join('\n\n');
 
 const staticPages = readPageFiles(join(SRC, 'pages'));
 
@@ -3092,12 +3127,10 @@ const tokens = {
 </article>`;
     })
     .join('\n'),
-  // Homepage "Near Me" carousels — nationwide top-rated by default, replaced
-  // client-side with a real distance-sorted set once location is known.
-  '{{NEARBY_CORN_MAZES_CARDS}}': topRatedCornMazes.map((l) => renderCard(l)).join('\n'),
-  '{{NEARBY_HAYRIDES_CARDS}}': topRatedHayrides.map((l) => renderCard(l)).join('\n'),
-  '{{NEARBY_FARMS_CARDS}}': topRatedAll.map((l) => renderCard(l)).join('\n'),
-  '{{NEARBY_PUMPKIN_PATCHES_CARDS}}': topRatedAll.map((l) => renderCard(l)).join('\n'),
+  // Homepage "Near Me" carousels — one per real category plus Farms/Pumpkin
+  // Patches, nationwide top-rated by default, replaced client-side with a
+  // real distance-sorted set once location is known.
+  '{{NEARBY_CAROUSELS}}': nearbyCarouselsHtml,
   '{{STAT_LISTINGS}}': stats.listings.toLocaleString('en-US'),
   '{{STAT_STATES}}': String(stats.states),
   '{{STAT_CITIES}}': String(stats.cities),
