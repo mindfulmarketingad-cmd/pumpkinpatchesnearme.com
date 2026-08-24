@@ -1041,6 +1041,14 @@ function render(meta, body, opts = {}) {
     '{{SITE_URL}}': SITE_URL,
     '{{OG_TYPE}}': meta.ogType || 'website',
     '{{BODY_CLASS}}': meta.bodyClass || 'page',
+    // Google Auto ads scans the live page and can inject its own ad units
+    // anywhere it judges there's room — including over the homepage's
+    // full-width search map. Auto ads only activates on pages that load
+    // this script, so the homepage skips it entirely rather than fighting
+    // Auto ads' placement heuristics.
+    '{{ADSENSE_SCRIPT}}': meta.path === '/'
+      ? ''
+      : '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9332749804326149" crossorigin="anonymous"></script>',
     '{{HEAD_EXTRA}}': (meta.noindex ? '<meta name="robots" content="noindex, follow">\n' : '') + (opts.headExtra || ''),
     '{{SCRIPTS}}': opts.scripts || '',
     '{{JSONLD}}': jsonLdFor(meta, opts.jsonld),
@@ -3235,7 +3243,6 @@ const tokens = {
   <a class="btn btn-primary" href="/partners/">Claim your listing</a>
 </div>`,
   '{{SEASON_YEAR}}': String(SEASON_YEAR),
-  '{{AD_SQUARE}}': renderAdSlot('square'),
   // The national /pumpkin-patches/ directory — every listing we track, in
   // the same pillar-list format as the state/city/category pages, with a
   // state filter added since (unlike those pages) nothing here is already
