@@ -890,6 +890,12 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
   display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 1.6rem;
 }
 .footer-nav a { font-size: 0.95rem; font-weight: 500; }
+.footer-nav-cats ul { margin-top: 0.65rem; }
+.footer-nav-label {
+  display: block; font-family: var(--font-display); font-weight: 600;
+  font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #a99c93; margin-top: 1.5rem;
+}
 .footer-legal {
   margin-top: 1.5rem; font-size: 0.84rem; color: #8d8179; display: flex;
   flex-wrap: wrap; gap: 0.5rem 1.25rem; justify-content: space-between;
