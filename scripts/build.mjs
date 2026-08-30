@@ -2036,16 +2036,22 @@ ${conclusion}`;
    businesses actually qualify (same no-fabrication precedent as every other
    state-post generator in this file). content.* callbacks supply the
    category-specific prose while the shared plumbing — TOC, JSON-LD,
-   sitemap, handAuthoredPosts — lives here once. */
-function generateStateAttractionListicles(categorySlug, content) {
-  const cat = categories.find((c) => c.slug === categorySlug);
+   sitemap, handAuthoredPosts — lives here once.
+   catOrSlug accepts either a real categories.json slug, or a plain
+   { slug, name, singular } object for a series (like the Halloween pumpkin
+   patch guides) that isn't scoped to one feature tag — pass
+   content.itemFilter in that case to override the default feature-tag
+   filter. */
+function generateStateAttractionListicles(catOrSlug, content) {
+  const cat = typeof catOrSlug === 'string' ? categories.find((c) => c.slug === catOrSlug) : catOrSlug;
+  const itemFilter = content.itemFilter || ((l) => (l.features || []).includes(cat.feature));
   const max = content.max || 5;
   let postIndex = 0;
   for (const stateName of stateNames) {
     const stateItems = byState.get(stateName) || [];
     const seen = new Set();
     const distinct = stateItems.filter((l) => {
-      if (!(l.features || []).includes(cat.feature)) return false;
+      if (!itemFilter(l)) return false;
       const key = l.name.trim().toLowerCase();
       if (seen.has(key)) return false;
       seen.add(key);
@@ -2285,6 +2291,94 @@ generateStateAttractionListicles('haunted-attractions', {
   ],
   conclusion: ({ topN, x, names, stateName }) => `<h2>Conclusion</h2>
 <p>${esc(topN[0].name)} is${x > 1 ? ' our top pick' : ' the only farm we currently track'} for a haunted attraction at a pumpkin patch in ${esc(stateName)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${x > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and haunt nights, ticketing and intensity level vary a lot farm to farm — always confirm directly before you go, especially if you're planning around young kids. For more options, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`,
+});
+
+// Not tied to one feature tag — the "for Halloween" framing covers the same
+// statewide population as the flagship "10 Best Pumpkin Patches" post, just
+// angled at a different real query pattern (picking a carving pumpkin,
+// timing a visit around Halloween weekend crowds) with its own FAQ content,
+// so it earns its own page rather than duplicating that one. A plain
+// { slug, name, singular } stands in for a categories.json entry since
+// pumpkin patches themselves aren't a category tag — categoryPath(cat)
+// still resolves correctly to the real /pumpkin-patches/ hub.
+generateStateAttractionListicles(
+  { slug: 'pumpkin-patches', name: 'Pumpkin Patches', singular: 'pumpkin patch' },
+  {
+    itemFilter: () => true,
+    titleSingular: (s) => `Best Pumpkin Patch To Visit For Halloween in ${s}`,
+    titlePlural: (x, s) => `${x} Best Pumpkin Patches To Visit For Halloween in ${s}`,
+    heroAlt: (s) => `Pumpkin patches to visit for Halloween in ${s}`,
+    description: ({ x, names, stateName }) =>
+      x === 1
+        ? `The best pumpkin patch to visit for Halloween in ${stateName} is ${names[0]}. See its rating, hours and directions before you go.`
+        : `The ${x} best pumpkin patches to visit for Halloween in ${stateName}: ${joinNatural(names)}. Ranked by rating and reviews.`,
+    intro: ({ x, linkedNames, stateName, cat }) =>
+      x === 1
+        ? `<p>The best pumpkin patch to visit for Halloween in ${esc(stateName)} is ${linkedNames[0]} — the top-rated farm we track statewide for picking a carving pumpkin and getting the full seasonal experience before the holiday. Here's a closer look at what it offers, how it's rated, and how to get there, followed by answers to the questions we hear most about timing a Halloween visit. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse our full <a href="${categoryPath(cat)}">state-by-state pumpkin patch directory</a>.</p>`
+        : `<p>The ${x} best pumpkin patches to visit for Halloween in ${esc(stateName)} are ${joinNatural(linkedNames)}, ranked by rating and review volume — top picks for finding a carving pumpkin and getting the full seasonal experience before the holiday. Below, each gets a closer look — what it offers, how it's rated, and how to get there — followed by answers to the questions we hear most about timing a Halloween visit. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse our full <a href="${categoryPath(cat)}">state-by-state pumpkin patch directory</a>.</p>`,
+    faq: ({ topN, x, stateName }) => [
+      {
+        q: `What is the best pumpkin patch to visit for Halloween in ${stateName}?`,
+        a: `Based on rating and review volume, ${esc(topN[0].name)} ranks first among the pumpkin patches we track in ${esc(stateName)}${topN[0].rating ? `, with a ${topN[0].rating.toFixed(1)}-out-of-5 rating` : ''}. See the full breakdown above, or its <a href="${listingPath(topN[0])}">full listing</a> for hours and directions.`,
+      },
+      {
+        q: `When's the best time to visit before Halloween?`,
+        a: `The two weekends before Halloween are the most popular — and most crowded — for picking a carving pumpkin, since the field selection is still strong but the pumpkin won't sit around rotting for weeks. A weekday morning in that same window gets you the same selection with a much shorter line.`,
+      },
+      {
+        q: `Do pumpkin patches run out of pumpkins before Halloween?`,
+        a: `The best-picked sizes and shapes can thin out in the final week, especially at smaller or heavily-visited farms. If a specific size or look matters for carving, visiting earlier in October is the safer bet than waiting for Halloween week itself.`,
+      },
+      {
+        q: `Can I pick a pumpkin and do other Halloween activities the same trip?`,
+        a: `Often, yes — many pumpkin patches also run a corn maze, hayride or haunted attraction on the same property, so it's worth checking the feature tags on each listing above before you go if you want to combine picking a pumpkin with other activities in one visit.`,
+      },
+      {
+        q: x === 1 ? `Is this pumpkin patch busy on Halloween weekend?` : `Are these pumpkin patches busy on Halloween weekend?`,
+        a: `Generally yes — the final weekend before Halloween is the busiest of the season at most farms. If a quieter visit matters more than picking on the exact weekend, a weekday or the first half of October is usually a calmer option with the same farm.`,
+      },
+    ],
+    conclusion: ({ topN, x, names, stateName }) => `<h2>Conclusion</h2>
+<p>${esc(topN[0].name)} is${x > 1 ? ' our top pick' : ' the only farm we currently track'} for a Halloween pumpkin patch visit in ${esc(stateName)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${x > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and pumpkin selection, hours and pricing shift as the season goes on — always confirm with the farm directly before you drive out, especially close to Halloween. For more options, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`,
+  }
+);
+
+generateStateAttractionListicles('corn-mazes', {
+  titleSingular: (s) => `Best Corn Maze To Visit For Halloween in ${s}`,
+  titlePlural: (x, s) => `${x} Best Corn Mazes To Visit For Halloween in ${s}`,
+  heroAlt: (s) => `Corn mazes to visit for Halloween in ${s}`,
+  description: ({ x, names, stateName }) =>
+    x === 1
+      ? `The best corn maze to visit for Halloween in ${stateName} is ${names[0]}. See its rating, hours and directions before you go.`
+      : `The ${x} best corn mazes to visit for Halloween in ${stateName}: ${joinNatural(names)}. Ranked by rating and reviews.`,
+  intro: ({ x, linkedNames, stateName, cat }) =>
+    x === 1
+      ? `<p>The best corn maze to visit for Halloween in ${esc(stateName)} is ${linkedNames[0]} — the top-rated farm we track statewide with a corn maze running through the Halloween season, alongside the pumpkins. Here's a closer look at what it offers, how it's rated, and how to get there, followed by answers to the questions we hear most about visiting one for Halloween. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse corn mazes in every state on our <a href="${categoryPath(cat)}">Corn Mazes near me</a> page.</p>`
+      : `<p>The ${x} best corn mazes to visit for Halloween in ${esc(stateName)} are ${joinNatural(linkedNames)}, ranked by rating and review volume — farms running a corn maze through the Halloween season, alongside the pumpkins. Below, each gets a closer look — what it offers, how it's rated, and how to get there — followed by answers to the questions we hear most about visiting one for Halloween. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse corn mazes in every state on our <a href="${categoryPath(cat)}">Corn Mazes near me</a> page.</p>`,
+  faq: ({ topN, x, stateName }) => [
+    {
+      q: `What is the best corn maze to visit for Halloween in ${stateName}?`,
+      a: `Based on rating and review volume, ${esc(topN[0].name)} ranks first among the corn mazes we track in ${esc(stateName)}${topN[0].rating ? `, with a ${topN[0].rating.toFixed(1)}-out-of-5 rating` : ''}. See the full breakdown above, or its <a href="${listingPath(topN[0])}">full listing</a> for hours and directions.`,
+    },
+    {
+      q: `Are corn mazes open through Halloween?`,
+      a: `Most run their daytime maze through the end of October, often with a separate haunted or nighttime version on select evenings closer to Halloween. Check the individual listing above, or call ahead, for exact closing dates.`,
+    },
+    {
+      q: `How long does a corn maze take to walk?`,
+      a: `It varies a lot by farm and maze design — anywhere from 15 minutes for a smaller maze to over an hour for a larger, multi-path one. Some farms offer a shorter and a longer route on the same property, so ask at the gate if time is tight.`,
+    },
+    {
+      q: `Is a corn maze the same ticket as pumpkin picking?`,
+      a: `Sometimes it's bundled into general admission, and sometimes it's ticketed separately — this varies farm to farm more than most other attractions. Confirm current pricing directly with the farm before you go.`,
+    },
+    {
+      q: x === 1 ? `Is this corn maze good for young kids?` : `Are these corn mazes good for young kids?`,
+      a: `It depends on the maze's size and difficulty — some farms design a shorter, simpler route specifically for younger kids alongside the full-length maze. Check the listings above for details, or ask at the gate before starting.`,
+    },
+  ],
+  conclusion: ({ topN, x, names, stateName }) => `<h2>Conclusion</h2>
+<p>${esc(topN[0].name)} is${x > 1 ? ' our top pick' : ' the only farm we currently track'} for a corn maze to visit for Halloween in ${esc(stateName)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${x > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and maze hours, difficulty and whether a nighttime version is running vary week to week — always confirm directly with the farm before you drive out. For more options, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`,
 });
 
 /* --- programmatic "5 Best Pumpkin Patches in <City>" posts --------------- */
