@@ -1958,15 +1958,17 @@ ${faqQa
   const conclusion = `<h2>Conclusion</h2>
 <p>There's no single answer to "what does a pumpkin patch cost in ${esc(stateName)}" because the honest answer depends on which of the three pricing models the farm you pick actually runs — not on the state you're in. A free-entry u-pick farm and a full agritourism destination can sit five miles apart and charge wildly different totals for what is, at its core, the same afternoon out. Decide which kind of day you actually want — a cheap pumpkin and a nice photo, or a few hours of maze-and-hayride entertainment — and call ahead to confirm which model the farm uses before you go. For the full national breakdown of what catches people out, see <a href="/blog/how-much-does-a-pumpkin-patch-cost/">How Much Does a Pumpkin Patch Cost?</a>, and for help matching a specific farm to your group, see <a href="/blog/how-to-choose-a-pumpkin-patch/">How to Choose the Right Pumpkin Patch</a>.</p>`;
 
-  const body = `${intro}
-${modelsSection}
+  const { toc, body: sectionsWithIds } = autoToc(`${modelsSection}
 ${extrasSection}
 ${paymentSection}
 ${budgetSection}
 ${savingSection}
 ${trackedSection}
 ${faqHtml}
-${conclusion}`;
+${conclusion}`);
+  const body = `${intro}
+${toc}
+${sectionsWithIds}`;
 
   const description = `What pumpkins and admission actually cost at a pumpkin patch in ${stateName}: the three pricing models, typical ranges, cash-vs-card, and how to spend less.`;
   const postMeta = {
