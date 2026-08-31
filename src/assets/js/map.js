@@ -1,16 +1,13 @@
 /* =====================================================================
-   Homepage search map: Leaflet with individual (unclustered) pumpkin pins,
-   full-width above a carousel of results, with ZIP search, filters, sort
-   and satellite basemap toggle. Zoom is restricted to the +/- controls —
-   no scroll-wheel, double-click or pinch zoom — so the page scrolls
-   normally over the map.
+   Homepage search: ZIP/geolocation search, filters and sort over the full
+   directory, feeding the results carousel and the "near me" carousels
+   below a single static hero photo (no interactive map on this page —
+   state/city/category pages have their own separate List/Map toggle).
    ===================================================================== */
 (function () {
   'use strict';
 
   var els = {
-    app: document.getElementById('search-app'),
-    map: document.getElementById('map'),
     list: document.getElementById('results-list'),
     overflowNote: document.getElementById('results-overflow-note'),
     count: document.getElementById('results-count'),
@@ -23,18 +20,15 @@
     filterRating: document.getElementById('filter-rating'),
     sort: document.getElementById('sort-select'),
     reset: document.getElementById('reset-btn'),
-    satellite: document.getElementById('satellite-toggle'),
   };
 
-  if (!els.map || typeof L === 'undefined') return;
+  if (!els.list || !els.form) return;
 
   var MAX_CARDS = 60;
   var state = {
     all: [],
     filtered: [],
     origin: null,       // { lat, lng, label }
-    activeSlug: null,
-    markers: {},
   };
 
   /* ------------------------------------------------------------- helpers */
@@ -127,53 +121,6 @@
     });
   }
 
-  /* ---------------------------------------------------------------- map */
-
-  var map = L.map('map', {
-    center: [39.5, -98.35],
-    zoom: 4,
-    minZoom: 3,
-    scrollWheelZoom: false,
-    doubleClickZoom: false,
-    touchZoom: false,
-    boxZoom: false,
-    zoomControl: true,
-  });
-
-  var streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  }).addTo(map);
-
-  var satelliteLayer = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    {
-      maxZoom: 19,
-      attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics',
-    }
-  );
-
-  // Plain layer group — every listing gets its own pumpkin pin, never a
-  // clustered number bubble, even zoomed out to the whole country.
-  var markerLayer = L.layerGroup().addTo(map);
-
-  var originMarker = null;
-
-  // Markers sprout up from their anchor point when they first appear, with a
-  // small stagger so a page full of pins doesn't pop in as one flat flash.
-  // The stagger is capped so it stays quick even with thousands of markers.
-  var sproutCounter = 0;
-  function markerIcon(active) {
-    var delay = Math.min(sproutCounter++ % 40, 40) * 12;
-    return L.divIcon({
-      className: '',
-      html: '<div class="patch-marker sprout' + (active ? ' is-active' : '') + '" style="animation-delay:' + delay + 'ms"></div>',
-      iconSize: [26, 26],
-      iconAnchor: [13, 26],
-      popupAnchor: [0, -24],
-    });
-  }
-
   /* ------------------------------------------------------------ rendering */
 
   function cardHtml(item) {
@@ -194,20 +141,9 @@
         (tags.length ? '<div class="tag-row">' + tags.map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('') + '</div>' : '') +
         '<div class="card-actions">' +
           '<a class="btn btn-primary btn-sm" href="' + esc(item.url) + '">View details</a>' +
-          '<button class="btn btn-outline btn-sm" type="button" data-focus="' + esc(item.slug) + '">Show on map</button>' +
         '</div>' +
       '</div>' +
     '</article>';
-  }
-
-  function popupHtml(item) {
-    var place = [item.city, item.stateCode].filter(Boolean).join(', ');
-    return '<div class="map-popup">' +
-      imgHtml(item, 'map-popup-img', 240, 120) +
-      '<h4>' + esc(item.name) + '</h4>' +
-      '<p>' + (item.rating ? '<span class="stars">' + starString(item.rating) + '</span> ' + item.rating.toFixed(1) + ' &middot; ' : '') + esc(place) + '</p>' +
-      '<a class="btn btn-primary btn-sm" href="' + esc(item.url) + '">View details</a>' +
-    '</div>';
   }
 
   function renderList() {
@@ -237,69 +173,9 @@
       if (items.length > shown.length) {
         els.overflowNote.hidden = false;
         els.overflowNote.textContent = 'Showing the closest ' + shown.length + ' of ' + items.length.toLocaleString('en-US') +
-          ' results. Zoom the map or search a ZIP code to narrow it down.';
+          ' results. Search a ZIP code to narrow it down.';
       } else {
         els.overflowNote.hidden = true;
-      }
-    }
-  }
-
-  function renderMarkers() {
-    markerLayer.clearLayers();
-    state.markers = {};
-    var bounds = [];
-
-    state.filtered.forEach(function (item) {
-      var marker = L.marker([item.lat, item.lng], {
-        icon: markerIcon(false),
-        title: item.name,
-      });
-      marker.bindPopup(popupHtml(item));
-      marker.on('click', function () { setActive(item.slug, false); });
-      state.markers[item.slug] = marker;
-      markerLayer.addLayer(marker);
-      bounds.push([item.lat, item.lng]);
-    });
-
-    if (state.origin) {
-      if (originMarker) map.removeLayer(originMarker);
-      originMarker = L.circleMarker([state.origin.lat, state.origin.lng], {
-        radius: 8,
-        color: '#c74a0f',
-        weight: 3,
-        fillColor: '#fff',
-        fillOpacity: 1,
-      }).addTo(map).bindPopup('Searching from ' + esc(state.origin.label));
-      // Frame the origin plus the ten nearest results (the list is distance-sorted).
-      bounds = [[state.origin.lat, state.origin.lng]].concat(bounds.slice(0, 10));
-    }
-
-    // Only reframe when the visitor has narrowed things down. Fitting every
-    // listing on first load would zoom out past Alaska and Hawaii.
-    var narrowed = state.origin || els.filterState.value || els.filterFeature.value || els.filterRating.value;
-    if (bounds.length && narrowed) {
-      map.fitBounds(L.latLngBounds(bounds).pad(0.15), { maxZoom: state.origin ? 11 : 10 });
-    }
-  }
-
-  function setActive(slug, pan) {
-    state.activeSlug = slug;
-    Array.prototype.forEach.call(els.list.querySelectorAll('.listing-card'), function (card) {
-      card.classList.toggle('is-active', card.getAttribute('data-slug') === slug);
-      if (card.getAttribute('data-slug') === slug) {
-        card.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
-      }
-    });
-    var marker = state.markers[slug];
-    if (marker && pan) {
-      map.setView(marker.getLatLng(), Math.max(map.getZoom(), 12));
-      marker.openPopup();
-      // The map sits above the results carousel now (no more list/map
-      // toggle) — on a small screen the card that was just clicked can be
-      // well below the fold, so bring the map back into view to show the
-      // pan actually happened.
-      if (window.innerWidth <= 900) {
-        els.map.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
     }
   }
@@ -336,7 +212,6 @@
 
     state.filtered = items;
     renderList();
-    renderMarkers();
   }
 
   function resetAll() {
@@ -346,10 +221,8 @@
     els.sort.value = 'distance';
     els.zip.value = '';
     state.origin = null;
-    if (originMarker) { map.removeLayer(originMarker); originMarker = null; }
     applyFilters();
     renderNearbyCarousels();
-    map.setView([39.5, -98.35], 4);
   }
 
   /* ---------------------------------------------------- "near me" carousels */
@@ -570,9 +443,8 @@
   }
 
   // Shared by the manual "Use my location" button and the silent auto-locate
-  // on page load: sets the origin, re-sorts/re-renders the list (nearest
-  // first), and re-frames the map on it (renderMarkers already fitBounds
-  // to the origin plus its ten nearest results whenever state.origin is set).
+  // on page load: sets the origin and re-sorts/re-renders the list and
+  // carousels (nearest first).
   function applyOrigin(pos, label) {
     state.origin = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: label };
     els.sort.value = 'distance';
@@ -599,11 +471,11 @@
   }
 
   // Auto-locate on page load: same request as clicking "Use my location,"
-  // just fired automatically so a first-time visitor sees the map zoomed to
-  // their area and the #1 nearest patch first without an extra click. Silent
-  // on denial/unavailability — the nationwide default view already showing
-  // (rendered before this resolves) is exactly the right fallback, so
-  // there's nothing to say and nothing to undo.
+  // just fired automatically so a first-time visitor sees the #1 nearest
+  // patch first without an extra click. Silent on denial/unavailability —
+  // the nationwide default view already showing (rendered before this
+  // resolves) is exactly the right fallback, so there's nothing to say and
+  // nothing to undo.
   function autoLocate() {
     if (!navigator.geolocation) return;
     els.scope.textContent = 'Finding pumpkin patches near you…';
@@ -612,23 +484,6 @@
       function () { els.scope.textContent = 'across the United States'; },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
     );
-  }
-
-  /* ------------------------------------------------------------- toggles */
-
-  function toggleSatellite() {
-    var on = els.satellite.getAttribute('aria-pressed') === 'true';
-    if (on) {
-      map.removeLayer(satelliteLayer);
-      map.addLayer(streetLayer);
-      els.satellite.setAttribute('aria-pressed', 'false');
-      els.satellite.textContent = 'Satellite';
-    } else {
-      map.removeLayer(streetLayer);
-      map.addLayer(satelliteLayer);
-      els.satellite.setAttribute('aria-pressed', 'true');
-      els.satellite.textContent = 'Street map';
-    }
   }
 
   /* ---------------------------------------------------------------- init */
@@ -665,17 +520,6 @@
     els.filterRating.addEventListener('change', applyFilters);
     els.sort.addEventListener('change', applyFilters);
     els.reset.addEventListener('click', resetAll);
-    els.satellite.addEventListener('click', toggleSatellite);
-
-    els.list.addEventListener('click', function (event) {
-      var trigger = event.target.closest('[data-focus]');
-      if (trigger) {
-        setActive(trigger.getAttribute('data-focus'), true);
-        return;
-      }
-      var card = event.target.closest('.listing-card');
-      if (card && !event.target.closest('a')) setActive(card.getAttribute('data-slug'), true);
-    });
   }
 
   /* --------------------------------------------------- location banner -- */

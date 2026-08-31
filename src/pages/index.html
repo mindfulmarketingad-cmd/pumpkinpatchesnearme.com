@@ -14,7 +14,7 @@
   <button type="button" class="location-banner-close" id="location-banner-close" aria-label="Dismiss">&times;</button>
 </div>
 
-<section class="hero-app" id="search-app" aria-label="Pumpkin patch search map">
+<section class="hero-app" id="search-app" aria-label="Pumpkin patch search">
   <div class="hero-bar">
     <h1 class="hero-title">Find Pumpkin Patches <span class="accent">Near Me</span></h1>
 
@@ -63,12 +63,9 @@
     </div>
   </div>
 
-  <div class="map-panel">
-    <div id="map" role="application" aria-label="Map of pumpkin patches in the United States"></div>
-    <div class="map-tools">
-      <button class="toggle-btn" type="button" id="satellite-toggle" aria-pressed="false">Satellite</button>
-    </div>
-    <p class="map-note">Zoom and pan the map, then click a marker for details</p>
+  <div class="hero-photo">
+    <img src="{{HOME_HERO_IMAGE}}" alt="{{HOME_HERO_ALT}}" loading="eager" fetchpriority="high" width="1600" height="900" onerror="this.onerror=null;this.src='/assets/img/patch-placeholder.svg';">
+    <p class="hero-photo-caption">{{HOME_HERO_CAPTION}}</p>
   </div>
 </section>
 

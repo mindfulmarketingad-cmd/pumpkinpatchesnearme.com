@@ -3287,8 +3287,17 @@ const nearbyCarouselsHtml = homepageNearbySections.map((s, i) => renderNearbyCar
 
 const staticPages = readPageFiles(join(SRC, 'pages'));
 
+const homeHeroListing = topRatedAll.find((l) => l.photo) || listings.find((l) => l.photo);
 const tokens = {
   '{{FAQ}}': renderFaqHtml(faqs),
+  // The full-screen searchable map is now a single static hero photo — the
+  // real top-rated listing in the directory, not a stock image, consistent
+  // with the no-fabrication approach the rest of the site takes to imagery.
+  '{{HOME_HERO_IMAGE}}': homeHeroListing ? resizedPhotoUrl(homeHeroListing.photo, 1600, 900) : PLACEHOLDER_IMAGE,
+  '{{HOME_HERO_ALT}}': attr(homeHeroListing ? `${homeHeroListing.name}${homeHeroListing.city ? ` in ${homeHeroListing.city}, ${homeHeroListing.stateCode || homeHeroListing.state}` : ''}` : 'A pumpkin patch'),
+  '{{HOME_HERO_CAPTION}}': homeHeroListing
+    ? `${esc(homeHeroListing.name)}${homeHeroListing.city ? `, ${esc(homeHeroListing.city)}` : ''}`
+    : '',
   '{{STATE_GRID}}': renderStateGrid(),
   // The homepage teases a handful of guides rather than the full feed —
   // with 800+ programmatic attraction posts now in the mix, dumping every
@@ -3511,9 +3520,7 @@ for (const page of staticPages) {
         },
       ],
     };
-    scripts = `<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css">
-<script src="/assets/vendor/leaflet/leaflet.js" defer></script>
-<script src="/assets/js/map.js?v=${ASSET_VERSION}" defer></script>`;
+    scripts = `<script src="/assets/js/map.js?v=${ASSET_VERSION}" defer></script>`;
   }
 
   if (meta.path === '/search/') {
