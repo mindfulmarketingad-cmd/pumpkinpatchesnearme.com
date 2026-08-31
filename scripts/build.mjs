@@ -2307,8 +2307,8 @@ generateStateAttractionListicles(
   { slug: 'pumpkin-patches', name: 'Pumpkin Patches', singular: 'pumpkin patch' },
   {
     itemFilter: () => true,
-    titleSingular: (s) => `Best Pumpkin Patch To Visit For Halloween in ${s}`,
-    titlePlural: (x, s) => `${x} Best Pumpkin Patches To Visit For Halloween in ${s}`,
+    titleSingular: (s) => `Best Halloween Pumpkin Patch in ${s}`,
+    titlePlural: (x, s) => `${x} Best Halloween Pumpkin Patches in ${s}`,
     heroAlt: (s) => `Pumpkin patches to visit for Halloween in ${s}`,
     description: ({ x, names, stateName }) =>
       x === 1
@@ -2381,6 +2381,52 @@ generateStateAttractionListicles('corn-mazes', {
   ],
   conclusion: ({ topN, x, names, stateName }) => `<h2>Conclusion</h2>
 <p>${esc(topN[0].name)} is${x > 1 ? ' our top pick' : ' the only farm we currently track'} for a corn maze to visit for Halloween in ${esc(stateName)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${x > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and maze hours, difficulty and whether a nighttime version is running vary week to week — always confirm directly with the farm before you drive out. For more options, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`,
+});
+
+// The "do both in one trip" framing, and the only corn-maze state series
+// that isn't Halloween-scoped — it targets the "corn maze and pumpkin
+// patch in <state>" query pattern, which runs the whole September-October
+// season rather than the last two weeks of it. Same corn-maze feature tag
+// as the Halloween series above (every listing in the dataset is already a
+// pumpkin patch, so a corn-maze tag *is* "you can do both here"), but the
+// prose, FAQ and framing are about combining the two in one visit, not
+// about timing a trip around the holiday.
+generateStateAttractionListicles('corn-mazes', {
+  titleSingular: (s) => `Best Corn Maze & Pumpkin Patch in ${s}`,
+  titlePlural: (x, s) => `${x} Best Corn Mazes & Pumpkin Patches in ${s}`,
+  heroAlt: (s) => `Farms with a corn maze and pumpkin patch in ${s}`,
+  description: ({ x, names, stateName }) =>
+    x === 1
+      ? `The best corn maze and pumpkin patch in ${stateName} is ${names[0]} — both on one farm. See its rating, hours and directions before you go.`
+      : `The ${x} best corn mazes and pumpkin patches in ${stateName}: ${joinNatural(names)}. Farms where you can do both in one trip, ranked by rating.`,
+  intro: ({ x, linkedNames, stateName, cat }) =>
+    x === 1
+      ? `<p>The best place in ${esc(stateName)} to do a corn maze and a pumpkin patch in the same trip is ${linkedNames[0]} — the only farm we track statewide running both on one property. That combination is the whole reason most families make the drive: the maze fills an afternoon, the field sends everyone home with a pumpkin. Here's a closer look at what it offers, how it's rated, and how to get there, followed by answers to the questions we hear most about doing both in one visit. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse corn mazes in every state on our <a href="${categoryPath(cat)}">Corn Mazes near me</a> page.</p>`
+      : `<p>The ${x} best corn mazes and pumpkin patches in ${esc(stateName)} are ${joinNatural(linkedNames)}, ranked by rating and review volume — farms running a corn maze and a pick-your-own pumpkin field on the same property, so you get both in one trip. That combination is the whole reason most families make the drive: the maze fills an afternoon, the field sends everyone home with a pumpkin. Below, each gets a closer look — what it offers, how it's rated, and how to get there — followed by answers to the questions we hear most about doing both in one visit. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse corn mazes in every state on our <a href="${categoryPath(cat)}">Corn Mazes near me</a> page.</p>`,
+  faq: ({ topN, x, stateName }) => [
+    {
+      q: `What is the best corn maze and pumpkin patch in ${stateName}?`,
+      a: `Based on rating and review volume, ${esc(topN[0].name)} ranks first among the farms we track in ${esc(stateName)} that run both${topN[0].rating ? `, with a ${topN[0].rating.toFixed(1)}-out-of-5 rating` : ''}. See the full breakdown above, or its <a href="${listingPath(topN[0])}">full listing</a> for hours and directions.`,
+    },
+    {
+      q: `How long should I budget to do both?`,
+      a: `Plan on two to three hours for a comfortable visit. A mid-size corn maze runs 30-45 minutes on its own, picking a pumpkin adds another 30, and the rest goes to parking, the wagon ride out to the field, and the food stand on the way back. Larger farms with several attractions can easily fill half a day.`,
+    },
+    {
+      q: `Is the corn maze included with pumpkin picking?`,
+      a: `It depends on which pricing model the farm uses. Farms with free entry usually charge separately for the maze and sell pumpkins by weight or by the piece; farms with a flat gate admission typically bundle the maze in and sell pumpkins on the way out. Confirm with the farm directly — pricing isn't a field we track.`,
+    },
+    {
+      q: `When in the season is the best time to go?`,
+      a: `Late September through mid-October is the sweet spot: the maze is fully cut, the field is at its fullest, and you're ahead of the last-two-weekends-before-Halloween crowds. Weekday mornings in that window are the quietest time to do both without queueing.`,
+    },
+    {
+      q: x === 1 ? `Is this farm good for young kids?` : `Are these farms good for young kids?`,
+      a: `Usually — farms that run both often cut a shorter, easier maze route for younger children alongside the full-length one, and the pumpkin field itself works at any age. Check the feature tags on each listing above for things like a petting zoo or play area, and ask at the gate about the shorter maze route if you're bringing toddlers.`,
+    },
+  ],
+  conclusion: ({ topN, x, names, stateName }) => `<h2>Conclusion</h2>
+<p>${esc(topN[0].name)} is${x > 1 ? ' our top pick' : ' the only farm we currently track'} in ${esc(stateName)} for doing a corn maze and a pumpkin patch in one trip${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${x > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and whether the maze is open on a given day — plus what it costs alongside pumpkin picking — varies week to week through the season, so always confirm with the farm before you drive out. For more options, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`,
 });
 
 /* --- programmatic "5 Best Pumpkin Patches in <City>" posts --------------- */
