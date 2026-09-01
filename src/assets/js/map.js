@@ -29,6 +29,7 @@
     all: [],
     filtered: [],
     origin: null,       // { lat, lng, label }
+    originPlace: null,  // "Atlanta, GA" when we can name it from the data
   };
 
   /* ------------------------------------------------------------- helpers */
@@ -69,6 +70,51 @@
   function starString(rating) {
     var full = Math.round(rating);
     return new Array(full + 1).join('★') + new Array(Math.max(0, 5 - full) + 1).join('☆');
+  }
+
+  /* ------------------------------------------------- location personalisation */
+  // What "near me" is allowed to mean. A pumpkin patch is a day trip, so a
+  // wide radius is fair — but without a cap, a visitor in Atlanta was being
+  // shown a sunflower field 492 miles away under a "Near You" heading, which
+  // is just untrue. Sections with nothing inside the radius say so and fall
+  // back to "here are the closest we track" instead of pretending.
+  var NEAR_RADIUS_MILES = 150;
+  // How close the nearest tracked farm has to be before we're willing to name
+  // the visitor's town from it. Beyond this the town name would be a guess.
+  var ORIGIN_PLACE_MAX_MILES = 75;
+
+  // Names the visitor's own town from the nearest listing we track, the same
+  // trick the location banner uses — no geocoding call, and it degrades to a
+  // plain "you" rather than inventing a place name.
+  function computeOriginPlace() {
+    state.originPlace = null;
+    if (!state.origin) return;
+    var nearest = null;
+    var best = Infinity;
+    state.all.forEach(function (item) {
+      if (!item.city) return;
+      var d = distanceMiles(state.origin.lat, state.origin.lng, item.lat, item.lng);
+      if (d < best) { best = d; nearest = item; }
+    });
+    if (nearest && best <= ORIGIN_PLACE_MAX_MILES) {
+      state.originPlace = nearest.city + (nearest.stateCode ? ', ' + nearest.stateCode : '');
+    }
+  }
+
+  // "Atlanta, GA" when we can name it, the searched ZIP when that's all we
+  // have, and "you" as the last resort.
+  function originLabel() {
+    if (!state.origin) return null;
+    if (state.originPlace) return state.originPlace;
+    return state.origin.label === 'your location' ? 'you' : state.origin.label;
+  }
+
+  // Splits a distance-sorted list into "genuinely nearby" and, when nothing
+  // clears the radius, a short honest fallback of the closest anywhere.
+  function withinRadius(sorted, fallbackCount) {
+    var near = sorted.filter(function (x) { return x.dist <= NEAR_RADIUS_MILES; });
+    if (near.length) return { items: near, local: true };
+    return { items: sorted.slice(0, fallbackCount || 8), local: false };
   }
 
   /* --------------------------------------------------------- hours parsing */
@@ -148,10 +194,30 @@
 
   function renderList() {
     var items = state.filtered;
-    els.count.innerHTML = '<b>' + items.length.toLocaleString('en-US') + '</b> pumpkin patch' + (items.length === 1 ? '' : 'es');
-    els.scope.textContent = state.origin
-      ? 'nearest to ' + state.origin.label
-      : 'across the United States';
+
+    // Once we know where the visitor is, the headline result set is "what's
+    // actually near you", not the whole 2,000-row directory sorted by
+    // distance — a visitor in Georgia being told "2,000 pumpkin patches"
+    // isn't a local answer. Picking a state from the filter is an explicit
+    // override of that intent, so the radius steps out of the way there.
+    var scoped = false;
+    if (state.origin && !els.filterState.value) {
+      var within = items.filter(function (i) { return i._distance != null && i._distance <= NEAR_RADIUS_MILES; });
+      if (within.length) { items = within; scoped = true; }
+    }
+
+    var noun = ' pumpkin patch' + (items.length === 1 ? '' : 'es');
+    els.count.innerHTML = '<b>' + items.length.toLocaleString('en-US') + '</b>' + noun;
+    if (!state.origin) {
+      els.scope.textContent = 'across the United States';
+    } else if (scoped) {
+      els.scope.textContent = 'within ' + NEAR_RADIUS_MILES + ' miles of ' + originLabel();
+    } else if (els.filterState.value) {
+      els.scope.textContent = 'nearest to ' + originLabel();
+    } else {
+      els.scope.textContent = 'None within ' + NEAR_RADIUS_MILES + ' miles of ' + originLabel() +
+        ' — showing the closest we track';
+    }
 
     if (!items.length) {
       els.list.innerHTML = '<div class="empty-state">' +
@@ -172,8 +238,11 @@
     if (els.overflowNote) {
       if (items.length > shown.length) {
         els.overflowNote.hidden = false;
-        els.overflowNote.textContent = 'Showing the closest ' + shown.length + ' of ' + items.length.toLocaleString('en-US') +
-          ' results. Search a ZIP code to narrow it down.';
+        els.overflowNote.textContent = scoped
+          ? 'Showing the closest ' + shown.length + ' of ' + items.length.toLocaleString('en-US') +
+            ' within ' + NEAR_RADIUS_MILES + ' miles of ' + originLabel() + '. Use the filters to narrow it down.'
+          : 'Showing the closest ' + shown.length + ' of ' + items.length.toLocaleString('en-US') +
+            ' results. Search a ZIP code to narrow it down.';
       } else {
         els.overflowNote.hidden = true;
       }
@@ -221,6 +290,7 @@
     els.sort.value = 'distance';
     els.zip.value = '';
     state.origin = null;
+    state.originPlace = null;
     applyFilters();
     renderNearbyCarousels();
   }
@@ -267,16 +337,16 @@
     var pool = section.feature
       ? state.all.filter(function (item) { return (item.features || []).indexOf(section.feature) !== -1; })
       : state.all;
-    var nearby = pool
+    var sorted = pool
       .map(function (item) {
         return { item: item, dist: distanceMiles(state.origin.lat, state.origin.lng, item.lat, item.lng) };
       })
       .sort(function (a, b) { return a.dist - b.dist; })
       .slice(0, 16);
 
-    var locationLabel = state.origin.label === 'your location' ? 'you' : state.origin.label;
+    var locationLabel = originLabel();
 
-    if (!nearby.length) {
+    if (!sorted.length) {
       track.innerHTML = '<p class="carousel-empty">No ' + esc(section.label.toLowerCase()) + ' tracked near ' + esc(locationLabel) +
         ' yet &mdash; <a href="' + section.href + '">browse all ' + esc(section.label.toLowerCase()) + '</a>.</p>';
       if (heading) heading.textContent = section.label + ' Near Me';
@@ -284,9 +354,20 @@
       return;
     }
 
-    track.innerHTML = nearby.map(function (x) { x.item._distance = x.dist; return cardHtml(x.item); }).join('');
-    if (heading) heading.textContent = section.label + ' Near ' + (locationLabel === 'you' ? 'You' : locationLabel);
-    if (sub) sub.textContent = 'The ' + nearby.length + ' closest to ' + locationLabel + ', nearest first.';
+    var picked = withinRadius(sorted);
+    track.innerHTML = picked.items.map(function (x) { x.item._distance = x.dist; return cardHtml(x.item); }).join('');
+    if (picked.local) {
+      if (heading) heading.textContent = section.label + ' Near ' + (locationLabel === 'you' ? 'You' : locationLabel);
+      if (sub) sub.textContent = 'The ' + picked.items.length + ' closest to ' + locationLabel + ', nearest first.';
+    } else {
+      // Nothing within the radius — say that plainly instead of filing a farm
+      // several states away under a "Near You" heading.
+      if (heading) heading.textContent = section.label;
+      if (sub) {
+        sub.textContent = 'None within ' + NEAR_RADIUS_MILES + ' miles of ' + locationLabel +
+          ' — here are the closest we track, ' + Math.round(picked.items[0].dist) + ' miles out.';
+      }
+    }
   }
 
   // "Top Rated" behaves like the category carousels once location is known,
@@ -306,28 +387,38 @@
       return;
     }
 
-    var locationLabel = state.origin.label === 'your location' ? 'you' : state.origin.label;
-    var nearby = state.all
+    var locationLabel = originLabel();
+    var sorted = state.all
       .map(function (item) {
         return { item: item, dist: distanceMiles(state.origin.lat, state.origin.lng, item.lat, item.lng) };
       })
       .sort(function (a, b) { return a.dist - b.dist; })
-      .slice(0, 40)
-      .sort(function (a, b) {
-        return (b.item.rating || 0) * Math.log10((b.item.reviews || 1) + 1) - (a.item.rating || 0) * Math.log10((a.item.reviews || 1) + 1);
-      })
-      .slice(0, 12);
+      .slice(0, 40);
 
-    if (!nearby.length) {
+    if (!sorted.length) {
       track.innerHTML = '<p class="carousel-empty">Nothing tracked near ' + esc(locationLabel) + ' yet &mdash; <a href="/pumpkin-patches/">browse all pumpkin patches</a>.</p>';
       if (heading) heading.textContent = 'Top Rated';
       if (sub) sub.textContent = 'None found close to ' + locationLabel + ' yet.';
       return;
     }
 
-    track.innerHTML = nearby.map(function (x) { x.item._distance = x.dist; return cardHtml(x.item); }).join('');
+    // Rank by review strength *within* the drivable pool, so this stays "the
+    // best options you can actually get to" rather than the best anywhere.
+    var picked = withinRadius(sorted, 12);
+    var ranked = picked.items
+      .slice()
+      .sort(function (a, b) {
+        return (b.item.rating || 0) * Math.log10((b.item.reviews || 1) + 1) - (a.item.rating || 0) * Math.log10((a.item.reviews || 1) + 1);
+      })
+      .slice(0, 12);
+
+    track.innerHTML = ranked.map(function (x) { x.item._distance = x.dist; return cardHtml(x.item); }).join('');
     if (heading) heading.textContent = 'Top Rated';
-    if (sub) sub.textContent = 'The strongest review profiles within driving distance of ' + locationLabel + '.';
+    if (sub) {
+      sub.textContent = picked.local
+        ? 'The strongest review profiles within ' + NEAR_RADIUS_MILES + ' miles of ' + locationLabel + '.'
+        : 'Nothing within ' + NEAR_RADIUS_MILES + ' miles of ' + locationLabel + ' — the best-reviewed farms closest to you.';
+    }
   }
 
   // "Open Now" has no default HTML to revert to (see the build.mjs
@@ -341,13 +432,17 @@
     if (!track) return;
 
     var openItems = state.all.filter(function (item) { return isOpenNow(item.hours); });
-    var locationLabel = state.origin ? (state.origin.label === 'your location' ? 'you' : state.origin.label) : null;
+    var locationLabel = originLabel();
+    var outsideRadius = false;
 
     var ranked;
     if (state.origin) {
-      ranked = openItems
+      var sorted = openItems
         .map(function (item) { return { item: item, dist: distanceMiles(state.origin.lat, state.origin.lng, item.lat, item.lng) }; })
         .sort(function (a, b) { return a.dist - b.dist; });
+      var picked = withinRadius(sorted);
+      ranked = picked.items;
+      outsideRadius = sorted.length > 0 && !picked.local;
     } else {
       ranked = openItems
         .map(function (item) { return { item: item, dist: null }; })
@@ -369,9 +464,14 @@
     }
     if (heading) heading.textContent = 'Open Now';
     if (sub) {
-      sub.textContent = locationLabel
-        ? 'Farms near ' + locationLabel + ' showing open hours right now.'
-        : 'Farms showing open hours right now, based on your device clock.';
+      if (!locationLabel) {
+        sub.textContent = 'Farms showing open hours right now, based on your device clock.';
+      } else if (outsideRadius) {
+        sub.textContent = 'Nothing open within ' + NEAR_RADIUS_MILES + ' miles of ' + locationLabel +
+          ' right now — here are the closest that are open.';
+      } else {
+        sub.textContent = 'Farms near ' + locationLabel + ' showing open hours right now.';
+      }
     }
   }
 
@@ -433,6 +533,7 @@
     lookupZip(zip)
       .then(function (origin) {
         state.origin = origin;
+        computeOriginPlace();
         els.sort.value = 'distance';
         applyFilters();
         renderNearbyCarousels();
@@ -447,6 +548,7 @@
   // carousels (nearest first).
   function applyOrigin(pos, label) {
     state.origin = { lat: pos.coords.latitude, lng: pos.coords.longitude, label: label };
+    computeOriginPlace();
     els.sort.value = 'distance';
     applyFilters();
     renderNearbyCarousels();
