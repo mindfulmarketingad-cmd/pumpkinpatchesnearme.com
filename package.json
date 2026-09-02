@@ -11,7 +11,8 @@
     "icons": "node scripts/make-icons.mjs",
     "avatars": "node scripts/make-avatars.mjs",
     "sample-data": "node scripts/make-sample-data.mjs",
-    "import": "node scripts/import-outscraper.mjs"
+    "import": "node scripts/import-outscraper.mjs",
+    "fetch-photos": "node scripts/fetch-photos.mjs"
   },
   "engines": {
     "node": ">=18"

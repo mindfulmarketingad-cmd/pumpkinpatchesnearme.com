@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Illustration of a pumpkin patch — photo not available for this listing">
-  <title>Photo not available</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Illustration of a pumpkin patch">
+  <title>Pumpkin patch illustration</title>
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stop-color="#FFF4EB"/>
@@ -84,9 +84,4 @@
     </g>
   </g>
 
-  <!-- caption chip -->
-  <g transform="translate(400,190)">
-    <rect x="-118" y="-24" width="236" height="48" fill="#2B221C" opacity="0.55"/>
-    <text x="0" y="7" text-anchor="middle" font-family="'Fredoka','Trebuchet MS',system-ui,sans-serif" font-size="19" font-weight="600" fill="#FFFFFF">Photo not available</text>
-  </g>
 </svg>
