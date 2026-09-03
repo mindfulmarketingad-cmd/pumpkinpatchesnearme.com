@@ -3,12 +3,40 @@
   'use strict';
 
   var el = document.getElementById('detail-map');
-  if (!el || typeof L === 'undefined') return;
+  if (!el) return;
 
   var lat = parseFloat(el.getAttribute('data-lat'));
   var lng = parseFloat(el.getAttribute('data-lng'));
   if (!isFinite(lat) || !isFinite(lng)) return;
 
+  /* ---------------------------------------------------------- lazy Leaflet */
+  // The map sits well below the fold on a 1,000+ word listing page, so its
+  // ~159KB of JS+CSS is fetched as it approaches the viewport rather than on
+  // page load. Readers who never scroll that far never pay for it.
+  var LEAFLET_CSS = '/assets/vendor/leaflet/leaflet.css';
+  var LEAFLET_JS = '/assets/vendor/leaflet/leaflet.js';
+  var leafletPromise = null;
+
+  function loadLeaflet() {
+    if (window.L) return Promise.resolve();
+    if (leafletPromise) return leafletPromise;
+    leafletPromise = new Promise(function (resolve, reject) {
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = LEAFLET_CSS;
+      document.head.appendChild(link);
+
+      var script = document.createElement('script');
+      script.src = LEAFLET_JS;
+      script.async = true;
+      script.onload = function () { resolve(); };
+      script.onerror = function () { leafletPromise = null; reject(new Error('Leaflet failed to load')); };
+      document.head.appendChild(script);
+    });
+    return leafletPromise;
+  }
+
+  function initMap() {
   var map = L.map(el, {
     center: [lat, lng],
     zoom: 13,
@@ -65,4 +93,29 @@
   // Leaflet's tiles sized for a stale width and overflowing the page.
   // invalidateSize() re-measures and corrects it without a full reinit.
   window.setTimeout(function () { map.invalidateSize(); }, 250);
+  }
+
+  var started = false;
+  function start() {
+    if (started) return;
+    started = true;
+    loadLeaflet().then(initMap).catch(function () {
+      // Leave the container empty rather than half-initialised; the address
+      // and the Google Maps directions link above it still work.
+    });
+  }
+
+  // rootMargin gives the fetch a head start so the map is usually ready by
+  // the time it scrolls into view. Without IntersectionObserver, just load.
+  if ('IntersectionObserver' in window) {
+    var observer = new IntersectionObserver(function (entries) {
+      if (entries.some(function (e) { return e.isIntersecting; })) {
+        observer.disconnect();
+        start();
+      }
+    }, { rootMargin: '400px' });
+    observer.observe(el);
+  } else {
+    start();
+  }
 })();

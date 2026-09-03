@@ -13,13 +13,64 @@
   var listView = document.getElementById('page-list-view');
   var mapView = document.getElementById('page-map-view');
 
-  if (!mapEl || !dataEl || !toggleList || !toggleMap || !listView || !mapView || typeof L === 'undefined') return;
+  if (!mapEl || !dataEl || !toggleList || !toggleMap || !listView || !mapView) return;
 
+  /* ---------------------------------------------------------- lazy Leaflet */
+  // Leaflet is ~159KB of JS+CSS and most visitors to a state or city page
+  // never open the map, so it is fetched on first use rather than shipped
+  // with every page. Hovering the Map button starts the fetch early, which
+  // usually means it has landed by the time the click registers.
+  var LEAFLET_CSS = '/assets/vendor/leaflet/leaflet.css';
+  var LEAFLET_JS = '/assets/vendor/leaflet/leaflet.js';
+  var leafletPromise = null;
+
+  function loadLeaflet() {
+    if (window.L) return Promise.resolve();
+    if (leafletPromise) return leafletPromise;
+
+    leafletPromise = new Promise(function (resolve, reject) {
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = LEAFLET_CSS;
+      document.head.appendChild(link);
+
+      var script = document.createElement('script');
+      script.src = LEAFLET_JS;
+      script.async = true;
+      script.onload = function () { resolve(); };
+      script.onerror = function () {
+        // Let a later click retry rather than latching the failure forever.
+        leafletPromise = null;
+        reject(new Error('Leaflet failed to load'));
+      };
+      document.head.appendChild(script);
+    });
+    return leafletPromise;
+  }
+
+  // Small lists are inlined in the page; big ones (the national hubs) live in
+  // their own JSON file and are fetched with Leaflet on first open.
   var items = [];
-  try {
-    items = JSON.parse(dataEl.textContent) || [];
-  } catch (e) {
-    items = [];
+  var itemsUrl = dataEl.getAttribute('data-src');
+  if (!itemsUrl) {
+    try {
+      items = JSON.parse(dataEl.textContent) || [];
+    } catch (e) {
+      items = [];
+    }
+  }
+
+  var itemsPromise = null;
+  function loadItems() {
+    if (!itemsUrl || items.length) return Promise.resolve();
+    // Cache the in-flight request: hovering then clicking the Map button
+    // would otherwise fetch the same file twice.
+    if (itemsPromise) return itemsPromise;
+    itemsPromise = fetch(itemsUrl)
+      .then(function (res) { return res.json(); })
+      .then(function (json) { items = json || []; })
+      .catch(function (err) { itemsPromise = null; throw err; });
+    return itemsPromise;
   }
 
   var map = null;
@@ -127,14 +178,28 @@
     mapView.hidden = false;
     toggleList.setAttribute('aria-pressed', 'false');
     toggleMap.setAttribute('aria-pressed', 'true');
-    initMap();
-    window.setTimeout(function () {
-      if (map) map.invalidateSize();
-    }, 60);
+
+    Promise.all([loadLeaflet(), loadItems()]).then(function () {
+      initMap();
+      window.setTimeout(function () {
+        if (map) map.invalidateSize();
+      }, 60);
+    }).catch(function () {
+      // Nothing to show without Leaflet — go back to the list, which is the
+      // same farms in the same order, rather than leaving an empty panel.
+      showList();
+      toggleMap.textContent = 'Map unavailable';
+      window.setTimeout(function () { toggleMap.textContent = 'Map'; }, 4000);
+    });
   }
 
   toggleList.addEventListener('click', showList);
   toggleMap.addEventListener('click', showMap);
+  // Warm the fetch on intent, so the click itself feels instant.
+  toggleMap.addEventListener('pointerenter', function () {
+    loadLeaflet().catch(function () {});
+    loadItems().catch(function () {});
+  }, { once: true });
 
   // Deep link: /nebraska/?view=map opens straight to the map.
   if (/[?&]view=map\b/.test(window.location.search)) showMap();

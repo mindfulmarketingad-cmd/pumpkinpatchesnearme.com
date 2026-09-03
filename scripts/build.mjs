@@ -150,10 +150,11 @@ const categoryCityPath = (category, cityName, stateCode) => `/${category.slug}/$
 // State-scoped service page, e.g. /hayrides/georgia/.
 const categoryStatePath = (category, stateName) => `/${category.slug}/${slugify(stateName)}/`;
 
-// Shared by every state and city page's List/Map toggle.
-const pageMapScripts = `<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css">
-<script src="/assets/vendor/leaflet/leaflet.js" defer></script>
-<script src="/assets/js/page-map.js?v=${ASSET_VERSION}" defer></script>`;
+// Shared by every state and city page's List/Map toggle. Leaflet itself is
+// deliberately NOT listed here — page-map.js fetches its CSS and JS on first
+// use (or on hover of the Map button). Most visitors to these ~1,800 pages
+// never open the map, so shipping 159KB of it to all of them was pure waste.
+const pageMapScripts = `<script src="/assets/js/page-map.js?v=${ASSET_VERSION}" defer></script>`;
 
 /**
  * Individual listings live at /<state>/<city>/<business-name>/, nested under
@@ -437,6 +438,47 @@ function injectInArticleAd(bodyHtml) {
 // most of a long scroll unmonetized. renderEntry is (listing, index) =>
 // html, already closed over whatever per-page seed a caller's own
 // renderPillarEntry() call needs — this only owns list assembly.
+/**
+ * A stripped-down pillar row: same <li>, same id and same data-* attributes
+ * the filter/sort script reads, same link to the listing — but no photo, no
+ * contact line, no blurb and no long Google URLs. About 300 bytes instead of
+ * 2,600.
+ *
+ * Used for the tail of the two national hubs (/pumpkin-patches/ and
+ * /farms/), which list all 2,000 farms on one page. Rendering every one of
+ * those in full made each hub a 6MB document with 2,000 <img> elements.
+ * Keeping the tail as rows means no listing loses its link or its place in
+ * the client-side filter, while the page stops being unusable on a phone.
+ */
+function renderPillarRow(l) {
+  const features = (l.features || []).join('|');
+  const place = [l.city, l.stateCode].filter(Boolean).join(', ');
+  const rating = l.rating
+    ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(l.rating)}</span> ${l.rating.toFixed(1)}</span>`
+    : '';
+  const reviews = l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} reviews</span>` : '';
+
+  return `    <li class="pillar-entry pillar-row" id="${attr(l.slug)}" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-city-label="${attr(l.city || '')}" data-state="${attr((l.state || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}" data-lat="${l.lat ?? ''}" data-lng="${l.lng ?? ''}">
+      <div class="pillar-entry-body">
+        <h3><a href="${listingPath(l)}">${esc(l.name)}</a></h3>
+        <p class="listing-meta">${rating}${reviews}${place ? `<span>${esc(place)}</span>` : ''}<span class="pillar-distance" hidden></span></p>
+      </div>
+    </li>`;
+}
+
+/**
+ * Renders a long directory list as `richCount` full entries followed by
+ * compact rows, with the usual in-list ads. Everything stays in the HTML and
+ * in the filter; only the presentation of the tail is reduced.
+ */
+const NATIONAL_HUB_RICH_ENTRIES = 100;
+
+function pillarEntriesTiered(items, renderEntry, richCount) {
+  const rich = pillarEntriesWithAds(items.slice(0, richCount), renderEntry);
+  const rest = items.slice(richCount).map(renderPillarRow).join('\n');
+  return rest ? `${rich}\n${rest}` : rich;
+}
+
 function pillarEntriesWithAds(items, renderEntry) {
   const entries = items.map((l, i) => renderEntry(l, i));
   if (entries.length < 6) return entries.join('\n');
@@ -922,6 +964,9 @@ ${cities
  * opening the map costs no extra request. Leaflet itself only initialises
  * when a visitor actually clicks "Map".
  */
+// Above this many farms, a page's map data moves out of the HTML (see below).
+const INLINE_MAP_DATA_MAX = 300;
+
 function renderScopedMap(items, listHtml, { singular = 'pumpkin patch', plural = 'pumpkin patches' } = {}) {
   const mappable = items.filter((l) => Number.isFinite(l.lat) && Number.isFinite(l.lng));
   if (!mappable.length) return listHtml;
@@ -940,6 +985,25 @@ function renderScopedMap(items, listHtml, { singular = 'pumpkin patch', plural =
   // Inline JSON inside a <script> tag must not contain a literal "</" or a
   // browser will parse it as the tag's own closing tag.
   const json = JSON.stringify(mapData).replace(/</g, '\\u003c');
+  let mapDataUrl = null;
+
+  // For a short list the inline blob is small and saves a request, which is
+  // why it was inlined in the first place. For the national hubs it is not:
+  // 2,000 farms is ~770KB of JSON, a third of the document, sitting in the
+  // HTML of a page most visitors read without ever opening the map. Past the
+  // threshold it moves to its own file that page-map.js fetches alongside
+  // Leaflet on first open. The filename is a hash of the payload, so the two
+  // hubs (identical farm sets) share one file — and one cache entry.
+  if (mapData.length > INLINE_MAP_DATA_MAX) {
+    const key = seededHash(json).toString(36);
+    const rel = `/data/map/${key}.json`;
+    const file = join(DIST, 'data', 'map', `${key}.json`);
+    if (!existsSync(file)) {
+      mkdirSync(dirname(file), { recursive: true });
+      writeFileSync(file, JSON.stringify(mapData));
+    }
+    mapDataUrl = rel;
+  }
 
   return `<div class="page-toggle-bar">
   <p class="page-toggle-label">${mappable.length.toLocaleString('en-US')} ${mappable.length === 1 ? singular : plural} on this page</p>
@@ -955,7 +1019,7 @@ ${listHtml}
   <div class="page-map" id="page-map"></div>
   <div class="map-tools"><button class="toggle-btn" type="button" id="page-map-satellite" aria-pressed="false">Satellite</button></div>
 </div>
-<script type="application/json" id="page-map-data">${json}</script>`;
+<script type="application/json" id="page-map-data"${mapDataUrl ? ` data-src="${mapDataUrl}"` : ''}>${mapDataUrl ? '' : json}</script>`;
 }
 
 function renderStateGrid() {
@@ -3090,7 +3154,7 @@ ${presentCategoriesAll.map(({ c, n }) => `        <option value="${attr(c.featur
 
   const listHtml = `${filterBar}
 <ol class="pillar-list" id="state-pillar-list">
-${pillarEntriesWithAds(items, (l, i) => renderPillarEntry(l, i, l.state))}
+${pillarEntriesTiered(items, (l, i) => renderPillarEntry(l, i, l.state), NATIONAL_HUB_RICH_ENTRIES)}
 </ol>
 <p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search, state or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
 
@@ -3450,7 +3514,7 @@ ${presentCategoriesAll.map(({ c, n }) => `        <option value="${attr(c.featur
 
     const listHtml = `${filterBar}
 <ol class="pillar-list" id="state-pillar-list">
-${pillarEntriesWithAds(items, (l, i) => renderPillarEntry(l, i, l.state))}
+${pillarEntriesTiered(items, (l, i) => renderPillarEntry(l, i, l.state), NATIONAL_HUB_RICH_ENTRIES)}
 </ol>
 <p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search, state or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
 
@@ -4293,9 +4357,9 @@ ${categories
     ],
   };
 
-  const scripts = `<link rel="stylesheet" href="/assets/vendor/leaflet/leaflet.css">
-<script src="/assets/vendor/leaflet/leaflet.js" defer></script>
-<script src="/assets/js/detail-map.js?v=${ASSET_VERSION}" defer></script>`;
+  // Leaflet is fetched by detail-map.js as the map nears the viewport, not
+  // shipped with the page — see the lazy loader there.
+  const scripts = `<script src="/assets/js/detail-map.js?v=${ASSET_VERSION}" defer></script>`;
 
   writePage(path, render(meta, body, { jsonld, scripts }));
   if (!l.sample) addToSitemap(path, '0.6', 'monthly');
