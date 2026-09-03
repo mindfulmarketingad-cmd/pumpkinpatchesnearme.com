@@ -84,11 +84,34 @@ const IMAGE_SIZES = {
  *  placeholder client-side rather than leaving a broken-image icon. Explicit
  *  width/height attributes (matching the rendered aspect ratio) let the
  *  browser reserve space before the image loads, avoiding layout shift. */
+/** Real fall photography, used wherever a listing has no usable photo of its
+ *  own. Picked by a hash of the listing's slug rather than at random, so a
+ *  given farm always shows the same image on every page it appears on and
+ *  across rebuilds, and neighbouring cards in a row don't repeat. Beats the
+ *  single illustrated placeholder, which made 2,000 cards look identical. */
+const FALLBACK_PHOTOS = [
+  '/assets/img/fallbacks/pumpkin-patch-field.jpg',
+  '/assets/img/fallbacks/patch-01.jpg',
+  '/assets/img/fallbacks/patch-02.jpg',
+  '/assets/img/fallbacks/patch-03.jpg',
+  '/assets/img/fallbacks/patch-04.jpg',
+  '/assets/img/fallbacks/patch-05.jpg',
+  '/assets/img/fallbacks/patch-06.jpg',
+  '/assets/img/fallbacks/pumpkins-crate.jpg',
+  '/assets/img/fallbacks/petting-zoo.jpg',
+];
+
+function fallbackPhotoFor(l) {
+  const key = l.slug || l.name || '';
+  return FALLBACK_PHOTOS[seededHash(key) % FALLBACK_PHOTOS.length];
+}
+
 function listingImage(l, { alt, className = '', sizes = '', size = 'card' } = {}) {
   const preset = IMAGE_SIZES[size] || IMAGE_SIZES.card;
   const altText = alt || `${l.name}${l.city ? ` in ${l.city}` : ''}`;
-  const src = l.photo ? resizedPhotoUrl(l.photo, preset.width, preset.height) : PLACEHOLDER_IMAGE;
-  return `<img class="${className}" src="${attr(src)}" alt="${attr(altText)}" width="${preset.width}" height="${preset.height}" loading="lazy" decoding="async"${sizes ? ` sizes="${attr(sizes)}"` : ''} onerror="this.onerror=null;this.src='${PLACEHOLDER_IMAGE}';">`;
+  const fallback = fallbackPhotoFor(l);
+  const src = l.photo ? resizedPhotoUrl(l.photo, preset.width, preset.height) : fallback;
+  return `<img class="${className}" src="${attr(src)}" alt="${attr(altText)}" width="${preset.width}" height="${preset.height}" loading="lazy" decoding="async"${sizes ? ` sizes="${attr(sizes)}"` : ''} onerror="this.onerror=null;this.src='${fallback}';">`;
 }
 
 /* ----------------------------------------------------------------- inputs */
@@ -1187,10 +1210,13 @@ const pickBlogPhoto = (seedIndex) => (photoPool.length ? photoPool[seedIndex % p
 const absImageUrl = (src) => (src.startsWith('http') ? src : `${SITE_URL}${src}`);
 function blogHeroFigureHtml(src, altText) {
   const isPlaceholder = src === PLACEHOLDER_IMAGE;
-  const resized = isPlaceholder ? src : resizedPhotoUrl(src, IMAGE_SIZES.hero.width, IMAGE_SIZES.hero.height);
+  // Seeded off the alt text (which carries the state/city/category) so each
+  // page keeps the same hero across rebuilds instead of reshuffling.
+  const fallback = FALLBACK_PHOTOS[seededHash(altText || 'hero') % FALLBACK_PHOTOS.length];
+  const resized = isPlaceholder ? fallback : resizedPhotoUrl(src, IMAGE_SIZES.hero.width, IMAGE_SIZES.hero.height);
   return `<figure class="detail-hero blog-hero">
-  <img class="detail-hero-img" src="${attr(resized)}" alt="${attr(altText)}" width="${IMAGE_SIZES.hero.width}" height="${IMAGE_SIZES.hero.height}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${PLACEHOLDER_IMAGE}';">
-  <figcaption>${isPlaceholder ? 'Illustration' : 'Photo via Google, from a pumpkin patch in our directory'}</figcaption>
+  <img class="detail-hero-img" src="${attr(resized)}" alt="${attr(altText)}" width="${IMAGE_SIZES.hero.width}" height="${IMAGE_SIZES.hero.height}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallback}';">
+  <figcaption>${isPlaceholder ? 'Photo of a pumpkin patch' : 'Photo via Google, from a pumpkin patch in our directory'}</figcaption>
 </figure>`;
 }
 
@@ -3398,12 +3424,14 @@ const nearbyCarouselsHtml = homepageNearbySections.map((s, i) => renderNearbyCar
 const staticPages = readPageFiles(join(SRC, 'pages'));
 
 const homeHeroListing = topRatedAll.find((l) => l.photo) || listings.find((l) => l.photo);
+// Largest of the uploaded photos — it carries a full-bleed hero best.
+const HOME_HERO_FALLBACK = '/assets/img/fallbacks/pumpkin-patch-field.jpg';
 const tokens = {
   '{{FAQ}}': renderFaqHtml(faqs),
   // The full-screen searchable map is now a single static hero photo — the
   // real top-rated listing in the directory, not a stock image, consistent
   // with the no-fabrication approach the rest of the site takes to imagery.
-  '{{HOME_HERO_IMAGE}}': homeHeroListing ? resizedPhotoUrl(homeHeroListing.photo, 1600, 900) : PLACEHOLDER_IMAGE,
+  '{{HOME_HERO_IMAGE}}': homeHeroListing ? resizedPhotoUrl(homeHeroListing.photo, 1600, 900) : HOME_HERO_FALLBACK,
   '{{HOME_HERO_ALT}}': attr(homeHeroListing ? `${homeHeroListing.name}${homeHeroListing.city ? ` in ${homeHeroListing.city}, ${homeHeroListing.stateCode || homeHeroListing.state}` : ''}` : 'A pumpkin patch'),
   '{{HOME_HERO_CAPTION}}': homeHeroListing
     ? `${esc(homeHeroListing.name)}${homeHeroListing.city ? `, ${esc(homeHeroListing.city)}` : ''}`

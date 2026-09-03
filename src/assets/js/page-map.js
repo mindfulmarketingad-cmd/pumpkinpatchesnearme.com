@@ -97,9 +97,35 @@
     return url.replace(/=w\d+-h\d+[^&]*$/, '=w' + width + '-h' + height + '-k-no');
   }
 
+  // Same nine photos and the same slug hash the build uses, so a farm shows
+  // the same fallback here as it does on its own server-rendered pages.
+  var FALLBACK_PHOTOS = [
+    '/assets/img/fallbacks/pumpkin-patch-field.jpg',
+    '/assets/img/fallbacks/patch-01.jpg',
+    '/assets/img/fallbacks/patch-02.jpg',
+    '/assets/img/fallbacks/patch-03.jpg',
+    '/assets/img/fallbacks/patch-04.jpg',
+    '/assets/img/fallbacks/patch-05.jpg',
+    '/assets/img/fallbacks/patch-06.jpg',
+    '/assets/img/fallbacks/pumpkins-crate.jpg',
+    '/assets/img/fallbacks/petting-zoo.jpg'
+  ];
+
+  function seededHash(seed) {
+    var hash = 0;
+    for (var i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+    return hash;
+  }
+
+  function fallbackPhoto(item) {
+    var key = item.slug || item.url || item.name || '';
+    return FALLBACK_PHOTOS[seededHash(key) % FALLBACK_PHOTOS.length];
+  }
+
   function imgHtml(item) {
-    var src = item.photo ? resizedPhotoUrl(item.photo, 240, 120) : PLACEHOLDER_IMAGE;
-    return '<img class="map-popup-img" src="' + esc(src) + '" alt="' + esc(item.name) + '" width="240" height="120" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + PLACEHOLDER_IMAGE + '\';">';
+    var fallback = fallbackPhoto(item);
+    var src = item.photo ? resizedPhotoUrl(item.photo, 240, 120) : fallback;
+    return '<img class="map-popup-img" src="' + esc(src) + '" alt="' + esc(item.name) + '" width="240" height="120" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + fallback + '\';">';
   }
 
   function popupHtml(item) {
