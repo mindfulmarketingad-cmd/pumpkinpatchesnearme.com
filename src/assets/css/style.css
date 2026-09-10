@@ -866,18 +866,6 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 .hours-table td:first-child { color: var(--muted); width: 45%; }
 .hours-table tr:last-child td { border-bottom: 0; }
 
-.ad-slot {
-  margin: 1.75rem auto; text-align: center; min-height: 90px;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-.ad-label {
-  margin: 0 0 0.4rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
-  text-transform: uppercase; color: var(--muted);
-}
-.ad-slot-square { width: 100%; }
-.ad-slot-vertical { width: 100%; max-width: 420px; }
-.pillar-ad { display: block; }
-.pillar-ad .ad-slot { margin: 0; }
 
 /* ------------------------------------------------------------- footer */
 
@@ -927,7 +915,7 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 }
 
 @media print {
-  .site-header, .site-footer, .hero-app, .ad-slot { display: none !important; }
+  .site-header, .site-footer, .hero-app { display: none !important; }
 }
 
 /* -------------------------------------------------------- /dashboard/ */
