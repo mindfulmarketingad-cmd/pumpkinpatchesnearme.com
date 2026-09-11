@@ -14,6 +14,65 @@
     });
   }
 
+  /* ----------------------------------------------------- promo modal */
+  // Held back on purpose. Google treats an interstitial that covers the
+  // content on mobile entry as a ranking negative, and search is where this
+  // site's traffic comes from — so it waits until the visitor has actually
+  // been reading, and shows at most once per visitor, ever.
+  var PROMO_MODAL_KEY = 'ppnm-promo-modal-seen';
+  var PROMO_MODAL_DELAY = 15000;
+  var modal = document.getElementById('promo-modal');
+
+  if (modal) {
+    var lastFocused = null;
+
+    var alreadySeen = function () {
+      try { return !!localStorage.getItem(PROMO_MODAL_KEY); } catch (e) { return true; }
+    };
+    var markSeen = function () {
+      try { localStorage.setItem(PROMO_MODAL_KEY, '1'); } catch (e) {}
+    };
+
+    var closeModal = function () {
+      modal.hidden = true;
+      document.body.style.overflow = '';
+      document.removeEventListener('keydown', onModalKeydown);
+      if (lastFocused && lastFocused.focus) lastFocused.focus();
+    };
+
+    function onModalKeydown(event) {
+      if (event.key === 'Escape') { closeModal(); return; }
+      if (event.key !== 'Tab') return;
+      // Keep tabbing inside the dialog while it is open.
+      var focusable = modal.querySelectorAll('a[href], button');
+      if (!focusable.length) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+
+    var openModal = function () {
+      if (alreadySeen()) return;
+      markSeen();
+      lastFocused = document.activeElement;
+      modal.hidden = false;
+      document.body.style.overflow = 'hidden';
+      document.addEventListener('keydown', onModalKeydown);
+      var cta = document.getElementById('promo-modal-cta');
+      if (cta) cta.focus();
+    };
+
+    Array.prototype.forEach.call(modal.querySelectorAll('[data-promo-close]'), function (el) {
+      el.addEventListener('click', closeModal);
+    });
+    // Clicking through to the offer counts as done with it.
+    var modalCta = document.getElementById('promo-modal-cta');
+    if (modalCta) modalCta.addEventListener('click', closeModal);
+
+    if (!alreadySeen()) window.setTimeout(openModal, PROMO_MODAL_DELAY);
+  }
+
   var toggle = document.querySelector('.nav-toggle');
   var nav = document.getElementById('main-nav');
 

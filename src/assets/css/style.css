@@ -162,6 +162,56 @@ html.promo-off { --promo-h: 0px; }
   .promo-banner-link { font-size: 0.88rem; }
 }
 
+/* ------------------------------------------------------- promo modal */
+/* Deliberately not shown on arrival: Google demotes pages whose main
+   content is covered by an interstitial on mobile entry, and this site
+   lives on search traffic. site.js holds it back until the visitor has
+   spent real time on the page, and only ever shows it once. */
+.promo-modal {
+  position: fixed; inset: 0; z-index: 2000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.25rem;
+}
+.promo-modal[hidden] { display: none; }
+.promo-modal-backdrop {
+  position: absolute; inset: 0; background: rgba(31, 26, 23, 0.62);
+  animation: promo-fade 0.18s ease-out;
+}
+.promo-modal-card {
+  position: relative; z-index: 1;
+  width: min(100%, 420px); max-height: calc(100dvh - 2.5rem); overflow-y: auto;
+  background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-lg);
+  padding: 2rem 1.75rem 1.5rem; text-align: center;
+  animation: promo-rise 0.22s ease-out;
+}
+.promo-modal-eyebrow {
+  margin: 0 0 0.4rem; font-family: var(--font-display); font-weight: 600;
+  font-size: 0.76rem; letter-spacing: 0.11em; text-transform: uppercase;
+  color: var(--orange-700);
+}
+.promo-modal-title { margin: 0 0 0.15rem; font-size: 1.55rem; }
+.promo-modal-deal {
+  margin: 0 0 0.75rem; font-family: var(--font-display); font-weight: 700;
+  font-size: 2.6rem; line-height: 1; color: var(--orange);
+}
+.promo-modal-desc {
+  margin: 0 auto 1.4rem; max-width: 32ch; font-size: 0.95rem; color: var(--ink-2);
+}
+.promo-modal-cta { width: 100%; font-size: 1.05rem; padding-block: 0.8rem; }
+.promo-modal-fine { margin: 0.85rem 0 0; font-size: 0.75rem; color: var(--muted); }
+.promo-modal-close {
+  position: absolute; top: 0.35rem; right: 0.5rem;
+  background: none; border: 0; color: var(--muted);
+  font-size: 1.6rem; line-height: 1; cursor: pointer; padding: 0.2rem 0.55rem;
+}
+.promo-modal-close:hover { color: var(--ink); }
+
+@keyframes promo-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes promo-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .promo-modal-backdrop, .promo-modal-card { animation: none; }
+}
+
 /* -------------------------------------------------------------- header */
 
 .site-header {
