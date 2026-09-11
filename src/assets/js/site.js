@@ -2,6 +2,18 @@
 (function () {
   'use strict';
 
+  /* ------------------------------------------------------- promo bar */
+  // Dismissal persists across pages (localStorage, not session) so closing
+  // it once actually sticks. The head script applies .promo-off before
+  // first paint; this only has to handle the click itself.
+  var promoClose = document.getElementById('promo-banner-close');
+  if (promoClose) {
+    promoClose.addEventListener('click', function () {
+      document.documentElement.classList.add('promo-off');
+      try { localStorage.setItem('ppnm-promo-dismissed', '1'); } catch (e) {}
+    });
+  }
+
   var toggle = document.querySelector('.nav-toggle');
   var nav = document.getElementById('main-nav');
 
