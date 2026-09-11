@@ -183,6 +183,20 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
 .main-nav .nav-cta a { background: var(--orange); color: #fff; padding-inline: 1.15rem; }
 .main-nav .nav-cta a:hover { background: var(--orange-600); color: #fff; }
 
+/* Shop links (header nav + hero bar) go to an affiliate storefront, so they
+   use the harvest gold rather than the brand orange — a clearly separate
+   action from Search and Partners instead of a third orange button
+   competing with them. Dark text on gold keeps the contrast accessible. */
+.main-nav .nav-shop a { background: var(--gold); color: var(--ink); padding-inline: 1.15rem; font-weight: 600; }
+.main-nav .nav-shop a:hover { background: #ffb838; color: var(--ink); }
+
+.btn-shop {
+  background: var(--gold); color: var(--ink); border-color: var(--gold);
+  box-shadow: var(--shadow-sm);
+}
+.btn-shop:hover { background: #ffb838; color: var(--ink); border-color: #ffb838; }
+.btn-shop svg { flex: 0 0 auto; }
+
 @media (max-width: 900px) {
   .nav-toggle { display: block; }
   .main-nav {
