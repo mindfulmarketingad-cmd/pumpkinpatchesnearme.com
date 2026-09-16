@@ -453,8 +453,78 @@ function pillarEntriesTiered(items, renderEntry, richCount) {
   return rest ? `${rich}\n${rest}` : rich;
 }
 
+/* ------------------------------------------------------------ AdSense ---
+   Two responsive units, placed where the page's own shape gives them a
+   natural slot rather than the same banner everywhere. Both are
+   data-ad-format="auto" with full-width-responsive, so each adapts to the
+   column it lands in — the square/vertical names are about where they sit,
+   not a fixed size.
+
+   The loader <script> is NOT repeated per unit: it lives once in
+   base.html's <head>, so every call site here is just the <ins> plus its
+   own push({}). Repeating the loader would re-fetch it several times a
+   page for no benefit.
+*/
+const AD_CLIENT = 'ca-pub-9332749804326149';
+const AD_SLOTS = { square: '4275377186', vertical: '8454295343', inFeed: '9687485965' };
+// The in-feed unit is a fluid format whose layout key is tied to that
+// specific unit in AdSense — it renders as a native-looking row inside a
+// list rather than a block, which is why it goes in the feeds.
+const AD_INFEED_LAYOUT_KEY = '-6q+e9+15-2u+4y';
+
+function renderAdSlot(type) {
+  const insAttrs = type === 'inFeed'
+    ? `style="display:block" data-ad-format="fluid" data-ad-layout-key="${AD_INFEED_LAYOUT_KEY}"`
+    : `style="display:block" data-ad-format="auto" data-full-width-responsive="true"`;
+  return `<div class="ad-slot ad-slot-${type}">
+  <p class="ad-label">Advertisement</p>
+  <ins class="adsbygoogle" ${insAttrs} data-ad-client="${AD_CLIENT}" data-ad-slot="${AD_SLOTS[type]}"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>`;
+}
+
+// Drops a unit in right after a post's opening paragraph — the reader has
+// started, so it doesn't read as an interstitial, but it is still high on
+// the page where fill and viewability are best. A plain replace on the
+// first "</p>" is deliberate: every post body on this site opens with a
+// lede paragraph before its first heading.
+function injectInArticleAd(bodyHtml) {
+  const marker = '</p>';
+  const idx = bodyHtml.indexOf(marker);
+  if (idx === -1) return bodyHtml;
+  const cut = idx + marker.length;
+  return bodyHtml.slice(0, cut) + '\n' + renderAdSlot('square') + bodyHtml.slice(cut);
+}
+
+/**
+ * Splices in-feed units into a listicle (the ranked "N Best ..." posts).
+ * These lists are short — 5 or 10 entries — so one unit after the third
+ * entry, and a second past eight, is as far as it goes without the post
+ * reading as more ad than list.
+ */
+function listicleEntries(items, renderEntry) {
+  const entries = items.map((l, i) => renderEntry(l, i));
+  if (entries.length < 4) return entries.join('\n');
+  const adLi = `  <li class="listicle-ad">${renderAdSlot('inFeed')}</li>`;
+  const out = entries.slice();
+  out.splice(3, 0, adLi);
+  // Index 9 rather than 8: the splice above already shifted everything
+  // after the third entry along by one.
+  if (entries.length >= 8) out.splice(9, 0, adLi);
+  return out.join('\n');
+}
+
 function pillarEntries(items, renderEntry) {
-  return items.map((l, i) => renderEntry(l, i)).join('\n');
+  const entries = items.map((l, i) => renderEntry(l, i));
+  // Native to the scroll a mobile visitor is already doing. Skipped on
+  // short lists (nothing to interrupt); a second one past 20 entries,
+  // where a single unit near the top would leave a long unbroken tail.
+  if (entries.length < 6) return entries.join('\n');
+  const adLi = `    <li class="pillar-ad">${renderAdSlot('inFeed')}</li>`;
+  const withAds = entries.slice();
+  withAds.splice(4, 0, adLi);
+  if (entries.length >= 20) withAds.splice(15, 0, adLi);
+  return withAds.join('\n');
 }
 
 function joinNatural(words) {
@@ -1214,7 +1284,7 @@ for (const post of handAuthoredPosts) {
     ],
   };
   const byline = renderByline(post.meta.author, post.meta.date, post.meta.readingTime);
-  writePage(meta.path, render(meta, heroHtml + byline + toc + bodyWithIds, { jsonld }));
+  writePage(meta.path, render(meta, heroHtml + byline + toc + injectInArticleAd(bodyWithIds), { jsonld }));
   addToSitemap(meta.path, '0.6', 'monthly', post.meta.updated || post.meta.date);
 }
 
@@ -1374,7 +1444,7 @@ ${closingSummary}`;
   };
   const byline = renderByline(pillarAuthorSlug, postMeta.date, postMeta.readingTime);
   const pillarScripts = `<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
-  writePage(path, render(meta, heroHtml + byline + body, { jsonld, scripts: pillarScripts }));
+  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: pillarScripts }));
   addToSitemap(path, '0.7', 'weekly', postMeta.date);
 }
 
@@ -1537,7 +1607,7 @@ ${closingSummary}`;
   };
   const byline = renderByline(stateAuthorSlug, postMeta.date, postMeta.readingTime);
   const statePostScripts = `<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
-  writePage(path, render(meta, heroHtml + byline + body, { jsonld, scripts: statePostScripts }));
+  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: statePostScripts }));
   addToSitemap(path, '0.6', 'weekly', postMeta.date);
   addStateGuideLink(stateName, h1, path);
 }
@@ -1584,7 +1654,7 @@ function generateStateNounListicles(nounSingular) {
     const summaryIntro = `<p>The ${STATE_POST_COUNT} best pumpkin ${nounPlural} in ${esc(stateName)} are ${joinNatural(linkedNames)}, ranked by rating and review volume out of the ${esc(stateItems.length.toLocaleString('en-US'))} pumpkin patches we track statewide. Below, each ${nounSingular} gets a closer look — what it offers, how it's rated, and how to get there — followed by a table of contents' worth of jumping-off points and answers to the questions we hear most about visiting a ${esc(stateName)} pumpkin ${nounSingular}. Want the complete, searchable list? See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or start from our <a href="/pumpkin-patches/">state-by-state directory</a>.</p>`;
 
     const listicleHtml = `<ol class="listicle">
-${top10.map((l, i) => renderListicleEntry(l, i + 1, stateName)).join('\n')}
+${listicleEntries(top10, (l, i) => renderListicleEntry(l, i + 1, stateName))}
 </ol>`;
 
     const kidFriendly = top10.filter((l) => (l.features || []).some((f) => ['Petting zoo', 'Kids play area'].includes(f)));
@@ -1696,7 +1766,7 @@ ${faqHtml}`;
       ],
     };
     const byline = renderByline(postAuthorSlug, postMeta.date, postMeta.readingTime);
-    writePage(path, render(meta, heroHtml + byline + body, { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
+    writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
     addToSitemap(path, '0.6', 'weekly', postMeta.date);
     handAuthoredPosts.push({ meta: postMeta, body });
     addStateGuideLink(stateName, h1, path);
@@ -1752,7 +1822,7 @@ for (const stateName of stateNames) {
     : `<p>The ${x} best places to pick your own pumpkin in ${esc(stateName)} are ${joinNatural(linkedNames)} — farms tagged for true u-pick, where you cut a pumpkin straight from the vine instead of choosing from a pile by the barn. Below, each gets a closer look — what it offers, how it's rated, and how to get there — followed by answers to the questions we hear most about visiting. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse u-pick farms in every state on our <a href="${categoryPath(UPICK_CATEGORY)}">U-Pick Pumpkin Patches near me</a> page.</p>`;
 
   const listicleHtml = `<ol class="listicle">
-${topN.map((l, i) => renderListicleEntry(l, i + 1, stateName)).join('\n')}
+${listicleEntries(topN, (l, i) => renderListicleEntry(l, i + 1, stateName))}
 </ol>`;
 
   const faqQa = [
@@ -1864,7 +1934,7 @@ ${faqHtml}`;
     ],
   };
   const byline = renderByline(upickAuthorSlug, postMeta.date, postMeta.readingTime);
-  writePage(path, render(meta, heroHtml + byline + body, { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
+  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
   addToSitemap(path, '0.6', 'weekly', postMeta.date);
   handAuthoredPosts.push({ meta: postMeta, body });
   addStateGuideLink(stateName, h1, path, UPICK_CATEGORY.slug);
@@ -2059,7 +2129,7 @@ ${sectionsWithIds}`;
     ],
   };
   const byline = renderByline(priceAuthorSlug, postMeta.date, postMeta.readingTime);
-  writePage(path, render(meta, heroHtml + byline + body, { jsonld }));
+  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld }));
   addToSitemap(path, '0.6', 'weekly', postMeta.date);
   handAuthoredPosts.push({ meta: postMeta, body });
   addStateGuideLink(stateName, h1, path);
@@ -2115,7 +2185,7 @@ function generateStateAttractionListicles(catOrSlug, content) {
 
     const summaryIntro = content.intro({ topN, x, names, linkedNames, stateName, cat });
     const listicleHtml = `<ol class="listicle">
-${topN.map((l, i) => renderListicleEntry(l, i + 1, stateName)).join('\n')}
+${listicleEntries(topN, (l, i) => renderListicleEntry(l, i + 1, stateName))}
 </ol>`;
 
     const faqQa = content.faq({ topN, x, names, stateName, cat });
@@ -2203,7 +2273,7 @@ ${faqHtml}`;
       ],
     };
     const byline = renderByline(authorSlug, postMeta.date, postMeta.readingTime);
-    writePage(path, render(meta, heroHtml + byline + body, { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
+    writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
     addToSitemap(path, '0.6', 'weekly', postMeta.date);
     handAuthoredPosts.push({ meta: postMeta, body });
     addStateGuideLink(stateName, h1, path, cat.slug);
@@ -2511,7 +2581,7 @@ for (const [key, items] of byCity) {
   const summaryIntro = `<p>The 5 best pumpkin patches in ${esc(label)} are ${joinNatural(names.map((n) => esc(n)))}, ranked by rating and review volume. Here's a closer look at each — what they offer, how they're rated, and how to get there — followed by answers to the questions we hear most about visiting. Want the full picture? See every farm we track in <a href="${cityPath(stateName, cityName)}">${esc(label)}</a>, browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>, or start from our <a href="/pumpkin-patches/">state-by-state directory</a>.</p>`;
 
   const listicleHtml = `<ol class="listicle">
-${top5.map((l, i) => renderListicleEntry(l, i + 1, cityName)).join('\n')}
+${listicleEntries(top5, (l, i) => renderListicleEntry(l, i + 1, cityName))}
 </ol>`;
 
   const kidFriendly = top5.filter((l) => (l.features || []).some((f) => CITY_POST_KID_FEATURES.includes(f)));
@@ -2624,7 +2694,7 @@ ${closingSummary}`;
     ],
   };
   const byline = renderByline(cityAuthorSlug, postMeta.date, postMeta.readingTime);
-  writePage(path, render(meta, heroHtml + byline + body, { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
+  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
   addToSitemap(path, '0.6', 'weekly', postMeta.date);
   addCityGuideLink(stateName, cityName, postMeta.h1, path);
 }
@@ -2685,7 +2755,7 @@ for (const [key, items] of byCity) {
       : `<p>The ${x} best ${esc(cat.name.toLowerCase())} in ${esc(label)} are ${joinNatural(names.map((n) => esc(n)))}, ranked by rating and review volume. Here's what each offers, how it's rated, and how to get there — followed by the questions we hear most about visiting. For every pumpkin patch we track nearby, see the full <a href="${cityPath(stateName, cityName)}">list of pumpkin patches in ${esc(label)}</a> or browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>. You can also browse ${esc(cat.name.toLowerCase())} everywhere we track them on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>`;
 
     const listicleHtml = `<ol class="listicle">
-${topN.map((l, i) => renderListicleEntry(l, i + 1, cityName)).join('\n')}
+${listicleEntries(topN, (l, i) => renderListicleEntry(l, i + 1, cityName))}
 </ol>`;
 
     const faqQa = [
@@ -2800,7 +2870,7 @@ ${closingSummary}`;
       ],
     };
     const byline = renderByline(attractionAuthorSlug, postMeta.date, postMeta.readingTime);
-    writePage(path, render(meta, heroHtml + byline + body, { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
+    writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: `<script src="/assets/js/listicle-toggle.js?v=${ASSET_VERSION}" defer></script>` }));
     addToSitemap(path, '0.6', 'weekly', postMeta.date);
     addCityGuideLink(stateName, cityName, h1, path, cat.slug);
     addCategoryCityGuideLink(cat.slug, stateName, cityName, h1, path, distinct.length);
@@ -2888,6 +2958,9 @@ ${pillarEntries(distinct, (l, i) => renderPillarEntry(l, i, cityName))}
 
     const body = `${heroHtml}
 ${renderScopedMap(distinct, listHtml, { singular: cat.singular, plural: cat.name.toLowerCase() })}
+
+${renderAdSlot('square')}
+
 <div class="section" style="padding-bottom:0">
   <p>Want everything ${esc(label)} has to offer, not just ${esc(cat.name.toLowerCase())}? See <a href="${cityPath(stateName, cityName)}">every pumpkin patch we track in ${esc(label)}</a>, or browse ${esc(cat.name.toLowerCase())} in every state on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>
   ${relatedGuide ? `<p>Want the full write-up? Read <a href="${relatedGuide.href}">${esc(relatedGuide.title)}</a>.</p>` : ''}
@@ -3436,6 +3509,7 @@ const tokens = {
   <a class="btn btn-primary" href="/partners/">Claim your listing</a>
 </div>`,
   '{{SEASON_YEAR}}': String(SEASON_YEAR),
+  '{{AD_SQUARE}}': renderAdSlot('square'),
   // The national /pumpkin-patches/ directory — every listing we track, in
   // the same pillar-list format as the state/city/category pages, with a
   // state filter added since (unlike those pages) nothing here is already
@@ -3856,7 +3930,13 @@ ${pillarEntries(items, (l, i) => renderPillarEntry(l, i, cityName))}
 </ol>
 <p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
 
+  // Every city page carries one unit regardless of how many farms it
+  // lists. Most towns have fewer than six, which is below the in-feed
+  // threshold, so ~2,300 of them were rendering real content (700+ words,
+  // map, guides, FAQ) with nothing on them at all.
   const body = `${renderScopedMap(items, listHtml)}
+
+${renderAdSlot('square')}
 
 <div class="section" style="padding-bottom:0">
   ${featureCounts.length ? `<h2>What ${esc(cityName)} farms offer</h2>
@@ -4192,6 +4272,7 @@ for (const l of listings) {
   ${listingImage(l, { className: 'detail-hero-img', sizes: '(min-width: 900px) 900px, 100vw', size: 'hero' })}
   <figcaption>${l.photo ? `Photo of ${esc(l.name)} via Google` : `Illustration — a real photo is not yet available for ${esc(l.name)}`}</figcaption>
 </figure>
+${renderAdSlot('square')}
 <div class="detail-grid">
   <div class="prose">
     <div class="listing-meta">
@@ -4203,6 +4284,8 @@ for (const l of listings) {
     ${l.description
       ? `<p>${esc(l.description)}</p>`
       : `<p>${esc(l.name)} is a listed pumpkin patch${place ? ` in ${esc(place)}` : ''}${l.county ? `, ${esc(l.county)} County` : ''}. We don't yet have a farm-provided description for this listing — if you run or have visited ${esc(l.name)}, <a href="/contact/">let us know</a> what makes it worth a stop and we will add it.</p>`}
+
+    ${renderAdSlot('vertical')}
 
     ${ratingBarsHtml(l)}
 

@@ -979,6 +979,32 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 .hours-table tr:last-child td { border-bottom: 0; }
 
 
+/* ------------------------------------------------------------- ads */
+/* min-height reserves the slot before the unit fills, so an ad arriving
+   late doesn't shove content down the page — responsive AdSense units are
+   a classic source of layout shift otherwise. */
+.ad-slot {
+  margin: 1.75rem auto; text-align: center; min-height: 280px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.ad-label {
+  margin: 0 0 0.4rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--muted);
+}
+.ad-slot ins { width: 100%; }
+.ad-slot-square { width: 100%; }
+.ad-slot-vertical { width: 100%; }
+.pillar-ad, .listicle-ad { display: block; }
+.pillar-ad .ad-slot, .listicle-ad .ad-slot { margin: 0; }
+/* Fluid in-feed units size themselves to the row, so they don't get the
+   tall reservation the block units need — that would leave a gap in the
+   middle of a feed. */
+.ad-slot-inFeed { min-height: 120px; }
+/* These sit inside ordered lists that number their items; an ad must not
+   consume a rank number or the list reads as skipping an entry. */
+.pillar-ad, .listicle-ad { list-style: none; counter-increment: none; }
+.pillar-ad::before, .listicle-ad::before { content: none; }
+
 /* ------------------------------------------------------------- footer */
 
 .site-footer { background: var(--ink); color: #d8cdc5; padding: 2.75rem 0 2rem; }
@@ -1027,7 +1053,7 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 }
 
 @media print {
-  .site-header, .site-footer, .hero-app { display: none !important; }
+  .site-header, .site-footer, .hero-app, .ad-slot { display: none !important; }
 }
 
 /* -------------------------------------------------------- /dashboard/ */
