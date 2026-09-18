@@ -133,10 +133,22 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
 html.promo-off { --promo-h: 0px; }
 .promo-off .promo-banner { display: none; }
 
+/* Slides are stacked, not laid out in a row, so the bar keeps exactly one
+   line of height no matter how many offers rotate through it — .hero-app
+   subtracts --promo-h from the viewport and would be misaligned otherwise.
+   visibility:hidden (not just opacity) also takes the inactive slide's
+   link out of the tab order. */
+.promo-banner-track { position: relative; width: 100%; height: 100%; }
 .promo-banner-link {
-  display: inline-flex; align-items: baseline; gap: 0.5rem;
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
   color: #fff; text-decoration: none; font-size: 0.94rem;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; overflow: hidden; padding-inline: 0.5rem;
+  opacity: 0; visibility: hidden; transition: opacity 0.45s ease;
+}
+.promo-banner-link.is-active { opacity: 1; visibility: visible; }
+@media (prefers-reduced-motion: reduce) {
+  .promo-banner-link { transition: none; }
 }
 .promo-banner-link:hover { color: #fff; }
 .promo-banner-link:hover .promo-banner-go { text-decoration: underline; }
@@ -157,8 +169,10 @@ html.promo-off { --promo-h: 0px; }
 @media (max-width: 560px) {
   :root { --promo-h: 38px; }
   /* Drop the trailing call to action rather than let the bar wrap to two
-     lines, which would make --promo-h wrong and misalign the hero. */
-  .promo-banner-go { display: none; }
+     lines, which would make --promo-h wrong and misalign the hero. The
+     slides are centred with nowrap, so anything too wide gets clipped at
+     BOTH ends — the longer tours headline also sheds its tail here. */
+  .promo-banner-go, .promo-banner-more { display: none; }
   .promo-banner-link { font-size: 0.88rem; }
 }
 

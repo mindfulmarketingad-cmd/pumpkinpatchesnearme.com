@@ -6,9 +6,53 @@
   // Dismissal persists across pages (localStorage, not session) so closing
   // it once actually sticks. The head script applies .promo-off before
   // first paint; this only has to handle the click itself.
+  var promoBanner = document.getElementById('promo-banner');
+  var promoTrack = document.getElementById('promo-banner-track');
+  var promoTimer = null;
+
+  // Rotation only exists when there is more than one offer to rotate; a
+  // single slide just sits there.
+  if (promoTrack) {
+    var slides = promoTrack.querySelectorAll('.promo-banner-link');
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (slides.length > 1 && !reduceMotion) {
+      var current = 0;
+
+      var showSlide = function (next) {
+        slides[current].classList.remove('is-active');
+        current = (next + slides.length) % slides.length;
+        slides[current].classList.add('is-active');
+      };
+      var startRotation = function () {
+        if (promoTimer) return;  // don't stack intervals on repeated enter/leave
+        promoTimer = window.setInterval(function () { showSlide(current + 1); }, 7000);
+      };
+      var stopRotation = function () {
+        window.clearInterval(promoTimer);
+        promoTimer = null;
+      };
+
+      startRotation();
+
+      // WCAG 2.2.2 — auto-updating content has to be pausable. Hovering or
+      // tabbing into the bar holds the current offer still so it can be
+      // read and clicked instead of swapping out mid-reach.
+      promoBanner.addEventListener('mouseenter', stopRotation);
+      promoBanner.addEventListener('mouseleave', startRotation);
+      promoBanner.addEventListener('focusin', stopRotation);
+      promoBanner.addEventListener('focusout', startRotation);
+      // No point cycling offers in a tab nobody is looking at.
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) stopRotation(); else startRotation();
+      });
+    }
+  }
+
   var promoClose = document.getElementById('promo-banner-close');
   if (promoClose) {
     promoClose.addEventListener('click', function () {
+      if (promoTimer) { window.clearInterval(promoTimer); promoTimer = null; }
       document.documentElement.classList.add('promo-off');
       try { localStorage.setItem('ppnm-promo-dismissed', '1'); } catch (e) {}
     });
