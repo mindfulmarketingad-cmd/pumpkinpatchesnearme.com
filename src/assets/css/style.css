@@ -993,6 +993,20 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 .hours-table tr:last-child td { border-bottom: 0; }
 
 
+/* ------------------------------------------------------- experiences */
+.experience-card { display: flex; flex-direction: column; text-align: left; }
+.experience-card h3 { font-size: 1.05rem; margin-bottom: 0.4rem; }
+.experience-card h3 a { color: var(--ink); text-decoration: none; }
+.experience-card h3 a:hover { color: var(--orange-700); }
+.experience-card p { font-size: 0.9rem; color: var(--ink-2); }
+.experience-card > p:last-child { margin-top: auto; margin-bottom: 0; padding-top: 0.6rem; }
+/* Kept visually quiet but present on every experiences page — the FTC
+   expects the disclosure near the links, not only on /disclaimer/. */
+.experience-disclosure {
+  background: var(--orange-50); border-left: 3px solid var(--orange-100);
+  padding: 0.85rem 1rem; font-size: 0.85rem; color: var(--ink-2); margin: 1.5rem 0;
+}
+
 /* ------------------------------------------------------------- ads */
 /* min-height reserves the slot before the unit fills, so an ad arriving
    late doesn't shove content down the page — responsive AdSense units are

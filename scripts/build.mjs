@@ -121,6 +121,44 @@ const listings = data.listings || [];
 const faqs = JSON.parse(readFileSync(join(SRC, 'data/faqs.json'), 'utf8'));
 const categories = JSON.parse(readFileSync(join(SRC, 'data/categories.json'), 'utf8'));
 const authors = JSON.parse(readFileSync(join(SRC, 'data/authors.json'), 'utf8'));
+
+/* --- Viator experiences: /experiences/ and /experiences/<state>/ ---------
+   Built from data/experiences.json, which scripts/fetch-viator.mjs writes
+   from the Viator Partner API. The API is called once, by hand; the site
+   itself never talks to Viator, so builds need no credentials and visitors
+   only ever get baked HTML.
+
+   If the data file isn't there, this whole section is skipped and the
+   build carries on — a missing optional data source shouldn't break 5,700
+   other pages. */
+const experiencesData = (() => {
+  const file = join(ROOT, 'data/experiences.json');
+  if (!existsSync(file)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(file, 'utf8'));
+    return parsed && parsed.states ? parsed : null;
+  } catch {
+    console.warn('data/experiences.json could not be parsed — skipping /experiences/.');
+    return null;
+  }
+})();
+
+// A page needs enough on it to be worth landing on. Below this a state is
+// listed on the hub as "not covered yet" rather than getting a thin page
+// of two affiliate cards, which is the kind of page Google's thin-affiliate
+// guidance targets — and this site depends on search traffic.
+const EXPERIENCES_MIN = 3;
+
+const experiencePath = (stateName) => `/experiences/${slugify(stateName)}/`;
+const experiencesByState = new Map();
+
+if (experiencesData) {
+  for (const [stateName, items] of Object.entries(experiencesData.states || {})) {
+    const usable = (items || []).filter((x) => x && x.title && x.url);
+    if (usable.length >= EXPERIENCES_MIN) experiencesByState.set(stateName, usable);
+  }
+}
+
 const authorsBySlug = new Map(authors.map((a) => [a.slug, a]));
 const template = readFileSync(join(SRC, 'templates/base.html'), 'utf8');
 const SEASON_YEAR = new Date().getFullYear();
@@ -1129,7 +1167,7 @@ ${body}
 }
 
 function render(meta, body, opts = {}) {
-  const navKeys = ['home', 'blog', 'about', 'find', 'pumpkin-patches', 'corn-mazes', 'hayrides', 'partners'];
+  const navKeys = ['home', 'blog', 'about', 'find', 'pumpkin-patches', 'corn-mazes', 'hayrides', 'experiences', 'partners'];
   let html = template;
 
   const banner = sampleOnly && meta.path === '/'
@@ -1143,6 +1181,11 @@ function render(meta, body, opts = {}) {
     '{{SITE_URL}}': SITE_URL,
     '{{OG_TYPE}}': meta.ogType || 'website',
     '{{BODY_CLASS}}': meta.bodyClass || 'page',
+    // Only linked when the Viator data is present and produced pages —
+    // otherwise this would be a nav link to a 404 on every page.
+    '{{NAV_EXPERIENCES_ITEM}}': experiencesByState.size
+      ? `<li><a href="/experiences/"${meta.nav === 'experiences' ? ' aria-current="page"' : ''}>Experiences</a></li>`
+      : '',
     '{{ADSENSE_SCRIPT}}': '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9332749804326149" crossorigin="anonymous"></script>',
     // Corn Mazes and Hayrides are the only two category hubs in the main
     // nav, so they pick up a link from every page on the site while the
@@ -2279,6 +2322,123 @@ ${faqHtml}`;
     addStateGuideLink(stateName, h1, path, cat.slug);
     addCategoryStateGuideLink(cat.slug, stateName, h1, path);
   }
+}
+
+function renderExperienceCard(x) {
+  const meta = [
+    x.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(x.rating)}</span> ${x.rating.toFixed(1)}</span>` : '',
+    x.reviews ? `<span>${x.reviews.toLocaleString('en-US')} reviews</span>` : '',
+    x.duration ? `<span>${esc(x.duration)}</span>` : '',
+  ].filter(Boolean).join('');
+
+  return `  <article class="card experience-card">
+    <h3><a href="${attr(x.url)}" target="_blank" rel="sponsored nofollow noopener">${esc(x.title)}</a></h3>
+    ${meta ? `<div class="listing-meta">${meta}</div>` : ''}
+    ${x.summary ? `<p>${esc(x.summary)}</p>` : ''}
+    <p><a class="btn btn-outline btn-sm" href="${attr(x.url)}" target="_blank" rel="sponsored nofollow noopener">See availability</a></p>
+  </article>`;
+}
+
+if (experiencesByState.size) {
+  const coveredStates = [...experiencesByState.keys()].sort();
+  const totalExperiences = coveredStates.reduce((n, s) => n + experiencesByState.get(s).length, 0);
+
+  const affiliateNote = `<p class="experience-disclosure">Experiences on this page are bookable through Viator, a third-party marketplace. These are affiliate links &mdash; if you book through one we may earn a commission at no extra cost to you. We don't run, staff or support any of these tours, and we don't set their prices or availability; that's between you and the operator.</p>`;
+
+  /* ---------------------------------------------------- the hub page ---- */
+  {
+    const path = '/experiences/';
+    const meta = {
+      path,
+      title: `Pumpkin Patch Tours & Fall Experiences Near Me (${SEASON_YEAR})`,
+      description: `Book guided pumpkin patch tours, corn maze trips, hayrides and fall foliage experiences across ${coveredStates.length} states. ${totalExperiences} bookable experiences, by state.`,
+      h1: 'Pumpkin Patch Tours & Fall Experiences',
+      lede: `Guided tours, hayrides, orchard trips and harvest festivals you can book ahead &mdash; ${totalExperiences} experiences across ${coveredStates.length} states.`,
+      nav: 'experiences',
+      layout: 'wide',
+      trail: [{ label: 'Experiences' }],
+    };
+
+    const body = `<p>Our directory covers <a href="/pumpkin-patches/">${stats.listings.toLocaleString('en-US')} pumpkin patches you can drive to yourself</a>. This page is the other half of a fall trip: guided experiences you book in advance &mdash; hayrides, orchard tours, harvest festivals, fall foliage drives and after-dark haunted walks &mdash; run by tour operators rather than by the farms we list.</p>
+<p>It's worth knowing the difference. A pumpkin patch is somewhere you turn up, pick a pumpkin and pay at the gate. An experience here is a scheduled, ticketed activity with a guide, and usually needs booking ahead &mdash; particularly in October, which is peak season for every one of them.</p>
+
+${affiliateNote}
+
+<h2>Experiences by state</h2>
+<div class="state-grid">
+${coveredStates.map((s) => `  <a class="state-link" href="${experiencePath(s)}">${esc(s)} <span>${experiencesByState.get(s).length}</span></a>`).join('\n')}
+</div>
+
+<h2>Looking for a patch to visit instead?</h2>
+<p>If you'd rather just drive out and pick a pumpkin, that's what the rest of the site is for &mdash; every farm we track, by state and town, with hours, ratings and directions.</p>
+<p>
+  <a class="btn btn-primary" href="/pumpkin-patches/">Browse the pumpkin patch directory</a>
+  <a class="btn btn-outline" href="/states/">Find patches by state</a>
+</p>`;
+
+    const jsonld = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'CollectionPage', name: meta.title, description: meta.description, url: SITE_URL + path },
+        breadcrumbJsonLd(meta.trail, path),
+      ],
+    };
+
+    writePage(path, render(meta, body, { jsonld }));
+    addToSitemap(path, '0.7', 'monthly');
+  }
+
+  /* ------------------------------------------------ per-state pages ---- */
+  for (const stateName of coveredStates) {
+    const items = experiencesByState.get(stateName);
+    const path = experiencePath(stateName);
+    const n = items.length;
+    const patchCount = (byState.get(stateName) || []).length;
+
+    const meta = {
+      path,
+      title: `${n} Pumpkin Patch Tours & Fall Experiences in ${stateName} (${SEASON_YEAR})`,
+      description: `Book fall experiences in ${stateName}: pumpkin patch tours, hayrides, orchard trips and harvest festivals. ${n} bookable experiences, plus every pumpkin patch we track statewide.`,
+      h1: `Pumpkin Patch Tours & Fall Experiences in ${stateName}`,
+      lede: `${n} guided fall experience${n === 1 ? '' : 's'} you can book ahead in ${stateName}.`,
+      nav: 'experiences',
+      layout: 'wide',
+      trail: [{ label: 'Experiences', href: '/experiences/' }, { label: stateName }],
+    };
+
+    const body = `<p>These are ${n} bookable fall experience${n === 1 ? '' : 's'} in ${esc(stateName)} &mdash; guided tours, hayrides, orchard visits and harvest events run by tour operators and sold through Viator. They're scheduled activities with a set start time, not farms you drop in on.</p>
+${patchCount ? `<p>If you'd rather just visit a farm and pick your own, we track <a href="${statePath(stateName)}">${patchCount.toLocaleString('en-US')} pumpkin patch${patchCount === 1 ? '' : 'es'} in ${esc(stateName)}</a> with addresses, hours and directions &mdash; no booking needed.</p>` : ''}
+
+${affiliateNote}
+
+<h2>Fall experiences in ${esc(stateName)}</h2>
+<div class="grid grid-3">
+${items.map(renderExperienceCard).join('\n')}
+</div>
+
+<h2>Booking a fall experience in ${esc(stateName)}</h2>
+<p>October is the busiest month of the year for every one of these, and the weekends before Halloween are the busiest days of that month. Anything with a fixed departure &mdash; a guided tour, a scheduled hayride, an after-dark walk &mdash; is the kind of thing that sells out first, so booking earlier in the season is the difference between going and not.</p>
+<p>Availability, pricing and departure times are set by the operator and change through the season, so check the current details on the booking page before you plan around one. We don't set or track them.</p>
+
+<h2>More in ${esc(stateName)}</h2>
+<p>
+  <a class="btn btn-primary" href="${statePath(stateName)}">Pumpkin patches in ${esc(stateName)}</a>
+  <a class="btn btn-outline" href="/experiences/">Experiences in other states</a>
+</p>`;
+
+    const jsonld = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'CollectionPage', name: meta.title, description: meta.description, url: SITE_URL + path },
+        breadcrumbJsonLd(meta.trail, path),
+      ],
+    };
+
+    writePage(path, render(meta, body, { jsonld }));
+    addToSitemap(path, '0.6', 'monthly');
+  }
+
+  console.log(`  experiences: ${coveredStates.length} state pages (${totalExperiences} experiences)`);
 }
 
 generateStateAttractionListicles('petting-zoos', {
@@ -3811,6 +3971,11 @@ ${presentCategories.map(({ c, n }) => {
   // state page, as the geographic pillar, actually surfaces its own
   // cluster content instead of dead-ending at the directory list.
   const stateGuides = stateGuideLinks.get(stateName) || [];
+  // Only links where a page was actually generated — states below the
+  // experiences threshold have no page to point at.
+  const experiencesLink = experiencesByState.has(stateName)
+    ? `<p>Prefer something booked and guided? See <a href="${experiencePath(stateName)}">${experiencesByState.get(stateName).length} pumpkin patch tours and fall experiences in ${esc(stateName)}</a>.</p>`
+    : '';
   const guidesSection = stateGuides.length
     ? `<h2>${esc(stateName)} pumpkin patch guides</h2>
 <ul class="link-list">
@@ -3823,6 +3988,7 @@ ${stateGuides.map((g) => `  <li><a href="${g.href}">${esc(g.title)}</a></li>`).j
 ${citySection}
 ${catSection}
 ${guidesSection}
+${experiencesLink}
 <h2>Planning a ${esc(stateName)} pumpkin patch trip</h2>
 <p>Pumpkin patch season in ${esc(stateName)} generally runs from mid-September through the first weekend of November, with the busiest weekends falling in mid-October. Weekday mornings are the quietest time to visit, and many farms charge admission only on weekends when the corn maze, hayrides and food stands are all running.</p>
 <p>Bring cash — plenty of family farms still run cash-only gates or wagon rides — and check whether the patch charges by the pumpkin, by the pound or as a flat admission. Call ahead after heavy rain, since field access is the first thing farms close.</p>
