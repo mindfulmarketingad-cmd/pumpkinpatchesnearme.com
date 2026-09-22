@@ -150,11 +150,81 @@ const experiencesData = (() => {
 const EXPERIENCES_MIN = 3;
 
 const experiencePath = (stateName) => `/experiences/${slugify(stateName)}/`;
+const experienceSlug = (x) => slugify(`${x.title} ${x.code}`);
+const experienceDetailPath = (stateName, x) => `${experiencePath(stateName)}${experienceSlug(x)}/`;
 const experiencesByState = new Map();
+
+/** Viator's thumbnails come back at 75x75, which is unusable in a grid.
+ *  Their CDN puts the size in the path, so a bigger variant is a string
+ *  swap — the same trick the Google photo URLs use elsewhere here. */
+function experienceImage(url, size = '674x446') {
+  if (!url) return null;
+  return String(url).replace(/attractions-splice-spp-\d+x\d+/, `attractions-splice-spp-${size}`);
+}
+
+/** Which experiences actually belong to a state.
+ *
+ *  The fetcher's destination filter didn't take, so Viator ranked results by
+ *  keyword relevance rather than location and returned, for example, an
+ *  England alpaca farm under US states. Each product URL carries its real
+ *  destination (/tours/<Destination>/...), so that is checked against the
+ *  state name and against the towns we already know sit in that state from
+ *  our own directory. Anything that can't be placed is dropped — a "Fall
+ *  Experiences in Georgia" page listing a Stoke-on-Trent tour is worse than
+ *  a shorter, correct one. */
+const experienceCityIndex = (() => {
+  const m = new Map();
+  for (const l of listings) {
+    if (!l.state || !l.city) continue;
+    if (!m.has(l.state)) m.set(l.state, new Set());
+    m.get(l.state).add(l.city.toLowerCase());
+  }
+  return m;
+})();
+
+const normPlace = (v) => String(v || '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+
+function experienceDestination(x) {
+  const m = String(x.url || '').match(/viator\.com\/tours\/([^/]+)\//);
+  return m ? normPlace(decodeURIComponent(m[1]).replace(/-/g, ' ')) : null;
+}
+
+function belongsToState(x, stateName) {
+  const dest = experienceDestination(x);
+  if (!dest) return false;
+  if (dest === normPlace(stateName)) return true;
+  const cities = experienceCityIndex.get(stateName);
+  return Boolean(cities && cities.has(dest));
+}
+
+/** Coarse activity type, derived from the title, used for the on-page
+ *  filters. Viator has no fall taxonomy, so this reads the words that are
+ *  actually there rather than inventing a category. */
+const EXPERIENCE_KINDS = [
+  { key: 'pumpkin', label: 'Pumpkin patches', test: /pumpkin/i },
+  { key: 'haunted', label: 'Haunted & ghost tours', test: /haunt|ghost|spooky|scream/i },
+  { key: 'harvest', label: 'Harvest & farm', test: /harvest|farm|orchard|apple|hayride|corn maze/i },
+  { key: 'foliage', label: 'Fall foliage & scenic', test: /foliage|scenic|leaf|autumn drive|nature/i },
+  { key: 'food', label: 'Food & drink', test: /wine|cider|brewery|tasting|food|culinary/i },
+];
+
+function experienceKinds(x) {
+  const hay = `${x.title} ${x.summary || ''}`;
+  const hits = EXPERIENCE_KINDS.filter((k) => k.test.test(hay)).map((k) => k.key);
+  return hits.length ? hits : ['other'];
+}
 
 if (experiencesData) {
   for (const [stateName, items] of Object.entries(experiencesData.states || {})) {
-    const usable = (items || []).filter((x) => x && x.title && x.url);
+    const usable = (items || [])
+      .filter((x) => x && x.title && x.url && belongsToState(x, stateName))
+      .map((x) => ({
+        ...x,
+        image: experienceImage(x.image),
+        imageSmall: x.image || null,
+        place: experienceDestination(x),
+        kinds: experienceKinds(x),
+      }));
     if (usable.length >= EXPERIENCES_MIN) experiencesByState.set(stateName, usable);
   }
 }
@@ -2324,23 +2394,60 @@ ${faqHtml}`;
   }
 }
 
-function renderExperienceCard(x) {
-  const meta = [
+function renderExperienceMeta(x) {
+  return [
     x.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(x.rating)}</span> ${x.rating.toFixed(1)}</span>` : '',
     x.reviews ? `<span>${x.reviews.toLocaleString('en-US')} reviews</span>` : '',
     x.duration ? `<span>${esc(x.duration)}</span>` : '',
   ].filter(Boolean).join('');
+}
 
-  return `  <article class="card experience-card">
-    <h3><a href="${attr(x.url)}" target="_blank" rel="sponsored nofollow noopener">${esc(x.title)}</a></h3>
-    ${meta ? `<div class="listing-meta">${meta}</div>` : ''}
-    ${x.summary ? `<p>${esc(x.summary)}</p>` : ''}
-    <p><a class="btn btn-outline btn-sm" href="${attr(x.url)}" target="_blank" rel="sponsored nofollow noopener">See availability</a></p>
+/* Viator hands us 75x75 thumbnails, which are useless at card size, so we
+   ask the CDN for its large variant by swapping the size token in the path
+   (see experienceImage). If that variant doesn't exist for a given product
+   the browser falls back to the original thumbnail rather than leaving a
+   hole — and only if that fails too does the image come out entirely. */
+function experienceImgTag(x, loading, cls = '') {
+  const fallback = x.imageSmall && x.imageSmall !== x.image ? x.imageSmall : '';
+  const onerror = fallback
+    ? "if(this.dataset.fallback){this.src=this.dataset.fallback;this.removeAttribute('data-fallback');}else{this.closest('.experience-media,.detail-hero').remove();}"
+    : "this.closest('.experience-media,.detail-hero').remove();";
+  return `<img${cls ? ` class="${attr(cls)}"` : ''} src="${attr(x.image)}"${fallback ? ` data-fallback="${attr(fallback)}"` : ''} alt="${attr(x.title)}" width="674" height="446" loading="${attr(loading)}" decoding="async" onerror="${attr(onerror)}">`;
+}
+
+function renderExperienceCard(x, stateName) {
+  const meta = renderExperienceMeta(x);
+  const detail = experienceDetailPath(stateName, x);
+  // data-* drive the on-page filters; keeping them on the card means the
+  // filtering is pure DOM work with no second request.
+  return `  <article class="card experience-card" data-kinds="${attr(x.kinds.join(' '))}" data-name="${attr(x.title.toLowerCase())}" data-place="${attr(x.place || '')}" data-rating="${x.rating || 0}" data-reviews="${x.reviews || 0}">
+    ${x.image ? `<a class="experience-media" href="${attr(detail)}" tabindex="-1" aria-hidden="true">${experienceImgTag(x, 'lazy')}</a>` : ''}
+    <div class="experience-body">
+      <h3><a href="${attr(detail)}">${esc(x.title)}</a></h3>
+      ${meta ? `<div class="listing-meta">${meta}</div>` : ''}
+      ${x.place ? `<p class="experience-place">${esc(placeCase(x.place))}</p>` : ''}
+      ${x.summary ? `<p class="experience-summary">${esc(trimToSentence(x.summary, 160))}</p>` : ''}
+      <p class="experience-actions"><a class="btn btn-outline btn-sm" href="${attr(x.url)}" target="_blank" rel="sponsored nofollow noopener">See availability</a></p>
+    </div>
   </article>`;
 }
 
+/** Cuts at a sentence end rather than mid-word — the raw Viator summaries
+ *  were being sliced to "...and vi". */
+function trimToSentence(text, max) {
+  const clean = String(text).replace(/\s+/g, ' ').trim();
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max);
+  const stop = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '));
+  if (stop > max * 0.5) return cut.slice(0, stop + 1);
+  return `${cut.slice(0, cut.lastIndexOf(' '))}…`;
+}
+
+const placeCase = (v) => String(v || '').replace(/\b[a-z]/g, (c) => c.toUpperCase());
+
 if (experiencesByState.size) {
   const coveredStates = [...experiencesByState.keys()].sort();
+  let detailPageCount = 0;
   const totalExperiences = coveredStates.reduce((n, s) => n + experiencesByState.get(s).length, 0);
 
   const affiliateNote = `<p class="experience-disclosure">Experiences on this page are bookable through Viator, a third-party marketplace. These are affiliate links &mdash; if you book through one we may earn a commission at no extra cost to you. We don't run, staff or support any of these tours, and we don't set their prices or availability; that's between you and the operator.</p>`;
@@ -2412,9 +2519,46 @@ ${patchCount ? `<p>If you'd rather just visit a farm and pick your own, we track
 ${affiliateNote}
 
 <h2>Fall experiences in ${esc(stateName)}</h2>
-<div class="grid grid-3">
-${items.map(renderExperienceCard).join('\n')}
+${(() => {
+  const kinds = EXPERIENCE_KINDS.filter((k) => items.some((x) => x.kinds.includes(k.key)));
+  const places = [...new Set(items.map((x) => x.place).filter(Boolean))].sort();
+  return `<div class="find-tool experience-filter" id="experience-filter">
+  <div class="search-field">
+    <label class="visually-hidden" for="experience-filter-q">Search experiences</label>
+    <input id="experience-filter-q" type="text" placeholder="Search experiences..." autocomplete="off">
+  </div>
+  <div class="control-group">
+    ${kinds.length > 1 ? `<label class="control">
+      <span class="control-label">Type</span>
+      <select id="experience-filter-kind" aria-label="Filter by type">
+        <option value="">All types</option>
+${kinds.map((k) => `        <option value="${attr(k.key)}">${esc(k.label)}</option>`).join('\n')}
+      </select>
+    </label>` : ''}
+    ${places.length > 1 ? `<label class="control">
+      <span class="control-label">Area</span>
+      <select id="experience-filter-place" aria-label="Filter by area">
+        <option value="">All areas</option>
+${places.map((pl) => `        <option value="${attr(pl)}">${esc(placeCase(pl))}</option>`).join('\n')}
+      </select>
+    </label>` : ''}
+    <label class="control">
+      <span class="control-label">Sort</span>
+      <select id="experience-filter-sort" aria-label="Sort experiences">
+        <option value="rating">Top rated</option>
+        <option value="reviews">Most reviewed</option>
+        <option value="name">Name A-Z</option>
+      </select>
+    </label>
+    <button class="toggle-btn" type="button" id="experience-filter-reset">Reset</button>
+  </div>
+  <p class="results-count" id="experience-filter-count">${items.length} experience${items.length === 1 ? '' : 's'}</p>
+</div>`;
+})()}
+<div class="grid grid-3" id="experience-grid">
+${items.map((x) => renderExperienceCard(x, stateName)).join('\n')}
 </div>
+<p class="empty-state" id="experience-filter-empty" hidden><strong>No matches.</strong> Try a different search or <button type="button" class="btn-link" id="experience-filter-empty-reset">reset the filters</button>.</p>
 
 <h2>Booking a fall experience in ${esc(stateName)}</h2>
 <p>October is the busiest month of the year for every one of these, and the weekends before Halloween are the busiest days of that month. Anything with a fixed departure &mdash; a guided tour, a scheduled hayride, an after-dark walk &mdash; is the kind of thing that sells out first, so booking earlier in the season is the difference between going and not.</p>
@@ -2434,11 +2578,72 @@ ${items.map(renderExperienceCard).join('\n')}
       ],
     };
 
-    writePage(path, render(meta, body, { jsonld }));
+    writePage(path, render(meta, body, {
+      jsonld,
+      scripts: `<script src="/assets/js/experience-filter.js?v=${ASSET_VERSION}" defer></script>`,
+    }));
     addToSitemap(path, '0.6', 'monthly');
+
+    /* ------------------------------------------- individual experiences */
+    for (const x of items) {
+      const dPath = experienceDetailPath(stateName, x);
+      const others = items.filter((o) => o.code !== x.code).slice(0, 3);
+      const where = x.place ? placeCase(x.place) : stateName;
+
+      const dMeta = {
+        path: dPath,
+        title: `${x.title} — ${where} | Book This Fall Experience`,
+        description: trimToSentence(x.summary || `${x.title}, a bookable fall experience in ${where}, ${stateName}.`, 155),
+        h1: x.title,
+        lede: `A bookable fall experience in ${where}, ${stateName}.`,
+        nav: 'experiences',
+        layout: 'wide',
+        trail: [
+          { label: 'Experiences', href: '/experiences/' },
+          { label: stateName, href: experiencePath(stateName) },
+          { label: x.title },
+        ],
+      };
+
+      const dMetaRow = renderExperienceMeta(x);
+      const dBody = `${x.image ? `<figure class="detail-hero experience-hero">${experienceImgTag(x, 'eager', 'detail-hero-img')}<figcaption>Image via Viator</figcaption></figure>` : ''}
+${dMetaRow ? `<div class="listing-meta">${dMetaRow}</div>` : ''}
+
+<p><a class="btn btn-primary" href="${attr(x.url)}" target="_blank" rel="sponsored nofollow noopener">Check dates &amp; availability on Viator</a></p>
+
+${affiliateNote}
+
+${x.summary ? `<h2>About this experience</h2>\n<p>${esc(x.summary)}</p>` : ''}
+
+<h2>Where it runs</h2>
+<p>This experience is based in ${esc(where)}${where.toLowerCase() === stateName.toLowerCase() ? '' : `, ${esc(stateName)}`}. Departure points, times and what's included are set by the operator and listed on the booking page &mdash; we don't set or track them, so check there before planning around it.</p>
+${(byState.get(stateName) || []).length ? `<p>Visiting the area anyway? We track <a href="${statePath(stateName)}">${(byState.get(stateName) || []).length.toLocaleString('en-US')} pumpkin patches in ${esc(stateName)}</a> you can drive to without booking.</p>` : ''}
+
+${others.length ? `<h2>Other fall experiences in ${esc(stateName)}</h2>
+<div class="grid grid-3">
+${others.map((o) => renderExperienceCard(o, stateName)).join('\n')}
+</div>` : ''}
+
+<p style="margin-top:1.5rem">
+  <a class="btn btn-outline" href="${experiencePath(stateName)}">All ${esc(stateName)} experiences</a>
+  <a class="btn btn-outline" href="/experiences/">Other states</a>
+</p>`;
+
+      const dJsonld = {
+        '@context': 'https://schema.org',
+        '@graph': [
+          { '@type': 'WebPage', name: dMeta.title, description: dMeta.description, url: SITE_URL + dPath },
+          breadcrumbJsonLd(dMeta.trail, dPath),
+        ],
+      };
+
+      writePage(dPath, render(dMeta, dBody, { jsonld: dJsonld }));
+      addToSitemap(dPath, '0.5', 'monthly');
+      detailPageCount++;
+    }
   }
 
-  console.log(`  experiences: ${coveredStates.length} state pages (${totalExperiences} experiences)`);
+  console.log(`  experiences: ${coveredStates.length} state pages + ${detailPageCount} experience pages`);
 }
 
 generateStateAttractionListicles('petting-zoos', {

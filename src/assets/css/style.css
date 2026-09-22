@@ -103,6 +103,13 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 2.5rem 0; }
   border: 2px solid transparent; cursor: pointer; text-decoration: none;
   transition: transform 0.12s ease, background-color 0.15s ease, box-shadow 0.15s ease;
   white-space: nowrap;
+  /* A long label ("Check dates & availability on Viator") would otherwise run
+     past the right edge and give the whole page a horizontal scroll on a
+     phone — cap it at the container and let the text wrap instead. */
+  max-width: 100%;
+}
+@media (max-width: 560px) {
+  .btn { white-space: normal; text-align: center; }
 }
 .btn:hover { transform: translateY(-1px); }
 .btn:active { transform: translateY(0); }
@@ -236,8 +243,10 @@ html.promo-off { --promo-h: 0px; }
   border-bottom: 1px solid var(--line);
 }
 .site-header .wrap {
-  height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
 }
+/* The brand keeps its intrinsic width; the nav is what gives. */
+.site-header .brand { flex: 0 0 auto; }
 .brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
 .brand img { width: 38px; height: 38px; }
 .brand-text { display: flex; flex-direction: column; line-height: 1.05; }
@@ -250,7 +259,7 @@ html.promo-off { --promo-h: 0px; }
   letter-spacing: -0.02em;
 }
 
-.header-actions { display: flex; align-items: center; gap: 0.6rem; }
+.header-actions { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
 
 .header-search-details { position: relative; }
 .header-search-toggle {
@@ -283,12 +292,17 @@ html.promo-off { --promo-h: 0px; }
 }
 
 .main-nav ul {
-  display: flex; align-items: center; gap: 0.35rem; list-style: none; margin: 0; padding: 0;
+  display: flex; align-items: center; gap: 0.15rem; list-style: none; margin: 0; padding: 0;
 }
 .main-nav a {
-  display: block; padding: 0.5rem 0.9rem; border-radius: var(--r-pill);
-  font-family: var(--font-display); font-weight: 500; font-size: 1rem;
+  display: block; padding: 0.5rem 0.62rem; border-radius: var(--r-pill);
+  font-family: var(--font-display); font-weight: 500; font-size: 0.95rem;
   color: var(--ink-2); text-decoration: none;
+  /* Every item stays on one line. Without this the two-word items ("By
+     State", "Pumpkin Patches", "Corn Mazes") break internally once the bar
+     runs out of room, which stacks them to two lines and makes the header
+     a different height depending on which page you're on. */
+  white-space: nowrap;
 }
 .main-nav a:hover { background: var(--orange-50); color: var(--orange-900); }
 .main-nav a[aria-current="page"] { background: var(--orange); color: #fff; }
@@ -308,6 +322,21 @@ html.promo-off { --promo-h: 0px; }
 }
 .btn-shop:hover { background: #ffb838; color: var(--ink); border-color: #ffb838; }
 .btn-shop svg { flex: 0 0 auto; }
+
+/* Between the phone menu and a roomy desktop the bar has ten items that are
+   all now nowrap, so instead of letting them wrap to a second row (which is
+   what made the header a different height on /experiences/) or push the page
+   into a horizontal scroll, tighten the spacing and drop the wordmark text
+   back to the logo mark. Measured against the widest nav we ship — the one
+   with Experiences in it. */
+@media (min-width: 901px) and (max-width: 1240px) {
+  .main-nav a { padding: 0.5rem 0.4rem; font-size: 0.88rem; }
+  .main-nav .nav-cta a, .main-nav .nav-shop a { padding-inline: 0.8rem; }
+}
+@media (min-width: 901px) and (max-width: 1080px) {
+  .brand-text { display: none; }
+  .main-nav a { padding: 0.5rem 0.3rem; font-size: 0.84rem; }
+}
 
 @media (max-width: 900px) {
   .nav-toggle { display: block; }
@@ -994,12 +1023,37 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 
 
 /* ------------------------------------------------------- experiences */
-.experience-card { display: flex; flex-direction: column; text-align: left; }
+.experience-card { display: flex; flex-direction: column; text-align: left; padding: 0; overflow: hidden; }
+/* The thumbnail is decorative duplication of the title link below it, so
+   it's aria-hidden and out of the tab order — keyboard and screen-reader
+   users get one link to the experience, not two identical ones. */
+.experience-media { display: block; background: var(--orange-50); }
+.experience-media img {
+  display: block; width: 100%; height: auto; aspect-ratio: 674 / 446;
+  object-fit: cover;
+}
+.experience-body { display: flex; flex-direction: column; flex: 1; padding: 1rem 1.1rem 1.1rem; }
 .experience-card h3 { font-size: 1.05rem; margin-bottom: 0.4rem; }
 .experience-card h3 a { color: var(--ink); text-decoration: none; }
 .experience-card h3 a:hover { color: var(--orange-700); }
 .experience-card p { font-size: 0.9rem; color: var(--ink-2); }
-.experience-card > p:last-child { margin-top: auto; margin-bottom: 0; padding-top: 0.6rem; }
+.experience-card .listing-meta { margin-bottom: 0.4rem; }
+.experience-place {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: 0.85rem !important; color: var(--orange-700) !important;
+  margin-bottom: 0.4rem;
+}
+.experience-summary { margin-bottom: 0; }
+.experience-actions { margin-top: auto; margin-bottom: 0; padding-top: 0.75rem; }
+/* Filter bar sits directly above the grid; the count and empty state are
+   updated by experience-filter.js. */
+.experience-filter { margin-bottom: 1.5rem; }
+.experience-card[hidden] { display: none; }
+/* Viator's largest variant is 674px wide, so on a wide detail page the
+   shared .detail-hero-img rule would upscale it to ~1200px and make it
+   mushy. Cap it at its native width and keep it left-aligned with the
+   text it introduces. */
+.detail-hero.experience-hero { max-width: 674px; }
 /* Kept visually quiet but present on every experiences page — the FTC
    expects the disclosure near the links, not only on /disclaimer/. */
 .experience-disclosure {
