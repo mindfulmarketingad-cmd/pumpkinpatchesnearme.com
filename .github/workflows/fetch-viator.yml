@@ -1,0 +1,62 @@
+# Runs the Viator fetch on GitHub's machines and commits the result, so the
+# API key never has to live on a laptop and nobody needs a local Node setup.
+#
+# One-time setup:
+#   Repo -> Settings -> Secrets and variables -> Actions -> New repository secret
+#   Name:  VIATOR_API_KEY
+#   Value: your Viator Partner API key
+#
+# To run it: Actions tab -> "Fetch Viator experiences" -> Run workflow.
+# It refreshes data/experiences.json and commits it. Re-run whenever you want
+# fresh data (tours get discontinued, and dead affiliate links earn nothing).
+name: Fetch Viator experiences
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Fetch experiences from Viator
+        env:
+          VIATOR_API_KEY: ${{ secrets.VIATOR_API_KEY }}
+        run: npm run fetch-viator
+
+      - name: Verify the site still builds with the new data
+        run: npm run build
+
+      - name: Commit the refreshed data
+        run: |
+          if [[ -z $(git status --porcelain data/experiences.json) ]]; then
+            echo "No change to data/experiences.json — nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/experiences.json
+          git commit -m "Refresh Viator experiences data"
+          git push
+
+      # If the fetch stopped because Viator's response didn't match what the
+      # script expects, this makes the raw sample downloadable from the run
+      # page so the mapping can be corrected.
+      - name: Upload raw sample (only if the mapping failed)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: viator-raw-sample
+          path: data/viator-raw-sample.json
+          if-no-files-found: ignore
