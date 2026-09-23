@@ -2,6 +2,17 @@
   command = "npm run build"
   publish = "dist"
 
+# Our ad partner hosts ads.txt and keeps it current as their partner list
+# changes, so /ads.txt points at their copy rather than a file we maintain.
+# The ads.txt spec allows a single cross-domain redirect, and crawlers follow
+# it. force = true because Netlify serves a matching static file ahead of a
+# redirect otherwise.
+[[redirects]]
+  from = "/ads.txt"
+  to = "https://adstxt.journeymv.com/sites/5e44c2e0-bcb8-46ab-98fd-b9342d32f4c6/ads.txt"
+  status = 301
+  force = true
+
 [[redirects]]
   from = "/find"
   to = "/pumpkin-patches/"

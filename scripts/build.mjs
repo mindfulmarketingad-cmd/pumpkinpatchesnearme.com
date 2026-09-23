@@ -4866,7 +4866,11 @@ Sitemap: ${SITE_URL}/sitemap.xml
 `
 );
 
-writeFileSync(join(DIST, 'ads.txt'), 'google.com, pub-9332749804326149, DIRECT, f08c47fec0942fa0\n');
+/* No ads.txt is written here on purpose. /ads.txt is a 301 to the file our
+   ad partner hosts (see vercel.json / netlify.toml), which they keep in step
+   with their own partner list. A file emitted here would be a second, stale
+   source of truth — and the one this build used to write still declared the
+   old AdSense publisher relationship, which no longer exists. */
 
 writeFileSync(
   join(DIST, 'site.webmanifest'),
