@@ -561,34 +561,21 @@ function pillarEntriesTiered(items, renderEntry, richCount) {
   return rest ? `${rich}\n${rest}` : rich;
 }
 
-/* ------------------------------------------------------------ AdSense ---
-   Two responsive units, placed where the page's own shape gives them a
-   natural slot rather than the same banner everywhere. Both are
-   data-ad-format="auto" with full-width-responsive, so each adapts to the
-   column it lands in — the square/vertical names are about where they sit,
-   not a fixed size.
+/* ---------------------------------------------------------------- ads ---
+   Placements sit where the page's own shape gives them a natural slot
+   rather than the same banner everywhere — the square/vertical/inFeed
+   names are about where a unit sits, not a fixed size.
 
-   The loader <script> is NOT repeated per unit: it lives once in
-   base.html's <head>, so every call site here is just the <ins> plus its
-   own push({}). Repeating the loader would re-fetch it several times a
-   page for no benefit.
-*/
-const AD_CLIENT = 'ca-pub-9332749804326149';
-const AD_SLOTS = { square: '4275377186', vertical: '8454295343', inFeed: '9687485965' };
-// The in-feed unit is a fluid format whose layout key is tied to that
-// specific unit in AdSense — it renders as a native-looking row inside a
-// list rather than a block, which is why it goes in the feeds.
-const AD_INFEED_LAYOUT_KEY = '-6q+e9+15-2u+4y';
+   Ads are served by the tag in base.html's <head>, which places units
+   itself. Each call here leaves a named, empty container the tag can fill;
+   nothing is requested per-slot from the page.
 
+   An empty container collapses to zero height with no label (see the
+   :empty rules in style.css), so a slot the tag chooses not to fill leaves
+   no gap and no stray "Advertisement" caption. data-ad-slot names the
+   position so placements can be targeted or reported on by name. */
 function renderAdSlot(type) {
-  const insAttrs = type === 'inFeed'
-    ? `style="display:block" data-ad-format="fluid" data-ad-layout-key="${AD_INFEED_LAYOUT_KEY}"`
-    : `style="display:block" data-ad-format="auto" data-full-width-responsive="true"`;
-  return `<div class="ad-slot ad-slot-${type}">
-  <p class="ad-label">Advertisement</p>
-  <ins class="adsbygoogle" ${insAttrs} data-ad-client="${AD_CLIENT}" data-ad-slot="${AD_SLOTS[type]}"></ins>
-  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-</div>`;
+  return `<div class="ad-slot ad-slot-${type}" data-ad-slot="${type}"></div>`;
 }
 
 // Drops a unit in right after a post's opening paragraph — the reader has
@@ -1256,7 +1243,10 @@ function render(meta, body, opts = {}) {
     '{{NAV_EXPERIENCES_ITEM}}': experiencesByState.size
       ? `<li><a href="/experiences/"${meta.nav === 'experiences' ? ' aria-current="page"' : ''}>Experiences</a></li>`
       : '',
-    '{{ADSENSE_SCRIPT}}': '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9332749804326149" crossorigin="anonymous"></script>',
+    // The ad partner's single wrapper tag. It loads once per page here and
+    // handles placement itself; the .ad-slot containers in the body are
+    // just named positions for it, with no per-unit request of their own.
+    '{{AD_SCRIPT}}': '<script type="text/javascript" async="async" data-noptimize="1" data-cfasync="false" src="//scripts.scriptwrapper.com/tags/5e44c2e0-bcb8-46ab-98fd-b9342d32f4c6.js"></script>',
     // Corn Mazes and Hayrides are the only two category hubs in the main
     // nav, so they pick up a link from every page on the site while the
     // other six only get linked from pages that happen to carry that

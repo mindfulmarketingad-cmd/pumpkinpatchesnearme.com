@@ -1062,26 +1062,30 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 }
 
 /* ------------------------------------------------------------- ads */
-/* min-height reserves the slot before the unit fills, so an ad arriving
-   late doesn't shove content down the page — responsive AdSense units are
-   a classic source of layout shift otherwise. */
-.ad-slot {
-  margin: 1.75rem auto; text-align: center; min-height: 280px;
+/* The ad tag decides for itself which of these containers to fill, so the
+   styling is driven off :empty: an unfilled slot has no margin, no height
+   and no caption, and leaves no trace in the layout. Reserving height
+   up front the way a fixed-size unit would want is not an option here —
+   on the slots the tag skips it would be a permanent hole. */
+.ad-slot { margin: 0; text-align: center; }
+.ad-slot:not(:empty) {
+  margin: 1.75rem auto;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
-.ad-label {
+/* "Advertisement" belongs to the ad, so it appears only once there is one
+   to label. */
+.ad-slot:not(:empty)::before {
+  content: "Advertisement";
   margin: 0 0 0.4rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
   text-transform: uppercase; color: var(--muted);
 }
-.ad-slot ins { width: 100%; }
-.ad-slot-square { width: 100%; }
-.ad-slot-vertical { width: 100%; }
+.ad-slot > * { max-width: 100%; }
+.ad-slot-square, .ad-slot-vertical { width: 100%; }
 .pillar-ad, .listicle-ad { display: block; }
-.pillar-ad .ad-slot, .listicle-ad .ad-slot { margin: 0; }
-/* Fluid in-feed units size themselves to the row, so they don't get the
-   tall reservation the block units need — that would leave a gap in the
-   middle of a feed. */
-.ad-slot-inFeed { min-height: 120px; }
+.pillar-ad .ad-slot:not(:empty), .listicle-ad .ad-slot:not(:empty) { margin: 1rem 0; }
+/* A feed row an ad never arrives in must not leave a gap between the
+   entries it sits between. */
+.pillar-ad:has(.ad-slot:empty), .listicle-ad:has(.ad-slot:empty) { display: none; }
 /* These sit inside ordered lists that number their items; an ad must not
    consume a rank number or the list reads as skipping an entry. */
 .pillar-ad, .listicle-ad { list-style: none; counter-increment: none; }
