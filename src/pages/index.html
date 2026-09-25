@@ -67,33 +67,16 @@
     </div>
   </div>
 
-  <!-- Both slides ship in the HTML, so the booking offer is crawlable and
-       is there with JS off; hero-slider.js only adds the movement. The
-       search bar above deliberately stays put rather than sliding away
-       under someone mid-search. -->
-  <div class="hero-photo hero-slider" id="hero-slider" aria-roledescription="carousel" aria-label="Featured">
-    <div class="hero-slides" id="hero-slides">
-      <div class="hero-slide is-active" role="group" aria-roledescription="slide" aria-label="1 of 2: Featured pumpkin patch">
-        <img src="{{HOME_HERO_IMAGE}}" alt="{{HOME_HERO_ALT}}" loading="eager" fetchpriority="high" width="1600" height="900" onerror="this.onerror=null;this.src='/assets/img/fallbacks/pumpkin-patch-field.jpg';">
-        <p class="hero-photo-caption">{{HOME_HERO_CAPTION}}</p>
-      </div>
-      <div class="hero-slide hero-slide-promo" role="group" aria-roledescription="slide" aria-label="2 of 2: Book fall experiences">
-        <img src="{{HOME_HERO_2_IMAGE}}" alt="" loading="lazy" decoding="async" width="1600" height="900" onerror="this.onerror=null;this.src='/assets/img/fallbacks/pumpkin-patch-field.jpg';">
-        <div class="hero-slide-content">
-          <h2 class="hero-slide-title">Book Pumpkin Patch Tours <span class="accent">and Fall Experiences</span></h2>
-          <p class="hero-slide-sub">{{HOME_HERO_2_SUB}}</p>
-          <a class="btn btn-primary hero-slide-cta" href="/experiences/">Book Now</a>
-        </div>
-      </div>
+  <!-- Single static banner. The image is the LCP element, so it loads eager
+       with a high fetch priority; alt is empty because the headline over it
+       already carries the meaning and the photo is decorative. -->
+  <div class="hero-photo hero-banner">
+    <img src="{{HOME_HERO_IMAGE}}" alt="" loading="eager" fetchpriority="high" width="1600" height="900" onerror="this.onerror=null;this.src='/assets/img/fallbacks/pumpkin-patch-field.jpg';">
+    <div class="hero-banner-content">
+      <h2 class="hero-banner-title">Book Pumpkin Patch Tours <span class="accent">and Fall Experiences</span></h2>
+      <p class="hero-banner-sub">{{HOME_HERO_SUB}}</p>
+      <a class="btn btn-primary hero-banner-cta" href="/experiences/">Book Now</a>
     </div>
-
-    <button class="hero-slider-arrow hero-slider-prev" type="button" data-hero-dir="-1" aria-label="Previous slide" hidden>
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
-    </button>
-    <button class="hero-slider-arrow hero-slider-next" type="button" data-hero-dir="1" aria-label="Next slide" hidden>
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
-    </button>
-    <div class="hero-slider-dots" id="hero-slider-dots" hidden></div>
   </div>
 </section>
 

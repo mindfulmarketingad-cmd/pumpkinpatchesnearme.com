@@ -3796,26 +3796,16 @@ const nearbyCarouselsHtml = homepageNearbySections.map((s, i) => renderNearbyCar
 
 const staticPages = readPageFiles(join(SRC, 'pages'));
 
-const homeHeroListing = topRatedAll.find((l) => l.photo) || listings.find((l) => l.photo);
-// Largest of the uploaded photos — it carries a full-bleed hero best.
-const HOME_HERO_FALLBACK = '/assets/img/fallbacks/pumpkin-patch-field.jpg';
+
 const tokens = {
   '{{FAQ}}': renderFaqHtml(faqs),
-  // The full-screen searchable map is now a single static hero photo — the
-  // real top-rated listing in the directory, not a stock image, consistent
-  // with the no-fabrication approach the rest of the site takes to imagery.
-  '{{HOME_HERO_IMAGE}}': homeHeroListing ? resizedPhotoUrl(homeHeroListing.photo, 1600, 900) : HOME_HERO_FALLBACK,
-  '{{HOME_HERO_ALT}}': attr(homeHeroListing ? `${homeHeroListing.name}${homeHeroListing.city ? ` in ${homeHeroListing.city}, ${homeHeroListing.stateCode || homeHeroListing.state}` : ''}` : 'A pumpkin patch'),
-  '{{HOME_HERO_CAPTION}}': homeHeroListing
-    ? `${esc(homeHeroListing.name)}${homeHeroListing.city ? `, ${esc(homeHeroListing.city)}` : ''}`
-    : '',
-  // Second hero slide, promoting the bookable experiences. Its photo is one
-  // of our own files rather than a listing's, so the slide never inadvertently
-  // pictures a specific farm next to a "book a tour" offer that isn't theirs.
-  '{{HOME_HERO_2_IMAGE}}': '/assets/img/fallbacks/patch-03.jpg',
-  // Counts come from the built data, so the claim on the slide can't drift
+  // The homepage banner promotes the bookable experiences. Its photo is one
+  // of our own files rather than a listing's, so the banner never pictures a
+  // specific farm next to a "book a tour" offer that isn't theirs.
+  '{{HOME_HERO_IMAGE}}': '/assets/img/fallbacks/patch-03.jpg',
+  // Counts come from the built data, so the claim on the banner can't drift
   // away from what /experiences/ actually lists.
-  '{{HOME_HERO_2_SUB}}': experiencesByState.size
+  '{{HOME_HERO_SUB}}': experiencesByState.size
     ? `Guided tours, hayrides, harvest events and haunted nights you can reserve ahead — ${[...experiencesByState.values()].reduce((n, xs) => n + xs.length, 0).toLocaleString('en-US')} experiences across ${experiencesByState.size} states.`
     : 'Guided tours, hayrides, harvest events and haunted nights you can reserve ahead.',
   '{{STATE_GRID}}': renderStateGrid(),
@@ -4040,7 +4030,7 @@ for (const page of staticPages) {
         },
       ],
     };
-    scripts = `<script src="/assets/js/map.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/hero-slider.js?v=${ASSET_VERSION}" defer></script>`;
+    scripts = `<script src="/assets/js/map.js?v=${ASSET_VERSION}" defer></script>`;
   }
 
   if (meta.path === '/search/') {

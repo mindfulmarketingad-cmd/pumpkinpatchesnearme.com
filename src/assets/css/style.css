@@ -456,79 +456,31 @@ html.promo-off { --promo-h: 0px; }
 .hero-photo img {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
 }
-.hero-photo-caption {
-  position: absolute; left: 16px; bottom: 16px; z-index: 5;
-  color: #fff; font-size: 0.85rem; margin: 0; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
-}
-
-/* ------------------------------------------------- hero slider (home) */
-/* The slides sit in a row the width of all of them and the track is
-   translated by whole viewport-widths. Before hero-slider.js runs there is
-   no transform, so slide 1 shows and the rest sit off to the right — which
-   is also exactly what a JS-off visitor gets. */
-.hero-slides {
-  display: flex; height: 100%; width: 100%;
-  transition: transform 0.55s cubic-bezier(0.4, 0.05, 0.2, 1);
-}
-.hero-slide { position: relative; flex: 0 0 100%; width: 100%; height: 100%; overflow: hidden; }
-/* The scrim lives on the slide rather than the container so each slide
-   keeps its own overlay while it moves. */
-.hero-slide::after {
+/* ------------------------------------------------- hero banner (home) */
+/* A single static banner: the photo fills the area and the headline, blurb
+   and CTA sit centred on top of it. */
+.hero-banner::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(180deg, rgba(31, 26, 23, 0) 55%, rgba(31, 26, 23, 0.4) 100%);
-}
-/* The promo slide's text sits on the photo, so it gets a heavier scrim than
-   the caption-only slide needs — this is the difference between legible and
-   nearly legible on a bright image. */
-.hero-slide-promo::after {
   background:
     linear-gradient(180deg, rgba(31, 26, 23, 0.55) 0%, rgba(31, 26, 23, 0.45) 45%, rgba(31, 26, 23, 0.68) 100%);
 }
-.hero-slide-content {
+.hero-banner-content {
   position: absolute; inset: 0; z-index: 5;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   text-align: center; gap: 0.9rem; padding: 2rem clamp(1rem, 5vw, 3rem);
 }
-.hero-slide-title {
+.hero-banner-title {
   margin: 0; color: #fff; max-width: 18ch;
   font-size: clamp(1.75rem, 4.6vw, 3.4rem); line-height: 1.08;
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 }
-.hero-slide-title .accent { color: var(--gold); }
-.hero-slide-sub {
+.hero-banner-title .accent { color: var(--gold); }
+.hero-banner-sub {
   margin: 0; color: rgba(255, 255, 255, 0.94); max-width: 48ch;
   font-size: clamp(0.95rem, 1.5vw, 1.1rem);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
 }
-.hero-slide-cta { font-size: 1.05rem; padding: 0.85rem 1.9rem; margin-top: 0.3rem; }
-
-.hero-slider-arrow {
-  position: absolute; top: 50%; transform: translateY(-50%); z-index: 6;
-  display: flex; align-items: center; justify-content: center;
-  width: 44px; height: 44px; border: 0; border-radius: 50%; cursor: pointer;
-  background: rgba(255, 255, 255, 0.88); color: var(--ink);
-  box-shadow: var(--shadow-md);
-}
-.hero-slider-arrow:hover { background: #fff; color: var(--orange-700); }
-.hero-slider-prev { left: clamp(0.5rem, 2vw, 1.25rem); }
-.hero-slider-next { right: clamp(0.5rem, 2vw, 1.25rem); }
-
-.hero-slider-dots {
-  position: absolute; z-index: 6; left: 0; right: 0; bottom: 16px;
-  display: flex; justify-content: center; gap: 0.5rem;
-}
-.hero-slider-dot {
-  width: 10px; height: 10px; padding: 0; border-radius: 50%; cursor: pointer;
-  border: 2px solid rgba(255, 255, 255, 0.9); background: transparent;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-}
-.hero-slider-dot.is-active { background: #fff; }
-/* Once the dots are there they would sit on top of the photo credit. */
-.hero-slider.is-enhanced .hero-photo-caption { bottom: 38px; }
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-slides { transition: none; }
-}
+.hero-banner-cta { font-size: 1.05rem; padding: 0.85rem 1.9rem; margin-top: 0.3rem; }
 
 @media (max-width: 900px) {
   .hero-app { height: auto; min-height: 0; }
@@ -538,9 +490,6 @@ html.promo-off { --promo-h: 0px; }
      the item out of the grow/shrink calculation lets its height apply. */
   .hero-photo { flex: 0 0 auto; height: 62vh; }
   .hero-title { width: 100%; }
-  /* At phone width the arrows overlap the headline; the dots and the swipe
-     of a finger across the track are enough to move between two slides. */
-  .hero-slider-arrow { display: none; }
 }
 
 /* ------------------------------------------------------- listing cards */
