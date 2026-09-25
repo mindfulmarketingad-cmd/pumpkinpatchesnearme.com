@@ -3809,6 +3809,15 @@ const tokens = {
   '{{HOME_HERO_CAPTION}}': homeHeroListing
     ? `${esc(homeHeroListing.name)}${homeHeroListing.city ? `, ${esc(homeHeroListing.city)}` : ''}`
     : '',
+  // Second hero slide, promoting the bookable experiences. Its photo is one
+  // of our own files rather than a listing's, so the slide never inadvertently
+  // pictures a specific farm next to a "book a tour" offer that isn't theirs.
+  '{{HOME_HERO_2_IMAGE}}': '/assets/img/fallbacks/patch-03.jpg',
+  // Counts come from the built data, so the claim on the slide can't drift
+  // away from what /experiences/ actually lists.
+  '{{HOME_HERO_2_SUB}}': experiencesByState.size
+    ? `Guided tours, hayrides, harvest events and haunted nights you can reserve ahead — ${[...experiencesByState.values()].reduce((n, xs) => n + xs.length, 0).toLocaleString('en-US')} experiences across ${experiencesByState.size} states.`
+    : 'Guided tours, hayrides, harvest events and haunted nights you can reserve ahead.',
   '{{STATE_GRID}}': renderStateGrid(),
   // The homepage teases a handful of guides rather than the full feed —
   // with 800+ programmatic attraction posts now in the mix, dumping every
@@ -4031,7 +4040,7 @@ for (const page of staticPages) {
         },
       ],
     };
-    scripts = `<script src="/assets/js/map.js?v=${ASSET_VERSION}" defer></script>`;
+    scripts = `<script src="/assets/js/map.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/hero-slider.js?v=${ASSET_VERSION}" defer></script>`;
   }
 
   if (meta.path === '/search/') {
