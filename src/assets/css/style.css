@@ -49,8 +49,12 @@ html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body {
   margin: 0;
   font-family: var(--font-body);
-  font-size: 17px;
-  line-height: 1.65;
+  /* 18px body with a 1.8 line height, per our ad partner's readability
+     guidance for content sites. Paragraphs are capped at roughly 3-4 lines
+     by splitLongParagraphs() in build.mjs, which matters more at this line
+     height than it did at 1.65. */
+  font-size: 18px;
+  line-height: 1.8;
   color: var(--ink);
   background: var(--white);
   overflow-x: hidden;

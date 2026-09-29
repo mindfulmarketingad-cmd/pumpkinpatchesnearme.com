@@ -1202,8 +1202,105 @@ function breadcrumbJsonLd(trail, currentPath) {
   };
 }
 
+/* ------------------------------------------------ paragraph shortening ---
+   Caps body paragraphs at roughly 3-4 rendered lines by breaking the long
+   ones at sentence boundaries. At our 18px/1.8 body type the prose column is
+   about 80 characters wide, so ~300 characters is where the fourth line ends.
+
+   Two rules keep this from mangling anything:
+
+   - Only bare <p> is touched. A <p class="..."> is styled for a specific job
+     (ledes, disclosures, captions) and splitting it would duplicate that
+     styling across the halves. This costs almost nothing: 98% of the long
+     paragraphs on the site are attribute-less.
+   - A break is only taken where no inline tag is open, so a sentence end
+     inside a link or a <strong> is never a split point.
+
+   Sentence detection is deliberately conservative — it would rather leave a
+   long paragraph alone than cut one mid-sentence. A break needs a lowercase
+   letter or a closing bracket/quote before the full stop, which rules out
+   initials and "U.S.", plus an explicit list of lowercase abbreviations.
+*/
+const PARA_TARGET_CHARS = 300;
+// Below this a trailing fragment reads as a stray line, so it stays attached
+// to the paragraph before it.
+const PARA_MIN_TAIL_CHARS = 90;
+const PARA_ABBREVIATIONS = new Set([
+  'etc', 'vs', 'al', 'approx', 'est', 'no', 'ft', 'mi', 'lb', 'oz', 'min', 'max',
+  'inc', 'ltd', 'co', 'jr', 'sr', 'mr', 'mrs', 'ms', 'dr', 'st', 'mt', 'ave', 'rd', 'blvd',
+]);
+
+function sentenceBreaks(inner) {
+  const breaks = [];
+  let depth = 0;
+  for (let i = 0; i < inner.length; i++) {
+    const ch = inner[i];
+    if (ch === '<') {
+      const close = inner.indexOf('>', i);
+      if (close === -1) break;
+      const tag = inner.slice(i, close + 1);
+      if (!/^<[^>]*\/>$/.test(tag) && !/^<(br|img|hr|wbr)\b/i.test(tag)) {
+        if (tag[1] === '/') depth--; else depth++;
+      }
+      i = close;
+      continue;
+    }
+    if (depth !== 0) continue;
+    if (ch !== '.' && ch !== '!' && ch !== '?') continue;
+    // Must be followed by a space and then something that can open a sentence.
+    if (!/^[.!?]["'”’)]?\s+[A-Z“"'(]/.test(inner.slice(i))) continue;
+    if (ch === '.') {
+      const before = inner.slice(0, i);
+      if (!/[a-z)\]"'”’]$/.test(before)) continue;
+      const word = (before.match(/([A-Za-z]+)$/) || [])[1];
+      if (word && PARA_ABBREVIATIONS.has(word.toLowerCase())) continue;
+    }
+    const after = inner.slice(i + 1).match(/^["'”’)]?\s+/);
+    breaks.push(i + 1 + (after ? after[0].length : 0));
+  }
+  return breaks;
+}
+
+const stripTags = (html) => html.replace(/<[^>]+>/g, '');
+
+function splitLongParagraphs(html) {
+  return html.replace(/<p>([\s\S]*?)<\/p>/g, (whole, inner) => {
+    if (stripTags(inner).trim().length <= PARA_TARGET_CHARS) return whole;
+    const breaks = sentenceBreaks(inner);
+    if (!breaks.length) return whole;
+
+    // Cut the paragraph into sentences, then pack them back up to the target.
+    // Packing (rather than breaking at the first boundary past the target)
+    // is what keeps a chunk from running to 300 chars *plus* a whole final
+    // sentence — the difference between a 4-line paragraph and a 7-line one.
+    const sentences = [];
+    let prev = 0;
+    for (const at of breaks) { sentences.push(inner.slice(prev, at)); prev = at; }
+    sentences.push(inner.slice(prev));
+
+    const chunks = [];
+    let current = '';
+    for (const sentence of sentences) {
+      const len = stripTags(current + sentence).trim().length;
+      if (current && len > PARA_TARGET_CHARS) {
+        chunks.push(current);
+        current = sentence;
+      } else {
+        current += sentence;
+      }
+    }
+    if (current) chunks.push(current);
+    if (chunks.length < 2) return whole;
+    if (stripTags(chunks[chunks.length - 1]).trim().length < PARA_MIN_TAIL_CHARS) {
+      chunks[chunks.length - 2] += chunks.pop();
+    }
+    return chunks.map((c) => `<p>${c.trim()}</p>`).join('\n');
+  });
+}
+
 function layoutContent(meta, body) {
   const layout = meta.layout || 'prose';
+  body = splitLongParagraphs(body);
   if (layout === 'raw') return body;
 
   const head = `<div class="page-head">
@@ -1635,7 +1732,7 @@ ${faqQa
 </div>`;
 
   const closingSummary = `<h2>Summary</h2>
-<p>${esc(topN[0].name)} tops our list of pumpkin patches in ${esc(stateName)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the top ${STATE_POST_COUNT}. Ratings and review counts reflect public data at the time of writing and can change, and hours, admission and what's actually running on a given day can vary week to week during the season — always confirm with the farm directly before you drive out. For the full, ranked, searchable list, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`;
+<p>${esc(topN[0].name)} tops our list of pumpkin patches in ${esc(stateName)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}, with ${joinNatural(names.slice(1, 3).map((n) => esc(n)))} close behind; the rest of the top ${STATE_POST_COUNT} is listed above. Ratings and review counts reflect public data at the time of writing and can change. Hours, admission and what's actually running on a given day vary week to week during the season — always confirm with the farm directly before you drive out. For the full, ranked, searchable list, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`;
 
   const body = `${tocSection}
 ${summaryIntro}
@@ -1797,7 +1894,7 @@ ${faqQa
 </div>`;
 
     const conclusion = `<h2>Conclusion</h2>
-<p>${esc(top10[0].name)} tops our list of ${esc(stateName)} pumpkin ${nounPlural}${top10[0].rating ? `, rated ${top10[0].rating.toFixed(1)} out of 5` : ''}, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the top ${STATE_POST_COUNT}. Ratings and review counts reflect public data at the time of writing and can change, and hours, admission and what's actually running on a given day can vary week to week during the season — always confirm with the ${nounSingular} directly before you drive out. For the full, ranked, searchable list, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`;
+<p>${esc(top10[0].name)} tops our list of ${esc(stateName)} pumpkin ${nounPlural}${top10[0].rating ? `, rated ${top10[0].rating.toFixed(1)} out of 5` : ''}, with ${joinNatural(names.slice(1, 3).map((n) => esc(n)))} close behind; the rest of the top ${STATE_POST_COUNT} is listed above. Ratings and review counts reflect public data at the time of writing and can change. Hours, admission and what's actually running on a given day vary week to week during the season — always confirm with the ${nounSingular} directly before you drive out. For the full, ranked, searchable list, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`;
 
     const body = `${tocSection}
 ${summaryIntro}
@@ -2976,7 +3073,7 @@ ${faqQa
 </div>`;
 
   const closingSummary = `<h2>Summary</h2>
-<p>${esc(top5[0].name)} tops our list of pumpkin patches in ${esc(label)}${top5[0].rating ? `, rated ${top5[0].rating.toFixed(1)} out of 5` : ''}, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the top five. Ratings and review counts reflect public data at the time of writing and can change, and hours, admission and what's actually running on a given day can vary week to week during the season — always confirm with the farm directly before you drive out. For more options nearby, see the full <a href="${cityPath(stateName, cityName)}">list of pumpkin patches in ${esc(label)}</a> or browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>.</p>`;
+<p>${esc(top5[0].name)} tops our list of pumpkin patches in ${esc(label)}${top5[0].rating ? `, rated ${top5[0].rating.toFixed(1)} out of 5` : ''}, with ${joinNatural(names.slice(1, 3).map((n) => esc(n)))} close behind; the rest of the top five is listed above. Ratings and review counts reflect public data at the time of writing and can change. Hours, admission and what's actually running on a given day vary week to week during the season — always confirm with the farm directly before you drive out. For more options nearby, see the full <a href="${cityPath(stateName, cityName)}">list of pumpkin patches in ${esc(label)}</a> or browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>.</p>`;
 
   const body = `${tocSection}
 ${summaryIntro}
