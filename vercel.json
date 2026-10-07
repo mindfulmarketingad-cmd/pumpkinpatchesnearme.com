@@ -6,7 +6,12 @@
   "trailingSlash": true,
   "redirects": [
     { "source": "/find", "destination": "/pumpkin-patches/", "permanent": true },
-    { "source": "/find/", "destination": "/pumpkin-patches/", "permanent": true }
+    { "source": "/find/", "destination": "/pumpkin-patches/", "permanent": true },
+    {
+      "source": "/ads.txt",
+      "destination": "https://adstxt.journeymv.com/sites/5e44c2e0-bcb8-46ab-98fd-b9342d32f4c6/ads.txt",
+      "statusCode": 301
+    }
   ],
   "headers": [
     {

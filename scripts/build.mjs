@@ -573,6 +573,15 @@ function pillarEntriesTiered(items, renderEntry, richCount) {
    own push({}). Repeating the loader would re-fetch it several times a
    page for no benefit.
 */
+/* Which network is serving. Mediavine runs the ads while the AdSense
+   application is still pending; set this to 'adsense' once approved and
+   the manual units come back on their own, with no other edit. The two
+   never run together: Mediavine places its own units, so leaving the
+   AdSense <ins> blocks in would mean two stacks competing for the same
+   space. */
+const AD_NETWORK = 'mediavine';
+const MEDIAVINE_SITE_ID = '5e44c2e0-bcb8-46ab-98fd-b9342d32f4c6';
+
 const AD_CLIENT = 'ca-pub-9332749804326149';
 const AD_SLOTS = { square: '4275377186', vertical: '8454295343', inFeed: '9687485965' };
 // The in-feed unit is a fluid format whose layout key is tied to that
@@ -581,6 +590,9 @@ const AD_SLOTS = { square: '4275377186', vertical: '8454295343', inFeed: '968748
 const AD_INFEED_LAYOUT_KEY = '-6q+e9+15-2u+4y';
 
 function renderAdSlot(type) {
+  // Mediavine injects its own placements from the script in the head, so a
+  // manual slot here would either sit empty or fight it for the space.
+  if (AD_NETWORK !== 'adsense') return '';
   const insAttrs = type === 'inFeed'
     ? `style="display:block" data-ad-format="fluid" data-ad-layout-key="${AD_INFEED_LAYOUT_KEY}"`
     : `style="display:block" data-ad-format="auto" data-full-width-responsive="true"`;
@@ -1353,7 +1365,15 @@ function render(meta, body, opts = {}) {
     '{{NAV_EXPERIENCES_ITEM}}': experiencesByState.size
       ? `<li><a href="/experiences/"${meta.nav === 'experiences' ? ' aria-current="page"' : ''}>Experiences</a></li>`
       : '',
-    '{{ADSENSE_SCRIPT}}': '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9332749804326149" crossorigin="anonymous"></script>',
+    // Mediavine's tag places and fills every unit by itself, so while it is
+    // the live network this is the only ad code on the page. The AdSense
+    // loader stays alongside it because the application still pending needs
+    // that snippet on the site to be reviewed; it fills nothing until the
+    // account is approved, and the manual <ins> units stay off until then.
+    '{{ADSENSE_SCRIPT}}': AD_NETWORK === 'mediavine'
+      ? `<script type="text/javascript" async="async" data-noptimize="1" data-cfasync="false" src="//scripts.scriptwrapper.com/tags/${MEDIAVINE_SITE_ID}.js"></script>\n`
+        + `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${AD_CLIENT}" crossorigin="anonymous"></script>`
+      : `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${AD_CLIENT}" crossorigin="anonymous"></script>`,
     // Corn Mazes and Hayrides are the only two category hubs in the main
     // nav, so they pick up a link from every page on the site while the
     // other six only get linked from pages that happen to carry that
@@ -4972,7 +4992,14 @@ Sitemap: ${SITE_URL}/sitemap.xml
 `
 );
 
-writeFileSync(join(DIST, 'ads.txt'), 'google.com, pub-9332749804326149, DIRECT, f08c47fec0942fa0\n');
+/* Mediavine hosts its own ads.txt and wants /ads.txt redirected to it, so
+   that it can add and remove its demand partners without a deploy here.
+   Both hosts serve a real file ahead of a redirect, so while Mediavine is
+   the live network we deliberately write no file and let the redirect in
+   vercel.json and netlify.toml answer instead. */
+if (AD_NETWORK === 'adsense') {
+  writeFileSync(join(DIST, 'ads.txt'), `google.com, ${AD_CLIENT.replace(/^ca-/, '')}, DIRECT, f08c47fec0942fa0\n`);
+}
 
 writeFileSync(
   join(DIST, 'site.webmanifest'),

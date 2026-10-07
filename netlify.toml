@@ -14,6 +14,15 @@
   status = 301
   force = true
 
+# Mediavine hosts the live ads.txt so it can change demand partners without a
+# deploy here. force = true because Netlify serves a real file ahead of any
+# redirect, and the build writes no ads.txt while Mediavine is the network.
+[[redirects]]
+  from = "/ads.txt"
+  to = "https://adstxt.journeymv.com/sites/5e44c2e0-bcb8-46ab-98fd-b9342d32f4c6/ads.txt"
+  status = 301
+  force = true
+
 [[headers]]
   for = "/assets/*"
   [headers.values]
