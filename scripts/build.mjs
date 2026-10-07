@@ -281,6 +281,32 @@ const categoryCityPath = (category, cityName, stateCode) => `/${category.slug}/$
 // State-scoped service page, e.g. /hayrides/georgia/.
 const categoryStatePath = (category, stateName) => `/${category.slug}/${slugify(stateName)}/`;
 
+/* Category hub titles used to open with the farm count — "Corn Mazes in
+   Georgia | 3 Farms, Ranked" — which buries the intent and leads with a
+   number small enough to put people off. Search Console says these pages sit
+   on page one for "near me" phrasing and take almost none of it: "best corn
+   maze near me this fall" draws 78 impressions at position 7.9 for zero
+   clicks, and "best corn maze near me" 64 at 9.2 for zero. That is a snippet
+   problem, so the phrase people actually type goes first and the count moves
+   to the back, where it supports rather than undersells. The year is dropped
+   when a long place name would push the title past what Google will show. */
+function categoryHubTitle(cat, place, n) {
+  const noun = `Farm${n === 1 ? '' : 's'}`;
+  const base = `${cat.name} Near Me in ${place}`;
+  // Shed the year first, then the count, so a long place name loses the
+  // decoration rather than the phrase people searched for.
+  for (const t of [`${base}: ${n} ${noun} Ranked (${SEASON_YEAR})`, `${base}: ${n} ${noun} Ranked`, base]) {
+    if (t.length <= 60) return t;
+  }
+  return base;
+}
+
+function categoryHubDescription(cat, place, n) {
+  return cat.feature
+    ? `${cat.name} near me in ${place}: all ${n} pumpkin patch${n === 1 ? '' : 'es'} we track with ${cat.singular}, ranked by rating, with address, hours and directions for each.`
+    : `${cat.name} near me in ${place}: all ${n} we track, ranked by rating, with address, hours and directions for each.`;
+}
+
 // Shared by every state and city page's List/Map toggle. Leaflet itself is
 // deliberately NOT listed here — page-map.js fetches its CSS and JS on first
 // use (or on hover of the Map button). Most visitors to these ~1,800 pages
@@ -3386,15 +3412,13 @@ function generateCategoryCityPages(catOrSlug, { minListings = 1, itemFilter = nu
     // cat.feature is null for the "farms" virtual category (every listing
     // qualifies — there's no attraction being offered), so it reads as a
     // plain roster rather than "N patches offer pumpkin farm."
-    const description = cat.feature
-      ? `Find ${cat.name.toLowerCase()} in ${label} — ${n} pumpkin patch${n === 1 ? '' : 'es'} we track with ${cat.singular}, ranked by rating, with address, hours and directions.`
-      : `${n} ${cat.singular}${n === 1 ? '' : 's'} in ${label}, ranked by rating, with address, hours and directions for each.`;
+    const description = categoryHubDescription(cat, label, n);
     const lede = cat.feature
       ? `${n} pumpkin patch${n === 1 ? '' : 'es'} we track in ${label} ${n === 1 ? 'offers' : 'offer'} ${cat.singular}, ranked by rating and review volume.`
       : `${n} ${cat.singular}${n === 1 ? '' : 's'} we track in ${label}, ranked by rating and review volume.`;
     const meta = {
       path,
-      title: `${h1} | ${n} Farm${n === 1 ? '' : 's'}, Ranked (${SEASON_YEAR})`,
+      title: categoryHubTitle(cat, label, n),
       description,
       h1,
       lede,
@@ -3492,16 +3516,14 @@ function generateCategoryStatePages(catOrSlug, { minListings = 1, itemFilter = n
     const h1 = `${cat.name} in ${stateName}`;
     const cities = [...new Set(distinct.map((l) => l.city).filter(Boolean))].sort();
 
-    const description = cat.feature
-      ? `Find ${cat.name.toLowerCase()} in ${stateName} — ${n} pumpkin patch${n === 1 ? '' : 'es'} we track statewide with ${cat.singular}, ranked by rating, with address, hours and directions.`
-      : `${n} ${cat.singular}${n === 1 ? '' : 's'} in ${stateName}, ranked by rating, with address, hours and directions for each.`;
+    const description = categoryHubDescription(cat, stateName, n);
     const lede = cat.feature
       ? `${n} pumpkin patch${n === 1 ? '' : 'es'} we track in ${stateName} ${n === 1 ? 'offers' : 'offer'} ${cat.singular}, ranked by rating and review volume across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'}.`
       : `${n} ${cat.singular}${n === 1 ? '' : 's'} we track in ${stateName}, ranked by rating and review volume across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'}.`;
 
     const meta = {
       path,
-      title: `${h1} | ${n} Farm${n === 1 ? '' : 's'}, Ranked (${SEASON_YEAR})`,
+      title: categoryHubTitle(cat, stateName, n),
       description,
       h1,
       lede,
