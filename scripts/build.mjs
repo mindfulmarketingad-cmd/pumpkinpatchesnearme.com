@@ -17,7 +17,15 @@ import { slugify, STATES, DAYS } from './lib/listings.mjs';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'src');
 const DIST = join(ROOT, 'dist');
-const SITE_URL = 'https://pumpkinpatchesnearme.com';
+// The www host, because that is the one Google actually indexes. A URL
+// inspection of the homepage reports googleCanonical as the www address while
+// userCanonical was the bare domain: Google was overriding every canonical
+// tag this build wrote. Both hosts served the same pages with no redirect
+// between them, so the declared canonical lost to the stronger signals.
+// Declaring www matches the host already in the index, so no page has to be
+// re-canonicalised; the redirect added alongside this stops the split
+// recurring.
+const SITE_URL = 'https://www.pumpkinpatchesnearme.com';
 const SITE_NAME = 'Pumpkin Patches Near Me';
 const CONTACT_EMAIL = 'hello@pumpkinpatchesnearme.com';
 const ASSET_VERSION = String(Date.now()).slice(-6);

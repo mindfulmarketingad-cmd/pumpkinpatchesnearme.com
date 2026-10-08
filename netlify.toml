@@ -2,6 +2,15 @@
   command = "npm run build"
   publish = "dist"
 
+# Both hosts served the same pages with nothing to choose between them, so
+# Google picked www and overrode the non-www canonical this build used to
+# write. One host, one set of signals.
+[[redirects]]
+  from = "https://pumpkinpatchesnearme.com/*"
+  to = "https://www.pumpkinpatchesnearme.com/:splat"
+  status = 301
+  force = true
+
 [[redirects]]
   from = "/find"
   to = "/pumpkin-patches/"

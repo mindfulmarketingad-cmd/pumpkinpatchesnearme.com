@@ -5,6 +5,12 @@
   "cleanUrls": true,
   "trailingSlash": true,
   "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "pumpkinpatchesnearme.com" }],
+      "destination": "https://www.pumpkinpatchesnearme.com/:path*",
+      "statusCode": 301
+    },
     { "source": "/find", "destination": "/pumpkin-patches/", "permanent": true },
     { "source": "/find/", "destination": "/pumpkin-patches/", "permanent": true },
     {
