@@ -1193,3 +1193,73 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 .dash-business-table th:nth-child(2), .dash-business-table td:nth-child(2) { text-align: left; }
 .dash-business-table thead th { position: sticky; top: 0; background: #fff; font-family: var(--font-display); font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
 .dash-business-table td:last-child { font-weight: 700; color: var(--ink); }
+
+/* ===================================================================
+   Journey (Mediavine) ad structure
+   The script finds its three anchors by id -- #page-list-view for the
+   content column, #sidebar for the rail, #footer for where the sticky
+   rail ad stops -- and places everything itself. Nothing here loads or
+   sizes an ad; it only gives the script somewhere to put one and
+   reserves the space so the page does not jump when it arrives.
+   =================================================================== */
+
+/* Below the sidebar breakpoint this is a plain block and the page is
+   laid out exactly as it was before. */
+.content-row { display: block; }
+
+#sidebar { display: none; }
+
+/* 1200px, not 1024px. The content column on these pages is 1200px wide;
+   taking 300px plus a gutter out of it at 1024px would leave roughly
+   650px and amount to a redesign of every listing page. At 1200px the
+   column keeps ~830px, which is still wider than the 780px the articles
+   already read at. */
+@media (min-width: 1200px) {
+  .content-row {
+    display: flex; align-items: flex-start; gap: 2rem;
+    width: min(100% - 2.5rem, calc(var(--wrap) + 332px));
+    margin-inline: auto;
+  }
+  .content-row > .wrap,
+  .content-row > .wrap-narrow { width: auto; flex: 1 1 auto; min-width: 0; margin-inline: 0; }
+  .content-row > .wrap { max-width: var(--wrap); }
+  .content-row > .wrap-narrow { max-width: 780px; }
+
+  #sidebar {
+    display: block; flex: 0 0 300px; width: 300px;
+    /* Reserved so the column does not grow under the reader when the
+       first ad lands. Roughly one 600-tall unit. */
+    min-height: 600px;
+    position: sticky; top: 84px;   /* 68px sticky header + a little air */
+  }
+  /* The listing page has its own 340px rail; the sidebar sits at the top
+     of it rather than beside it, so it is not sticky there -- the rail
+     already scrolls with its own content. */
+  .detail-grid #sidebar {
+    flex: none; width: 100%; min-height: 600px; position: static; margin-bottom: 1.25rem;
+  }
+}
+
+/* A hint is a marker, not a slot: it has no size of its own and the ad
+   Journey places at it brings its own. The min-height is a floor under
+   the shift, not a reservation for a specific unit -- a hint that never
+   fills costs a little whitespace between two cards, which is why it is
+   nearer the height of the smallest unit than the largest. */
+.ad-hint {
+  list-style: none; display: block; width: 100%; min-height: 120px;
+  margin: 0; padding: 0;
+}
+/* The card lists are flex columns, so a plain block child already spans
+   the row; this keeps it true if one of them is ever made a grid. */
+.pillar-list .ad-hint, .listicle .ad-hint { flex-basis: 100%; grid-column: 1 / -1; align-self: stretch; }
+.pillar-list .ad-hint > div, .listicle .ad-hint > div { margin-inline: auto; }
+
+/* Each breakpoint uses only its own hints. Both sets are in the HTML so
+   the interval can differ between them -- every second card on mobile,
+   every third on desktop -- and the ones that do not apply are taken out
+   of the layout entirely rather than left as empty gaps. */
+.ad-hint-desktop { display: none; }
+@media (min-width: 768px) {
+  .ad-hint-mobile { display: none; }
+  .ad-hint-desktop { display: block; }
+}

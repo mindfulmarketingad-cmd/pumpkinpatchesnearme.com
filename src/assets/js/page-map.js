@@ -10,7 +10,7 @@
   var dataEl = document.getElementById('page-map-data');
   var toggleList = document.getElementById('page-view-list');
   var toggleMap = document.getElementById('page-view-map');
-  var listView = document.getElementById('page-list-view');
+  var listView = document.getElementById('page-list');
   var mapView = document.getElementById('page-map-view');
 
   if (!mapEl || !dataEl || !toggleList || !toggleMap || !listView || !mapView) return;

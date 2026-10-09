@@ -29,7 +29,7 @@
   // end would drag every ad to the top of the list after the first
   // filter/sort interaction. Record each ad's original "after the Nth
   // entry" position once, then restore it after every re-sort.
-  var adAnchors = Array.prototype.slice.call(list.querySelectorAll('.pillar-ad')).map(function (adEl) {
+  var adAnchors = Array.prototype.slice.call(list.querySelectorAll('.pillar-ad, .ad-hint')).map(function (adEl) {
     var precedingCount = 0;
     var node = adEl.previousSibling;
     while (node) {

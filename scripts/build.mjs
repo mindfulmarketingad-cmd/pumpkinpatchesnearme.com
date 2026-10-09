@@ -632,6 +632,13 @@ function injectInArticleAd(bodyHtml) {
  */
 function listicleEntries(items, renderEntry) {
   const entries = items.map((l, i) => renderEntry(l, i));
+  // No hints here on purpose. A listicle post is mostly prose with one
+  // ranked list in the middle, and a single hint anywhere inside the
+  // content element switches auto-placement off for the whole page --
+  // which would cost the post every slot between its paragraphs to buy a
+  // couple inside the list. Under Mediavine the entries are left alone
+  // and the ads land between the post's own blocks.
+  if (AD_NETWORK === 'mediavine') return entries.join('\n');
   if (entries.length < 4) return entries.join('\n');
   const adLi = `  <li class="listicle-ad">${renderAdSlot('inFeed')}</li>`;
   const out = entries.slice();
@@ -642,8 +649,55 @@ function listicleEntries(items, renderEntry) {
   return out.join('\n');
 }
 
+/* ------------------------------------------------- Journey ad hints ----
+   Journey places an in-content ad at each <div class="content_*_hint">,
+   and the moment one exists inside the content element it stops placing
+   ads anywhere else on that page. The interval below is therefore the
+   whole ad-density decision for the listing pages.
+
+   Measured on the built site: a pillar card runs ~620px tall at 390px
+   wide and ~285px at 1440px, against roughly 780px and 900px of visible
+   content once the 68px sticky header is taken off. Every second card on
+   mobile and every third on desktop puts each ad a shade over one
+   screenview apart -- comfortably on the right side of the one-per-
+   screenview rule, which is the one that matters.
+
+   Capped, because the national hubs run to two thousand rows and a hint
+   after every other one would be asking for a thousand ads. */
+const HINT_EVERY_MOBILE = 2;
+const HINT_EVERY_DESKTOP = 3;
+const HINT_MAX = 20;
+
+function hintLi(kind) {
+  return `    <li class="ad-hint ad-hint-${kind}" aria-hidden="true"><div class="content_${kind}_hint"></div></li>`;
+}
+
+/* Hints go between cards, never before the first or after the last: an ad
+   above the opening card would sit directly under the H1, and one after
+   the closing card is just a footer ad in the wrong place. */
+function withHints(entries) {
+  if (AD_NETWORK !== 'mediavine') return entries;
+  if (entries.length <= HINT_EVERY_MOBILE) return entries;
+  const out = [];
+  let placed = 0;
+  entries.forEach((entry, i) => {
+    out.push(entry);
+    const n = i + 1;
+    if (n === entries.length || placed >= HINT_MAX) return;
+    const mob = n % HINT_EVERY_MOBILE === 0;
+    const desk = n % HINT_EVERY_DESKTOP === 0;
+    if (mob) out.push(hintLi('mobile'));
+    if (desk) out.push(hintLi('desktop'));
+    if (mob || desk) placed++;
+  });
+  return out;
+}
+
 function pillarEntries(items, renderEntry) {
   const entries = items.map((l, i) => renderEntry(l, i));
+  // Mediavine does its own placing, so the list carries hints marking
+  // where rather than ad units of our own.
+  if (AD_NETWORK === 'mediavine') return withHints(entries).join('\n');
   // Native to the scroll a mobile visitor is already doing. Skipped on
   // short lists (nothing to interrupt); a second one past 20 entries,
   // where a single unit near the top would leave a long unbroken tail.
@@ -1178,7 +1232,7 @@ function renderScopedMap(items, listHtml, { singular = 'pumpkin patch', plural =
     <button class="toggle-btn" type="button" id="page-view-map" aria-pressed="false">Map</button>
   </div>
 </div>
-<div id="page-list-view">
+<div id="page-list">
 ${listHtml}
 </div>
 <div class="page-map-wrap" id="page-map-view" hidden>
@@ -1331,6 +1385,24 @@ function splitLongParagraphs(html) {
   });
 }
 
+/* Pages that carry no ads: the two legal pages and the three functional
+   ones. Journey's selectors are simply left off them, which is all it
+   takes -- the script is in the head site-wide but places nothing when it
+   cannot find a content element. */
+const NO_AD_PATHS = new Set([
+  '/contact/', '/privacy/', '/terms/', '/disclaimer/',
+  '/add-a-listing/', '/dashboard/', '/search/',
+]);
+function adsAllowed(meta) {
+  return !NO_AD_PATHS.has(meta.path);
+}
+
+/* The sidebar Journey fills. Empty by design: the brief is to keep real
+   sidebar content short so the first ad sits near the top, and there is
+   no real sidebar content on these templates to keep. The height is
+   reserved in CSS so nothing shifts when the ad arrives. */
+const SIDEBAR_HTML = '<aside id="sidebar" aria-label="Advertisement"></aside>';
+
 function layoutContent(meta, body) {
   const layout = meta.layout || 'prose';
   body = splitLongParagraphs(body);
@@ -1345,10 +1417,22 @@ function layoutContent(meta, body) {
 </div>`;
 
   const wrapClass = layout === 'wide' ? 'wrap' : 'wrap-narrow prose';
+
+  /* Journey finds its content and sidebar by id, so a page has to carry
+     exactly one of each. A template with a better home for them than this
+     wrapper -- a listing page puts the content id on its own prose column,
+     where the blocks are direct children rather than two levels down --
+     supplies them itself and this leaves them alone. */
+  const ads = adsAllowed(meta);
+  const contentId = ads && !body.includes('id="page-list-view"') ? ' id="page-list-view"' : '';
+  const aside = ads && !body.includes('id="sidebar"') ? `\n    ${SIDEBAR_HTML}` : '';
+
   return `${head}
 <section class="section">
-  <div class="${wrapClass}">
+  <div class="content-row">
+    <div class="${wrapClass}"${contentId}>
 ${body}
+    </div>${aside}
   </div>
 </section>`;
 }
@@ -4769,7 +4853,7 @@ for (const l of listings) {
 </figure>
 ${renderAdSlot('square')}
 <div class="detail-grid">
-  <div class="prose">
+  <div class="prose" id="page-list-view">
     <div class="listing-meta">
       ${l.rating ? `<span class="rating"><span class="stars" aria-hidden="true">${stars(l.rating)}</span> ${l.rating.toFixed(1)}</span>` : ''}
       ${l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} Google reviews</span>` : ''}
@@ -4836,6 +4920,7 @@ ${listingGuides.map((g) => `      <li><a href="${g.href}">${esc(g.title)}</a></l
     <p style="margin-top:1.5rem"><a class="btn btn-outline" href="/">Search the full map for pumpkin patches near you</a></p>
   </div>
   <aside>
+    <div id="sidebar" aria-label="Advertisement"></div>
     <div class="card">
       <h3>Location and contact</h3>
       <ul class="fact-list">
