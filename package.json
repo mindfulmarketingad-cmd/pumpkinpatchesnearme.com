@@ -5,7 +5,7 @@
   "description": "Directory of pumpkin patches, corn mazes and fall farms across all 50 US states.",
   "type": "module",
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "build": "node scripts/build.mjs && node scripts/link-graph.mjs",
     "dev": "node scripts/build.mjs && node scripts/serve.mjs",
     "serve": "node scripts/serve.mjs",
     "icons": "node scripts/make-icons.mjs",
@@ -13,7 +13,8 @@
     "sample-data": "node scripts/make-sample-data.mjs",
     "import": "node scripts/import-outscraper.mjs",
     "fetch-photos": "node scripts/fetch-photos.mjs",
-    "fetch-viator": "node scripts/fetch-viator.mjs"
+    "fetch-viator": "node scripts/fetch-viator.mjs",
+    "link-graph": "node scripts/link-graph.mjs"
   },
   "engines": {
     "node": ">=18"

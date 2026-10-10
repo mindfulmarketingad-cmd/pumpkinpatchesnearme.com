@@ -7,12 +7,25 @@
   "redirects": [
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "pumpkinpatchesnearme.com" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "pumpkinpatchesnearme.com"
+        }
+      ],
       "destination": "https://www.pumpkinpatchesnearme.com/:path*",
       "statusCode": 301
     },
-    { "source": "/find", "destination": "/pumpkin-patches/", "permanent": true },
-    { "source": "/find/", "destination": "/pumpkin-patches/", "permanent": true },
+    {
+      "source": "/find",
+      "destination": "/pumpkin-patches/",
+      "permanent": true
+    },
+    {
+      "source": "/find/",
+      "destination": "/pumpkin-patches/",
+      "permanent": true
+    },
     {
       "source": "/ads.txt",
       "destination": "https://adstxt.journeymv.com/sites/5e44c2e0-bcb8-46ab-98fd-b9342d32f4c6/ads.txt",
@@ -22,11 +35,34 @@
   "headers": [
     {
       "source": "/assets/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/data/listings.json",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
+      ]
+    },
+    {
+      "source": "/data/link-graph.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://claude.ai"
+        }
+      ]
     }
   ]
 }

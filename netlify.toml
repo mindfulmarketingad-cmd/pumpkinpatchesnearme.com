@@ -41,3 +41,13 @@
   for = "/data/listings.json"
   [headers.values]
     Cache-Control = "public, max-age=3600"
+
+# OmniConsole reads the internal link graph from the browser, and it is
+# served from claude.ai, so this one file is readable cross-origin. It is
+# public, read-only, and nothing in it could not be had by crawling the
+# site directly.
+[[headers]]
+  for = "/data/link-graph.json"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+    Access-Control-Allow-Origin = "https://claude.ai"
