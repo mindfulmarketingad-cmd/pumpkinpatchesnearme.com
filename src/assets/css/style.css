@@ -1310,3 +1310,50 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
   .share-native span, .share-copy span { position: static; width: auto; height: auto; clip: auto; }
   .share-btn svg { width: 19px; height: 19px; }
 }
+
+/* ===================================================================
+   Season-reminder signup
+   The audience arrives in a six-week window and is gone until next
+   September; this is the only thing on the page that survives that gap.
+   Styled to read as part of the page rather than as an interruption —
+   no overlay, no timed popup, no exit intent.
+   =================================================================== */
+.ec {
+  margin: 2rem 0; padding: 1.3rem 1.4rem;
+  border: 1px solid var(--line); border-left: 4px solid var(--orange);
+  border-radius: var(--r-md); background: var(--sand, #faf6f0);
+}
+.ec-inline { margin: 2.25rem 0; }
+.ec-h { margin: 0 0 0.4rem; font-size: 1.15rem; font-weight: 700; }
+.ec-p { margin: 0 0 0.9rem; font-size: 0.95rem; line-height: 1.6; color: var(--muted, #555); max-width: 60ch; }
+.ec-fields { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.ec-input {
+  flex: 1 1 15rem; min-width: 0; min-height: 48px; padding: 0 0.85rem;
+  border: 1px solid var(--line); border-radius: var(--r-sm, 8px);
+  background: #fff; font: inherit; font-size: 1rem;   /* 16px: smaller zooms iOS */
+}
+.ec-input:focus { outline: 2px solid var(--orange); outline-offset: 1px; border-color: var(--orange); }
+.ec-btn { min-height: 48px; flex: 0 0 auto; white-space: nowrap; }
+.ec-consent {
+  display: flex; align-items: flex-start; gap: 0.55rem;
+  margin-top: 0.75rem; font-size: 0.82rem; line-height: 1.5; color: var(--muted, #555);
+}
+.ec-consent input { margin: 0.2rem 0 0; flex: 0 0 auto; width: 16px; height: 16px; }
+.ec-note { margin: 0.75rem 0 0; font-size: 0.9rem; line-height: 1.5; }
+.ec-ok { color: #1a7f44; font-weight: 600; }
+.ec-bad { color: #b3261e; }
+.ec.is-done { border-left-color: #1a7f44; }
+.ec.is-done .ec-fields, .ec.is-done .ec-consent { display: none; }
+
+/* Out of the layout, out of the a11y tree, still in the DOM for anything
+   that fills every input it finds. */
+.ec-trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+@media (max-width: 560px) {
+  .ec { padding: 1.1rem 1rem; }
+  .ec-fields { flex-direction: column; }
+  /* flex-basis is the main axis, and the main axis is now vertical: the
+     15rem that makes the field wide in a row makes it 240px tall here. */
+  .ec-input { flex: 0 0 auto; width: 100%; }
+  .ec-btn { width: 100%; }
+}

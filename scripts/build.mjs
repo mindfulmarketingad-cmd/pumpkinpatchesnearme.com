@@ -1497,7 +1497,12 @@ ${categories.map((c) => `        <li><a href="${categoryPath(c)}">${esc(c.name)}
       </ul>
     </nav>`,
     '{{HEAD_EXTRA}}': (meta.noindex ? '<meta name="robots" content="noindex, follow">\n' : '') + (opts.headExtra || ''),
-    '{{SCRIPTS}}': opts.scripts || '',
+    // Loaded off the rendered content rather than per call site: the
+    // form and its script cannot then get out of step with each other.
+    '{{SCRIPTS}}': (opts.scripts || '') +
+      (body.includes('data-email-capture')
+        ? `\n<script src="/assets/js/email-capture.js?v=${ASSET_VERSION}" defer></script>`
+        : ''),
     '{{JSONLD}}': jsonLdFor(meta, opts.jsonld),
     '{{CONTENT}}': banner + layoutContent(meta, body),
     '{{YEAR}}': String(new Date().getFullYear()),
@@ -1609,6 +1614,51 @@ function renderShare(title, path, imageSrc, { heading = 'Share this list' } = {}
       ${icon('M16 1H4a2 2 0 0 0-2 2v14h2V3h12zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11z')}<span>Copy link</span>
     </button>
   </div>
+</aside>`;
+}
+
+/* ------------------------------------------------------ season capture ---
+   The whole audience for this site arrives in a six-week window and is
+   gone until next September. An email address is the only thing that
+   survives that gap, which makes this the one piece of the page that
+   compounds. The promise is deliberately small and literally true: one
+   email, when the season opens, for the state they were reading about.
+
+   Rendered only where a state is in hand, because "we will tell you when
+   patches open" with no place attached is a promise about nothing. */
+function renderEmailCapture(stateName, { heading, tone = 'standalone' } = {}) {
+  const place = stateName ? esc(stateName) : null;
+  const h = heading || (place
+    ? `Know when ${place}'s patches open`
+    : 'Know when the season opens');
+  const promise = place
+    ? `Pumpkin season in ${place} runs a few weeks and then it is over. Leave your email and we will send one message when next year's patches start announcing their opening dates — nothing else, ever.`
+    : 'Leave your email and we will send one message when next year\'s patches start announcing their opening dates — nothing else, ever.';
+  const id = `ec-${slugify(stateName || 'fleet')}-${tone}`;
+
+  return `<aside class="ec ec-${tone}" aria-labelledby="${id}-h">
+  <h2 class="ec-h" id="${id}-h">${esc(h)}</h2>
+  <p class="ec-p">${promise}</p>
+  <form class="ec-form" data-email-capture${stateName ? ` data-state="${attr(stateName)}"` : ''} novalidate>
+    <div class="ec-fields">
+      <label class="visually-hidden" for="${id}-email">Your email address</label>
+      <input class="ec-input" id="${id}-email" type="email" name="email" inputmode="email"
+             autocomplete="email" placeholder="you@example.com" required data-email-input>
+      <button class="btn btn-primary ec-btn" type="submit">Email me once</button>
+    </div>
+    <!-- Left empty by people, filled by bots. Hidden from both the page
+         and the accessibility tree, and never autofilled. -->
+    <div class="ec-trap" aria-hidden="true">
+      <label for="${id}-website">Leave this field empty</label>
+      <input id="${id}-website" type="text" name="website" tabindex="-1" autocomplete="off" data-email-trap>
+    </div>
+    <label class="ec-consent">
+      <input type="checkbox" checked data-email-consent>
+      <span>Yes, email me once when the season opens. See our <a href="/privacy/">privacy policy</a> — we do not sell or share addresses, and every email has an unsubscribe link.</span>
+    </label>
+    <p class="ec-note" data-email-note hidden></p>
+    <noscript><p class="ec-note ec-bad">This form needs JavaScript. Sorry — <a href="/contact/">contact us</a> and we will add you by hand.</p></noscript>
+  </form>
 </aside>`;
 }
 
@@ -2089,7 +2139,7 @@ ${faqQa
     // too (see hintBetween). The share block closes the page: somebody who
     // has read ten farms is the person most likely to send it on.
     const body = hintBetween([tocSection, summaryIntro, listicleHtml, conclusion, faqHtml]) +
-      '\n' + renderShare(h1, path, heroSrc);
+      '\n' + renderEmailCapture(stateName) + '\n' + renderShare(h1, path, heroSrc);
 
     const description = `The ${STATE_POST_COUNT} best pumpkin ${nounPlural} in ${stateName}, ranked by rating and reviews: ${joinNatural(names)}.`;
     const postMeta = {
@@ -2252,7 +2302,7 @@ ${faqQa
 <p>${esc(topN[0].name)} is${x > 1 ? ' our top pick' : ' the only farm we currently track'} for picking your own pumpkin in ${esc(stateName)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${x > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and hours, admission and what's actually running on a given day can vary week to week during the season — always confirm with the farm directly, and ask specifically whether the field is still open for cutting, before you drive out. For more options, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a> or browse <a href="${categoryPath(UPICK_CATEGORY)}">u-pick pumpkin patches near you</a>.</p>`;
 
   const body = hintBetween([tocSection, summaryIntro, listicleHtml, conclusion, faqHtml]) +
-    '\n' + renderShare(h1, path, heroSrc);
+    '\n' + renderEmailCapture(stateName) + '\n' + renderShare(h1, path, heroSrc);
 
   const description = x === 1
     ? `The best pumpkin patch to pick your own pumpkin in ${stateName} is ${names[0]}. See its rating, hours and directions before you go.`
@@ -2593,7 +2643,7 @@ ${faqQa
     // too (see hintBetween). The share block closes the page: somebody who
     // has read ten farms is the person most likely to send it on.
     const body = hintBetween([tocSection, summaryIntro, listicleHtml, conclusion, faqHtml]) +
-      '\n' + renderShare(h1, path, heroSrc);
+      '\n' + renderEmailCapture(stateName) + '\n' + renderShare(h1, path, heroSrc);
 
     const description = content.description({ topN, x, names, stateName });
     const postMeta = {
@@ -4470,6 +4520,7 @@ ${experiencesLink}
 <p>Pumpkin patch season in ${esc(stateName)} generally runs from mid-September through the first weekend of November, with the busiest weekends falling in mid-October. Weekday mornings are the quietest time to visit, and many farms charge admission only on weekends when the corn maze, hayrides and food stands are all running.</p>
 <p>Bring cash — plenty of family farms still run cash-only gates or wagon rides — and check whether the patch charges by the pumpkin, by the pound or as a flat admission. Call ahead after heavy rain, since field access is the first thing farms close.</p>
 <p><a class="btn btn-outline" href="/">Search the ${esc(stateName)} map</a></p>
+${renderEmailCapture(stateName, { tone: 'inline' })}
 ${renderPhotoGallery(items, path, stateName)}
 </div>`;
 
