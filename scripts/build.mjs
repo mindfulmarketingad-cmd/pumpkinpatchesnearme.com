@@ -1105,6 +1105,204 @@ ${qa
   return { html, qa };
 }
 
+/**
+ * FAQ pairs for a state hub, every answer derived from that state's own
+ * listings.
+ *
+ * State hubs were the one major template here with no FAQ block, and their
+ * copy is phrased end to end around "near me" — so the state-name searches
+ * they already collect impressions for ("pumpkin patch new jersey", "best
+ * pumpkin patches in ct") had nothing on the page to match. These questions
+ * use the state-name phrasing and answer it from the data we actually hold,
+ * which is also what keeps them safe: nothing here is asserted about a farm
+ * that the listing doesn't say.
+ */
+function stateFaqData(stateName, items, cities) {
+  const n = items.length;
+  const code = (items.find((l) => l.stateCode) || {}).stateCode || '';
+  const patches = `pumpkin patch${n === 1 ? '' : 'es'}`;
+  const farmWord = n === 1 ? 'farm' : 'farms';
+  const townWord = (k) => (k === 1 ? 'town' : 'towns');
+
+  const townCounts = cities
+    .map((city) => ({ city, n: items.filter((l) => l.city === city).length }))
+    .sort((a, b) => b.n - a.n || a.city.localeCompare(b.city));
+
+  // Naming a single business as the state's best-rated *pumpkin patch* only
+  // works over listings that actually are one. The source data is a mix of
+  // seasonal venues — Christmas tree farms, haunted houses, garden centres —
+  // so an unfiltered superlative here would hand "best-rated pumpkin patch in
+  // Maryland" to a Christmas tree market. Narrow the pool to listings whose
+  // own category, name or features say pumpkin patch before ranking them.
+  const isPatch = (l) =>
+    l.category === 'Pumpkin patch' ||
+    /pumpkin/i.test(l.name || '') ||
+    (l.features || []).includes('U-pick pumpkins');
+
+  // Rank on rating only where the sample is big enough to mean something: a
+  // lone 5.0 from a single review is not an answer to "which is best rated".
+  const REVIEW_FLOOR = 25;
+  const byRating = (a, b) => b.rating - a.rating || (b.reviews || 0) - (a.reviews || 0);
+  const patchRated = items.filter((l) => isPatch(l) && typeof l.rating === 'number');
+  const floored = patchRated.filter((l) => (l.reviews || 0) >= REVIEW_FLOOR);
+  const best = (floored.length ? floored : patchRated).slice().sort(byRating)[0];
+  const patchListings = items.filter(isPatch);
+  const mostReviewed = (patchListings.length ? patchListings : items)
+    .slice()
+    .sort((a, b) => (b.reviews || 0) - (a.reviews || 0))[0];
+
+  const withHours = items.filter((l) => l.hours && Object.keys(l.hours).length > 0).length;
+  const withAdmission = items.filter((l) => l.admission).length;
+
+  const featureCounts = categories
+    .map((c) => ({ c, n: items.filter((l) => (l.features || []).includes(c.feature)).length }))
+    .filter((x) => x.n > 0)
+    .sort((a, b) => b.n - a.n || a.c.name.localeCompare(b.c.name));
+
+  const qa = [];
+
+  qa.push({
+    q: `How many pumpkin patches are there in ${stateName}?`,
+    a: `We track ${n} ${patches} in ${stateName}${code ? ` (${code})` : ''}, spread across ${cities.length} ${townWord(cities.length)}. ${
+      n === 1 ? 'It is listed' : `All ${n} are listed`
+    } on this page with address, rating, review count and driving directions, and the list can be narrowed by town or by attraction.`,
+  });
+
+  if (best && typeof best.rating === 'number') {
+    const sameFarm = mostReviewed && mostReviewed.id === best.id;
+    qa.push({
+      q: `Which is the best-rated pumpkin patch in ${stateName}?`,
+      a: `${best.name} in ${best.city} carries the highest rating of any ${stateName} patch in our data${
+        floored.length ? ` with at least ${REVIEW_FLOOR} reviews` : ''
+      } — ${best.rating.toFixed(1)} stars from ${(best.reviews || 0).toLocaleString('en-US')} reviews.${
+        sameFarm
+          ? ''
+          : ` The most reviewed is ${mostReviewed.name} in ${mostReviewed.city}, with ${(mostReviewed.reviews || 0).toLocaleString('en-US')} reviews.`
+      } Ratings shift during the season, and the best patch for you depends on whether you want a quiet u-pick field or a full festival, so the list on this page is sorted by rating and can be re-sorted by review volume.`,
+    });
+  }
+
+  qa.push({
+    q: `Are pumpkin patches in ${stateName} open right now?`,
+    a: `Pumpkin patch season in ${stateName} generally runs from mid-September through the first weekend of November, with mid-October the busiest stretch. ${withHours} of the ${n} ${stateName} ${farmWord} we track publish weekly opening hours, shown on each farm's own page. Hours change through the season and fields are the first thing to close after heavy rain, so confirm with the farm directly before you drive out rather than relying on any directory, this one included.`,
+  });
+
+  if (featureCounts.length) {
+    qa.push({
+      q: `Which pumpkin patches in ${stateName} have corn mazes, hayrides or petting zoos?`,
+      a: `Attraction counts across the ${n} ${stateName} ${farmWord} we track: ${featureCounts
+        .slice(0, 7)
+        .map(({ c, n: k }) => `${c.name} (${k})`)
+        .join(', ')}. Use the attraction filter at the top of this page to narrow the list to any one of them.`,
+    });
+  }
+
+  qa.push({
+    q: `How much does it cost to visit a pumpkin patch in ${stateName}?`,
+    a: `${stateName} patches generally price one of three ways: free entry with pumpkins sold individually or by the pound, a flat gate admission that bundles the corn maze and hayrides, or a wristband priced per attraction. Weekend rates are often higher than weekdays because that is when every attraction runs, and plenty of family farms are still cash only at the gate. ${
+      withAdmission > 0
+        ? `${withAdmission} of the ${n} ${stateName} listings publish admission detail, shown on that farm's own page; for the rest, check the farm's website or call ahead.`
+        : `We don't hold published admission prices for the ${stateName} ${farmWord} in our data, so check the farm's website or call ahead for current pricing.`
+    }`,
+  });
+
+  if (townCounts.length > 1) {
+    const top = townCounts.slice(0, 8);
+    const rest = townCounts.length - top.length;
+    qa.push({
+      q: `Which towns in ${stateName} have the most pumpkin patches?`,
+      a: `Ranked by how many we track: ${top.map((t) => `${t.city} (${t.n})`).join(', ')}.${
+        rest > 0
+          ? ` A further ${rest} ${townWord(rest)} in ${stateName} ${rest === 1 ? 'has' : 'have'} at least one patch.`
+          : ''
+      } Each town has its own page listing only the farms there.`,
+    });
+  }
+
+  const html = `<h2>${esc(stateName)} pumpkin patch FAQ</h2>
+    <div class="faq-list">
+${qa
+  .map(
+    (item) => `      <details class="faq-item">
+        <summary>${esc(item.q)}</summary>
+        <div class="faq-answer"><p>${esc(item.a)}</p></div>
+      </details>`
+  )
+  .join('\n')}
+    </div>`;
+
+  return { html, qa };
+}
+
+/**
+ * FAQ pairs for the /pumpkin-patches/ directory hub, answered from the whole
+ * dataset.
+ *
+ * This page collects a long tail it has nothing on the page for — "are any
+ * pumpkin patches open", "affordable pumpkin patch near me", "adult pumpkin
+ * patch near me" — all of which it ranks for well off the first page. These
+ * answer that intent from the counts we actually hold.
+ */
+function directoryFaqData() {
+  const n = listings.length;
+  const stateCount = new Set(listings.map((l) => l.state)).size;
+  const townCount = new Set(listings.map((l) => `${l.state}|${l.city}`)).size;
+  const withHours = listings.filter((l) => l.hours && Object.keys(l.hours).length > 0).length;
+  const featureCounts = categories
+    .map((c) => ({ c, n: listings.filter((l) => (l.features || []).includes(c.feature)).length }))
+    .filter((x) => x.n > 0)
+    .sort((a, b) => b.n - a.n);
+  const countOf = (slug) => (featureCounts.find((x) => x.c.slug === slug) || { n: 0 }).n;
+  const fmt = (k) => k.toLocaleString('en-US');
+
+  const qa = [
+    {
+      q: 'Are any pumpkin patches open right now?',
+      a: `Across the country, pumpkin patch season runs from roughly mid-September to the first weekend of November, so if you are searching inside that window the answer is almost certainly yes. Of the ${fmt(n)} farms in this directory, ${fmt(withHours)} publish their weekly opening hours, and those are shown on each farm's own page. Outside the season most patches close the field entirely, and even in season hours change week to week and fields shut after heavy rain — so call the farm before you drive out rather than trusting any directory, this one included.`,
+    },
+    {
+      q: 'How do I find a pumpkin patch near me?',
+      a: `Use the search box at the top of this page: it matches on business name, city, state and ZIP code across all ${fmt(n)} listings. If you allow location access you can sort by distance to get the closest farms first. You can also narrow to what you actually want — a corn maze, a hayride, u-pick pumpkins — using the attraction filter, or browse straight to your state from the state list further down this page.`,
+    },
+    {
+      q: 'How much does it cost to go to a pumpkin patch?',
+      a: `Patches price one of three ways. Free-entry farms charge only for the pumpkins you pick, either per pumpkin or by the pound, and these are usually the cheapest way to come home with a pumpkin. Flat-admission farms bundle the corn maze, hayride and play areas into one gate price, which is typically higher at weekends. Wristband farms charge per attraction. If cost is the deciding factor, look for a small u-pick farm on a weekday — weekday gates are often cheaper or free, and many farms discount heavily in the last days of October to clear the field. Bring cash, as plenty of family farms are still cash only at the gate.`,
+    },
+    {
+      q: 'Which pumpkin patches have corn mazes, hayrides or petting zoos?',
+      a: `Attraction counts across the ${fmt(n)} farms in this directory: ${featureCounts
+        .map(({ c, n: k }) => `${c.name} (${fmt(k)})`)
+        .join(', ')}. Each of those has its own page listing every farm that offers it, and the attraction filter at the top of this page narrows the full directory the same way.`,
+    },
+    {
+      q: 'When does pumpkin patch season start and end?',
+      a: `Most farms open the pumpkin field in mid to late September, peak over the two weekends either side of mid-October, and close in the first days of November once Halloween has passed. Weekday mornings are the quietest time to go at any point in the season. Going late has a real trade-off: far shorter lines and often discounted pumpkins, but a thinner selection and some attractions already shut for the year.`,
+    },
+    {
+      q: 'Are there pumpkin patches for adults, without the kid-focused attractions?',
+      a: `Yes, though they are a smaller share of the directory. The farms that work best for adults and older groups tend to be the ones running evening attractions rather than play areas — ${fmt(countOf('haunted-attractions'))} farms here list a haunted attraction and ${fmt(countOf('fall-festivals'))} list a fall festival, which is where you find cider, food stalls and live music. Large corn mazes, of which ${fmt(countOf('corn-mazes'))} are listed, are also more of a draw for adults than toddlers. Filtering by those attractions is a faster route than reading every listing.`,
+    },
+    {
+      q: 'How many pumpkin patches are in this directory?',
+      a: `${fmt(n)} farms across ${stateCount} states and ${fmt(townCount)} towns, each with its address, phone number, rating, review count and driving directions where the listing provides them. If you know a patch we are missing, send it to us and we will get it listed.`,
+    },
+  ];
+
+  const html = `<h2 id="faq" style="margin-top:3rem">Pumpkin patch questions, answered</h2>
+    <div class="faq-list">
+${qa
+  .map(
+    (item) => `      <details class="faq-item">
+        <summary>${esc(item.q)}</summary>
+        <div class="faq-answer"><p>${esc(item.a)}</p></div>
+      </details>`
+  )
+  .join('\n')}
+    </div>`;
+
+  return { html, qa };
+}
+
 /* ---------------------------------------------------------- blog authors */
 
 const authorPath = (author) => `/authors/${author.slug}/`;
@@ -4079,9 +4277,13 @@ const nearbyCarouselsHtml = homepageNearbySections.map((s, i) => renderNearbyCar
 
 const staticPages = readPageFiles(join(SRC, 'pages'));
 
+// Built once so the rendered block and the FAQPage JSON-LD on
+// /pumpkin-patches/ come from the same question/answer pairs.
+const directoryFaq = directoryFaqData();
 
 const tokens = {
   '{{FAQ}}': renderFaqHtml(faqs),
+  '{{PUMPKIN_PATCHES_FAQ}}': directoryFaq.html,
   // The homepage banner promotes the bookable experiences. Its photo is one
   // of our own files rather than a listing's, so the banner never pictures a
   // specific farm next to a "book a tour" offer that isn't theirs.
@@ -4322,6 +4524,26 @@ for (const page of staticPages) {
 
   if (meta.path === '/pumpkin-patches/') {
     scripts = `${pageMapScripts}\n<script src="/assets/js/state-filter.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
+    jsonld = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'CollectionPage',
+          name: meta.title,
+          description: meta.description,
+          url: SITE_URL + meta.path,
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: directoryFaq.qa.map((item) => ({
+            '@type': 'Question',
+            name: item.q,
+            acceptedAnswer: { '@type': 'Answer', text: item.a },
+          })),
+        },
+        breadcrumbJsonLd(meta.trail, meta.path),
+      ],
+    };
   }
 
   if (meta.path === '/dashboard/') {
@@ -4460,6 +4682,8 @@ ${stateGuides.map((g) => `  <li><a href="${g.href}">${esc(g.title)}</a></li>`).j
 </ul>`
     : '';
 
+  const stateFaq = stateFaqData(stateName, items, cities);
+
   const body = `${renderScopedMap(items, listHtml)}
 <div class="section" style="padding-bottom:0">
 ${citySection}
@@ -4469,6 +4693,7 @@ ${experiencesLink}
 <h2>Planning a ${esc(stateName)} pumpkin patch trip</h2>
 <p>Pumpkin patch season in ${esc(stateName)} generally runs from mid-September through the first weekend of November, with the busiest weekends falling in mid-October. Weekday mornings are the quietest time to visit, and many farms charge admission only on weekends when the corn maze, hayrides and food stands are all running.</p>
 <p>Bring cash — plenty of family farms still run cash-only gates or wagon rides — and check whether the patch charges by the pumpkin, by the pound or as a flat admission. Call ahead after heavy rain, since field access is the first thing farms close.</p>
+${stateFaq.html}
 <p><a class="btn btn-outline" href="/">Search the ${esc(stateName)} map</a></p>
 ${renderPhotoGallery(items, path, stateName)}
 </div>`;
@@ -4490,6 +4715,14 @@ ${renderPhotoGallery(items, path, stateName)}
           position: i + 1,
           url: SITE_URL + listingPath(l),
           name: l.name,
+        })),
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: stateFaq.qa.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
         })),
       },
       breadcrumbJsonLd(meta.trail, path),
