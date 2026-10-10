@@ -632,13 +632,14 @@ function injectInArticleAd(bodyHtml) {
  */
 function listicleEntries(items, renderEntry) {
   const entries = items.map((l, i) => renderEntry(l, i));
-  // No hints here on purpose. A listicle post is mostly prose with one
-  // ranked list in the middle, and a single hint anywhere inside the
-  // content element switches auto-placement off for the whole page --
-  // which would cost the post every slot between its paragraphs to buy a
-  // couple inside the list. Under Mediavine the entries are left alone
-  // and the ads land between the post's own blocks.
-  if (AD_NETWORK === 'mediavine') return entries.join('\n');
+  // Auto-placement cannot reach inside this list. The ten entries are one
+  // direct child of the content element, and on a phone they are most of
+  // the page -- roughly 4,700px of scrolling that could hold six ads and
+  // was holding none. Hinting between them is the whole mobile story on
+  // these pages, which is why the body wraps its other sections in
+  // hintBetween(): once one hint exists, auto-placement is off everywhere,
+  // so the page has to place its own.
+  if (AD_NETWORK === 'mediavine') return withHints(entries).join('\n');
   if (entries.length < 4) return entries.join('\n');
   const adLi = `  <li class="listicle-ad">${renderAdSlot('inFeed')}</li>`;
   const out = entries.slice();
@@ -691,6 +692,24 @@ function withHints(entries) {
     if (mob || desk) placed++;
   });
   return out;
+}
+
+/* The same marker outside a list, for the gaps between a post's own
+   sections. A page that hints inside its list has to hint between its
+   sections too, or the prose above and below the list silently loses every
+   slot auto-placement would have given it. */
+function hintBlock() {
+  return `<div class="ad-hint ad-hint-mobile" aria-hidden="true"><div class="content_mobile_hint"></div></div>
+<div class="ad-hint ad-hint-desktop" aria-hidden="true"><div class="content_desktop_hint"></div></div>`;
+}
+
+/* Joins a post's major sections with a hint between each pair — never
+   before the first, which would put an ad between the H1 and the opening
+   line, and never after the last. */
+function hintBetween(parts) {
+  const real = parts.filter((p) => p && String(p).trim());
+  if (AD_NETWORK !== 'mediavine' || real.length < 2) return real.join('\n');
+  return real.join(`\n${hintBlock()}\n`);
 }
 
 function pillarEntries(items, renderEntry) {
@@ -1545,6 +1564,54 @@ const addToSitemap = (path, priority, changefreq, lastmod) =>
 const photoPool = rankListings(listings.filter((l) => l.photo));
 const pickBlogPhoto = (seedIndex) => (photoPool.length ? photoPool[seedIndex % photoPool.length].photo : PLACEHOLDER_IMAGE);
 const absImageUrl = (src) => (src.startsWith('http') ? src : `${SITE_URL}${src}`);
+
+/* ------------------------------------------------------------- sharing ---
+   Plain share links, no third-party widget. Every sharing SDK costs a
+   script, a connection and a set of cookies on a page whose whole job is
+   to load fast on a phone in a car park with one bar; the intent URLs do
+   the same work with none of that, and they cannot track anybody who does
+   not click.
+
+   Pinterest is first on purpose. "Fall things to do with the kids" is one
+   of the most pinned subjects there is, a pin keeps sending traffic for
+   seasons rather than hours, and this is the one network where a ranked
+   list of farms with a photo is native content rather than an intrusion.
+
+   The native share sheet replaces the row on phones that have one (see
+   site.js) — one tap into the apps people actually use beats five icons
+   for the networks we guessed at. */
+function renderShare(title, path, imageSrc, { heading = 'Share this list' } = {}) {
+  const url = SITE_URL + path;
+  const u = encodeURIComponent(url);
+  const t = encodeURIComponent(title);
+  const img = encodeURIComponent(absImageUrl(imageSrc || PLACEHOLDER_IMAGE));
+  const pinDesc = encodeURIComponent(`${title} — ratings, hours and directions.`);
+  const icon = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${d}"/></svg>`;
+  const net = (cls, href, label, d) =>
+    `<a class="share-btn share-${cls}" href="${href}" target="_blank" rel="noopener nofollow" data-share="${cls}">` +
+    `${icon(d)}<span>${label}</span></a>`;
+
+  return `<aside class="share" aria-labelledby="share-h-${slugify(path)}">
+  <h2 class="share-h" id="share-h-${slugify(path)}">${esc(heading)}</h2>
+  <div class="share-row">
+    <button class="share-btn share-native" type="button" data-share-native hidden>
+      ${icon('M18 16.1c-.76 0-1.44.3-1.96.77L8.9 12.7c.05-.23.1-.46.1-.7s-.05-.47-.1-.7l7.05-4.11c.54.5 1.25.81 2.05.81a3 3 0 1 0-3-3c0 .24.05.47.1.7L8.05 9.81A3 3 0 1 0 6 15c.8 0 1.51-.31 2.05-.81l7.12 4.16c-.05.21-.08.43-.08.65a2.92 2.92 0 1 0 2.91-2.9z')}<span>Share</span>
+    </button>
+    ${net('pinterest', `https://pinterest.com/pin/create/button/?url=${u}&media=${img}&description=${pinDesc}`, 'Pin it',
+      'M12 2a10 10 0 0 0-3.65 19.31c-.09-.78-.17-1.98.03-2.83l1.15-4.87s-.29-.59-.29-1.46c0-1.37.79-2.39 1.78-2.39.84 0 1.25.63 1.25 1.39 0 .84-.54 2.1-.82 3.27-.23.98.49 1.78 1.46 1.78 1.75 0 3.1-1.85 3.1-4.52 0-2.36-1.7-4.01-4.12-4.01-2.81 0-4.46 2.1-4.46 4.28 0 .85.33 1.76.74 2.25a.3.3 0 0 1 .07.29l-.28 1.13c-.04.18-.14.22-.33.13-1.25-.58-2.03-2.4-2.03-3.86 0-3.14 2.28-6.03 6.58-6.03 3.45 0 6.14 2.46 6.14 5.75 0 3.43-2.17 6.2-5.17 6.2-1.01 0-1.96-.53-2.28-1.15l-.62 2.37c-.23.86-.83 1.94-1.24 2.6A10 10 0 1 0 12 2z')}
+    ${net('facebook', `https://www.facebook.com/sharer/sharer.php?u=${u}`, 'Share',
+      'M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.45 2.89h-2.33v6.99A10 10 0 0 0 22 12z')}
+    ${net('x', `https://twitter.com/intent/tweet?url=${u}&text=${t}`, 'Post',
+      'M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.65l-5.22-6.82-5.96 6.82H1.68l7.73-8.84L1.25 2.25h6.82l4.71 6.23zm-1.16 17.52h1.83L7.08 4.13H5.11z')}
+    ${net('email', `mailto:?subject=${t}&body=${t}%0A%0A${u}`, 'Email',
+      'M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zm0 4.24-8 4.76-8-4.76V6l8 4.76L20 6z')}
+    <button class="share-btn share-copy" type="button" data-share-copy="${esc(url)}">
+      ${icon('M16 1H4a2 2 0 0 0-2 2v14h2V3h12zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11z')}<span>Copy link</span>
+    </button>
+  </div>
+</aside>`;
+}
+
 function blogHeroFigureHtml(src, altText) {
   const isPlaceholder = src === PLACEHOLDER_IMAGE;
   // Seeded off the alt text (which carries the state/city/category) so each
@@ -2018,11 +2085,11 @@ ${faqQa
     const conclusion = `<h2>Conclusion</h2>
 <p>${esc(top10[0].name)} tops our list of ${esc(stateName)} pumpkin ${nounPlural}${top10[0].rating ? `, rated ${top10[0].rating.toFixed(1)} out of 5` : ''}, with ${joinNatural(names.slice(1, 3).map((n) => esc(n)))} close behind; the rest of the top ${STATE_POST_COUNT} is listed above. Ratings and review counts reflect public data at the time of writing and can change. Hours, admission and what's actually running on a given day vary week to week during the season — always confirm with the ${nounSingular} directly before you drive out. For the full, ranked, searchable list, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a>.</p>`;
 
-    const body = `${tocSection}
-${summaryIntro}
-${listicleHtml}
-${conclusion}
-${faqHtml}`;
+    // The list carries its own hints, so the sections around it need them
+    // too (see hintBetween). The share block closes the page: somebody who
+    // has read ten farms is the person most likely to send it on.
+    const body = hintBetween([tocSection, summaryIntro, listicleHtml, conclusion, faqHtml]) +
+      '\n' + renderShare(h1, path, heroSrc);
 
     const description = `The ${STATE_POST_COUNT} best pumpkin ${nounPlural} in ${stateName}, ranked by rating and reviews: ${joinNatural(names)}.`;
     const postMeta = {
@@ -2184,11 +2251,8 @@ ${faqQa
   const conclusion = `<h2>Conclusion</h2>
 <p>${esc(topN[0].name)} is${x > 1 ? ' our top pick' : ' the only farm we currently track'} for picking your own pumpkin in ${esc(stateName)}${topN[0].rating ? `, rated ${topN[0].rating.toFixed(1)} out of 5` : ''}${x > 1 ? `, with ${joinNatural(names.slice(1).map((n) => esc(n)))} rounding out the list` : ''}. Ratings and review counts reflect public data at the time of writing and can change, and hours, admission and what's actually running on a given day can vary week to week during the season — always confirm with the farm directly, and ask specifically whether the field is still open for cutting, before you drive out. For more options, see every <a href="${statePath(stateName)}">pumpkin patch we track in ${esc(stateName)}</a> or browse <a href="${categoryPath(UPICK_CATEGORY)}">u-pick pumpkin patches near you</a>.</p>`;
 
-  const body = `${tocSection}
-${summaryIntro}
-${listicleHtml}
-${conclusion}
-${faqHtml}`;
+  const body = hintBetween([tocSection, summaryIntro, listicleHtml, conclusion, faqHtml]) +
+    '\n' + renderShare(h1, path, heroSrc);
 
   const description = x === 1
     ? `The best pumpkin patch to pick your own pumpkin in ${stateName} is ${names[0]}. See its rating, hours and directions before you go.`
@@ -2525,11 +2589,11 @@ ${faqQa
 
     const conclusion = content.conclusion({ topN, x, names, stateName, cat });
 
-    const body = `${tocSection}
-${summaryIntro}
-${listicleHtml}
-${conclusion}
-${faqHtml}`;
+    // The list carries its own hints, so the sections around it need them
+    // too (see hintBetween). The share block closes the page: somebody who
+    // has read ten farms is the person most likely to send it on.
+    const body = hintBetween([tocSection, summaryIntro, listicleHtml, conclusion, faqHtml]) +
+      '\n' + renderShare(h1, path, heroSrc);
 
     const description = content.description({ topN, x, names, stateName });
     const postMeta = {

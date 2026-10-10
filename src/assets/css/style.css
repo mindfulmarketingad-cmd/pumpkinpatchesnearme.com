@@ -1263,3 +1263,50 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
   .ad-hint-mobile { display: none; }
   .ad-hint-desktop { display: block; }
 }
+
+/* ===================================================================
+   Share row
+   Plain links to each network's share intent — no SDK, no iframe, no
+   cookie. On a phone the native sheet replaces the lot (see site.js).
+   =================================================================== */
+.share {
+  margin: 2rem 0; padding: 1.1rem 1.25rem;
+  border: 1px solid var(--line); border-radius: var(--r-md); background: #fff;
+}
+.share-h { margin: 0 0 0.75rem; font-size: 1rem; font-weight: 600; }
+.share-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.share-btn {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  min-height: 44px; padding: 0 0.95rem;          /* 44px: a thumb target */
+  border: 1px solid var(--line); border-radius: 999px; background: #fff;
+  font: inherit; font-size: 0.9rem; font-weight: 600; color: var(--ink, #222);
+  text-decoration: none; cursor: pointer; white-space: nowrap;
+}
+.share-btn svg { width: 17px; height: 17px; fill: currentColor; flex: 0 0 auto; }
+/* display:inline-flex above beats the hidden attribute on its own, which
+   would leave the native-share button on screen in every browser that has
+   no share sheet — and there it has no click handler either, so it would
+   be a button that does nothing. */
+.share-btn[hidden] { display: none; }
+.share-btn:hover { background: var(--sand, #faf6f0); border-color: currentColor; }
+.share-btn:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+.share-pinterest:hover { color: #bd081c; }
+.share-facebook:hover { color: #1877f2; }
+.share-x:hover { color: #000; }
+.share-email:hover, .share-copy:hover { color: var(--orange); }
+.share-copy.is-done { color: #1a7f44; border-color: #1a7f44; }
+
+/* Where a native share sheet exists it is strictly better than guessing
+   which five networks somebody uses, so it takes the row's place. */
+.share.has-native .share-row > :not(.share-native) { display: none; }
+.share.has-native .share-native { display: inline-flex; }
+
+@media (max-width: 560px) {
+  .share { padding: 0.9rem 1rem; }
+  .share-row { gap: 0.4rem; }
+  .share-btn { padding: 0 0.8rem; font-size: 0.86rem; }
+  /* Four across on a narrow screen rather than a wrapped ragged row */
+  .share-btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .share-native span, .share-copy span { position: static; width: auto; height: auto; clip: auto; }
+  .share-btn svg { width: 19px; height: 19px; }
+}

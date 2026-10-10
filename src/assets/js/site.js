@@ -212,3 +212,61 @@
     });
   }
 })();
+
+/* ---------------------------------------------------------------- share ---
+   Two progressive enhancements on top of links that already work with no
+   JavaScript at all: the native share sheet where the browser has one, and
+   copy-to-clipboard. Neither is required for the row to function. */
+(function () {
+  'use strict';
+
+  var copyBtns = document.querySelectorAll('[data-share-copy]');
+  Array.prototype.forEach.call(copyBtns, function (btn) {
+    btn.addEventListener('click', function () {
+      var url = btn.getAttribute('data-share-copy');
+      var label = btn.querySelector('span');
+      var was = label ? label.textContent : '';
+      function done(ok) {
+        if (label) label.textContent = ok ? 'Copied' : 'Press Ctrl+C';
+        btn.classList.toggle('is-done', ok);
+        setTimeout(function () {
+          if (label) label.textContent = was;
+          btn.classList.remove('is-done');
+        }, 2000);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () { done(true); }, function () { done(false); });
+        return;
+      }
+      // Older Safari and anything without the async clipboard API.
+      var ta = document.createElement('textarea');
+      ta.value = url;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:absolute;left:-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      done(ok);
+    });
+  });
+
+  // Only swap in the native sheet where it genuinely exists. Some desktop
+  // browsers expose navigator.share but refuse the call, so the row is only
+  // replaced once a share has been accepted as possible.
+  var natives = document.querySelectorAll('[data-share-native]');
+  if (!natives.length || !navigator.share) return;
+  Array.prototype.forEach.call(natives, function (btn) {
+    var box = btn.closest('.share');
+    var copy = box && box.querySelector('[data-share-copy]');
+    var url = copy ? copy.getAttribute('data-share-copy') : location.href;
+    var heading = box && box.querySelector('.share-h');
+    btn.hidden = false;
+    if (box) box.classList.add('has-native');
+    btn.addEventListener('click', function () {
+      navigator.share({ title: document.title, text: heading ? heading.textContent : document.title, url: url })
+        .catch(function () { /* the sheet was dismissed; nothing to report */ });
+    });
+  });
+})();
