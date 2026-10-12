@@ -63,6 +63,19 @@
           "value": "https://claude.ai"
         }
       ]
+    },
+    {
+      "source": "/data/page-meta.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://claude.ai"
+        }
+      ]
     }
   ]
 }
