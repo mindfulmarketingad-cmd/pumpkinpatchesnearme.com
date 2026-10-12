@@ -42,18 +42,27 @@
   [headers.values]
     Cache-Control = "public, max-age=3600"
 
-# OmniConsole reads the internal link graph and the per-page on-page
-# elements from the browser, and it is served from claude.ai, so these two
-# files are readable cross-origin. Both are public, read-only, and contain
-# nothing that could not be had by crawling the site directly.
+# OmniConsole runs in a browser on claude.ai and reads this site to show a
+# page's current title, headings and description beside the suggested ones.
+# It cannot read that out of a frame -- same-origin policy -- and Search
+# Console publishes no API for it, so the site lets that one origin read it.
+# Everything served here is already public to any crawler; the only thing
+# this changes is that a script on claude.ai may read the response rather
+# than merely cause it. frame-ancestors is set explicitly because, where it
+# is present, it overrides an X-Frame-Options added further up the chain.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "https://claude.ai"
+    Vary = "Origin"
+    Content-Security-Policy = "frame-ancestors 'self' https://claude.ai"
+
 [[headers]]
   for = "/data/link-graph.json"
   [headers.values]
     Cache-Control = "public, max-age=3600"
-    Access-Control-Allow-Origin = "https://claude.ai"
 
 [[headers]]
   for = "/data/page-meta.json"
   [headers.values]
     Cache-Control = "public, max-age=3600"
-    Access-Control-Allow-Origin = "https://claude.ai"

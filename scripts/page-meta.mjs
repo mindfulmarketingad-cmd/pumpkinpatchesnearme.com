@@ -84,6 +84,16 @@ for (const file of walk(DIST)) {
   }
   if (lede.length > LEDE_MAX) lede = lede.slice(0, LEDE_MAX - 1).replace(/\s\S*$/, '') + '…';
 
+  // The section headings, in order. They are the page's outline, and the
+  // console reconstructs the page from them rather than framing it.
+  const h2 = [];
+  const hRe = /<h2[^>]*>([\s\S]*?)<\/h2>/gi;
+  let hm;
+  while ((hm = hRe.exec(main)) !== null && h2.length < 14) {
+    const t = text(hm[1]);
+    if (t) h2.push(t.length > 90 ? t.slice(0, 89) + '…' : t);
+  }
+
   // A rough body word count, for telling a stub from a real page.
   const words = text(main.replace(/<(script|style)[\s\S]*?<\/\1>/gi, '')).split(' ').filter(Boolean).length;
 
@@ -93,7 +103,7 @@ for (const file of walk(DIST)) {
   if (title.length > 60) longTitle++;
   if (desc && desc.length < 120) shortDesc++;
 
-  pages[route] = { t: title, d: desc, h: h1, p: lede, w: words };
+  pages[route] = { t: title, d: desc, h: h1, p: lede, w: words, s: h2 };
 }
 
 const out = {
