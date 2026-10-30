@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  var list = document.getElementById('cat-pillar-list');
+  var list = document.getElementById('page-list-view');
   var qInput = document.getElementById('cat-filter-q');
   var stateSelect = document.getElementById('cat-filter-state');
   var sortSelect = document.getElementById('cat-filter-sort');
@@ -17,26 +17,10 @@
   if (!list || !qInput || !stateSelect || !sortSelect) return;
 
   var items = Array.prototype.slice.call(list.querySelectorAll('.pillar-entry'));
-
-  // See the matching comment in state-filter.js: ad slots spliced into the
-  // list aren't .pillar-entry elements, so re-sorting would otherwise drag
-  // them all to the top after the first interaction. Restore each ad's
-  // original "after the Nth entry" position on every re-sort.
-
-  // Ad slots spliced into the list (see pillarEntriesWithAds() in
-  // build.mjs) aren't .pillar-entry elements, so the sort below never
-  // moves them — left alone, appendChild()-ing every real entry to the
-  // end would drag every ad to the top of the list after the first
-  // filter/sort interaction. Record each ad's original "after the Nth
-  // entry" position once, then restore it after every re-sort.
-  var adAnchors = Array.prototype.slice.call(list.querySelectorAll('.pillar-ad, .ad-hint')).map(function (adEl) {
-    var precedingCount = 0;
-    var node = adEl.previousSibling;
-    while (node) {
-      if (node.nodeType === 1 && node.classList && node.classList.contains('pillar-entry')) precedingCount++;
-      node = node.previousSibling;
-    }
-    return { el: adEl, precedingCount: precedingCount };
+  var bridges = new Map();
+  items.forEach(function (el) {
+    var next = el.nextElementSibling;
+    if (next && next.classList.contains('entry-bridge')) bridges.set(el, next);
   });
 
   function apply() {
@@ -53,6 +37,8 @@
       var matchesState = !state || stateVal === state;
       var show = matchesQuery && matchesState;
       el.hidden = !show;
+      var bridge = bridges.get(el);
+      if (bridge) bridge.hidden = !show;
       if (show) visible++;
     });
 
@@ -73,8 +59,11 @@
       }
       return Number(b.getAttribute('data-rating')) - Number(a.getAttribute('data-rating'));
     });
-    sorted.forEach(function (el) { list.appendChild(el); });
-    adAnchors.forEach(function (anchor) { list.insertBefore(anchor.el, sorted[anchor.precedingCount] || null); });
+    sorted.forEach(function (el) {
+      list.appendChild(el);
+      var bridge = bridges.get(el);
+      if (bridge) list.appendChild(bridge);
+    });
 
     if (countEl) countEl.textContent = visible.toLocaleString('en-US') + ' listing' + (visible === 1 ? '' : 's');
     if (emptyEl) emptyEl.hidden = visible !== 0;
