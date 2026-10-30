@@ -70,11 +70,29 @@ function seededHash(seed) {
   return hash;
 }
 
+/** Google-hosted farm photos (Maps CDN and Street View thumbnails) return
+ *  403 to visitors, so they are never written into HTML or client JSON.
+ *  A site-relative path, or a URL on any other host, is the hook for a
+ *  licensed or farm-submitted photo later — drop it in `listing.photo`
+ *  and it renders with no other change. */
+function ownedPhoto(url) {
+  if (!url || typeof url !== 'string') return '';
+  if (/googleusercontent\.com|googleapis\.com|ggpht\.com/i.test(url)) return '';
+  if (/^https?:\/\/([^/]*\.)?google\.com\//i.test(url)) return '';
+  return url;
+}
+
+/** URL safe to put in HTML, JSON-LD, or a share link. Google hosts are
+ *  replaced with a stable seasonal photo. */
+function displayPhoto(src, seed) {
+  const owned = ownedPhoto(src);
+  if (owned) return owned;
+  return FALLBACK_PHOTOS[seededHash(String(seed || src || 'photo')) % FALLBACK_PHOTOS.length];
+}
+
 /** Google's photo CDN takes the requested pixel size straight in the URL
- *  (`=w800-h500-k-no`) — swapping those numbers gets an appropriately small
- *  image instead of downloading the full 800x500 source for a 120px
- *  thumbnail. A state page with 200+ entries was shipping 200+ full-size
- *  photos for images rendered at a fraction of that size. */
+ *  (`=w800-h500-k-no`). Kept for a future non-blocked host that uses the
+ *  same pattern; ownedPhoto() already drops Google URLs before this runs. */
 function resizedPhotoUrl(url, width, height) {
   if (!url || url.indexOf('googleusercontent.com') === -1) return url;
   return url.replace(/=w\d+-h\d+[^&]*$/, `=w${width}-h${height}-k-no`);
@@ -114,12 +132,17 @@ function fallbackPhotoFor(l) {
   return FALLBACK_PHOTOS[seededHash(key) % FALLBACK_PHOTOS.length];
 }
 
-function listingImage(l, { alt, className = '', sizes = '', size = 'card' } = {}) {
+function listingImage(l, { alt, className = '', sizes = '', size = 'card', loading = 'lazy', fetchPriority = '' } = {}) {
   const preset = IMAGE_SIZES[size] || IMAGE_SIZES.card;
   const altText = alt || `${l.name}${l.city ? ` in ${l.city}` : ''}`;
   const fallback = fallbackPhotoFor(l);
-  const src = l.photo ? resizedPhotoUrl(l.photo, preset.width, preset.height) : fallback;
-  return `<img class="${className}" src="${attr(src)}" alt="${attr(altText)}" width="${preset.width}" height="${preset.height}" loading="lazy" decoding="async"${sizes ? ` sizes="${attr(sizes)}"` : ''} onerror="this.onerror=null;this.src='${fallback}';">`;
+  const owned = ownedPhoto(l.photo);
+  const src = owned ? resizedPhotoUrl(owned, preset.width, preset.height) : fallback;
+  const priority = fetchPriority ? ` fetchpriority="${attr(fetchPriority)}"` : '';
+  // Only attach an error swap when the src is a real photo. The fallback
+  // itself must not request a URL we already know will fail.
+  const onerror = owned ? ` onerror="this.onerror=null;this.src='${fallback}';"` : '';
+  return `<img class="${className}" src="${attr(src)}" alt="${attr(altText)}" width="${preset.width}" height="${preset.height}" loading="${loading}" decoding="async"${priority}${sizes ? ` sizes="${attr(sizes)}"` : ''}${onerror}>`;
 }
 
 /* ----------------------------------------------------------------- inputs */
@@ -481,7 +504,7 @@ function renderCard(l, { showState = true, showCity = true, headingLevel = 3 } =
   const place = [showCity ? l.city : null, showState ? l.stateCode : null].filter(Boolean).join(', ');
   const tags = (l.features || []).slice(0, 3);
   const h = headingLevel;
-  return `<article class="listing-card${l.featured ? ' is-featured' : ''}">
+  return `<article class="listing-card${l.featured ? ' is-featured' : ''}" data-slug="${attr(l.slug)}">
   ${l.featured ? '<p class="featured-flag">Featured farm</p>' : ''}
   <a class="listing-card-media" href="${listingPath(l)}" tabindex="-1" aria-hidden="true">
     ${listingImage(l, { className: 'listing-card-img', sizes: '(min-width: 900px) 340px, 100vw' })}
@@ -509,7 +532,7 @@ function renderCard(l, { showState = true, showCity = true, headingLevel = 3 } =
 // shuffle each time). Skipped entirely on pages with no photographed listings
 // rather than padding with the illustrated placeholder.
 function renderPhotoGallery(items, seedKey, label, count = 5) {
-  const withPhotos = items.filter((l) => l.photo);
+  const withPhotos = items.filter((l) => ownedPhoto(l.photo));
   if (!withPhotos.length) return '';
   const picks = withPhotos
     .map((l) => ({ l, key: seededHash(seedKey + l.slug) }))
@@ -548,12 +571,12 @@ function renderPillarRow(l) {
     : '';
   const reviews = l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} reviews</span>` : '';
 
-  return `    <li class="pillar-entry pillar-row" id="${attr(l.slug)}" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-city-label="${attr(l.city || '')}" data-state="${attr((l.state || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}" data-lat="${l.lat ?? ''}" data-lng="${l.lng ?? ''}">
+  return `    <article class="pillar-entry pillar-row" id="${attr(l.slug)}" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-city-label="${attr(l.city || '')}" data-state="${attr((l.state || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}" data-lat="${l.lat ?? ''}" data-lng="${l.lng ?? ''}">
       <div class="pillar-entry-body">
         <h3><a href="${listingPath(l)}">${esc(l.name)}</a></h3>
         <p class="listing-meta">${rating}${reviews}${place ? `<span>${esc(place)}</span>` : ''}<span class="pillar-distance" hidden></span></p>
       </div>
-    </li>`;
+    </article>`;
 }
 
 /**
@@ -569,46 +592,13 @@ function pillarEntriesTiered(items, renderEntry, richCount) {
   return rest ? `${rich}\n${rest}` : rich;
 }
 
-/* ------------------------------------------------------------ AdSense ---
-   Two responsive units, placed where the page's own shape gives them a
-   natural slot rather than the same banner everywhere. Both are
-   data-ad-format="auto" with full-width-responsive, so each adapts to the
-   column it lands in — the square/vertical names are about where they sit,
-   not a fixed size.
-
-   The loader <script> is NOT repeated per unit: it lives once in
-   base.html's <head>, so every call site here is just the <ins> plus its
-   own push({}). Repeating the loader would re-fetch it several times a
-   page for no benefit.
-*/
-/* Which network is serving. Mediavine runs the ads while the AdSense
-   application is still pending; set this to 'adsense' once approved and
-   the manual units come back on their own, with no other edit. The two
-   never run together: Mediavine places its own units, so leaving the
-   AdSense <ins> blocks in would mean two stacks competing for the same
-   space. */
-const AD_NETWORK = 'mediavine';
+/* Journey (Mediavine) is the only ad network. It places every unit from
+   the script in the head. Manual slots are not emitted. */
 const MEDIAVINE_SITE_ID = '5e44c2e0-bcb8-46ab-98fd-b9342d32f4c6';
+const JOURNEY_SCRIPT = `<script type="text/javascript" async="async" data-noptimize="1" data-cfasync="false" src="//scripts.scriptwrapper.com/tags/${MEDIAVINE_SITE_ID}.js"></script>`;
 
-const AD_CLIENT = 'ca-pub-9332749804326149';
-const AD_SLOTS = { square: '4275377186', vertical: '8454295343', inFeed: '9687485965' };
-// The in-feed unit is a fluid format whose layout key is tied to that
-// specific unit in AdSense — it renders as a native-looking row inside a
-// list rather than a block, which is why it goes in the feeds.
-const AD_INFEED_LAYOUT_KEY = '-6q+e9+15-2u+4y';
-
-function renderAdSlot(type) {
-  // Mediavine injects its own placements from the script in the head, so a
-  // manual slot here would either sit empty or fight it for the space.
-  if (AD_NETWORK !== 'adsense') return '';
-  const insAttrs = type === 'inFeed'
-    ? `style="display:block" data-ad-format="fluid" data-ad-layout-key="${AD_INFEED_LAYOUT_KEY}"`
-    : `style="display:block" data-ad-format="auto" data-full-width-responsive="true"`;
-  return `<div class="ad-slot ad-slot-${type}">
-  <p class="ad-label">Advertisement</p>
-  <ins class="adsbygoogle" ${insAttrs} data-ad-client="${AD_CLIENT}" data-ad-slot="${AD_SLOTS[type]}"></ins>
-  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-</div>`;
+function renderAdSlot() {
+  return '';
 }
 
 // Drops a unit in right after a post's opening paragraph — the reader has
@@ -630,102 +620,92 @@ function injectInArticleAd(bodyHtml) {
  * entry, and a second past eight, is as far as it goes without the post
  * reading as more ad than list.
  */
-function listicleEntries(items, renderEntry) {
-  const entries = items.map((l, i) => renderEntry(l, i));
-  // Auto-placement cannot reach inside this list. The ten entries are one
-  // direct child of the content element, and on a phone they are most of
-  // the page -- roughly 4,700px of scrolling that could hold six ads and
-  // was holding none. Hinting between them is the whole mobile story on
-  // these pages, which is why the body wraps its other sections in
-  // hintBetween(): once one hint exists, auto-placement is off everywhere,
-  // so the page has to place its own.
-  if (AD_NETWORK === 'mediavine') return withHints(entries).join('\n');
-  if (entries.length < 4) return entries.join('\n');
-  const adLi = `  <li class="listicle-ad">${renderAdSlot('inFeed')}</li>`;
-  const out = entries.slice();
-  out.splice(3, 0, adLi);
-  // Index 9 rather than 8: the splice above already shifted everything
-  // after the third entry along by one.
-  if (entries.length >= 8) out.splice(9, 0, adLi);
-  return out.join('\n');
+/* Directory pages are split so a state or national hub is not a megabyte
+   of HTML. Page 1 keeps the existing URL; later pages are /<path>page/N/. */
+const DIRECTORY_PAGE_SIZE = 24;
+
+function directoryPagePath(basePath, pageNum) {
+  const base = basePath.endsWith('/') ? basePath : `${basePath}/`;
+  if (pageNum <= 1) return base;
+  return `${base}page/${pageNum}/`;
 }
 
-/* ------------------------------------------------- Journey ad hints ----
-   Journey places an in-content ad at each <div class="content_*_hint">,
-   and the moment one exists inside the content element it stops placing
-   ads anywhere else on that page. The interval below is therefore the
-   whole ad-density decision for the listing pages.
-
-   Measured on the built site: a pillar card runs ~620px tall at 390px
-   wide and ~285px at 1440px, against roughly 780px and 900px of visible
-   content once the 68px sticky header is taken off. Every second card on
-   mobile and every third on desktop puts each ad a shade over one
-   screenview apart -- comfortably on the right side of the one-per-
-   screenview rule, which is the one that matters.
-
-   Capped, because the national hubs run to two thousand rows and a hint
-   after every other one would be asking for a thousand ads. */
-const HINT_EVERY_MOBILE = 2;
-const HINT_EVERY_DESKTOP = 3;
-const HINT_MAX = 20;
-
-function hintLi(kind) {
-  return `    <li class="ad-hint ad-hint-${kind}" aria-hidden="true"><div class="content_${kind}_hint"></div></li>`;
+function directoryPages(items) {
+  const total = Math.max(1, Math.ceil(items.length / DIRECTORY_PAGE_SIZE) || 1);
+  const pages = [];
+  for (let n = 1; n <= total; n++) {
+    const start = (n - 1) * DIRECTORY_PAGE_SIZE;
+    pages.push({
+      pageNum: n,
+      totalPages: total,
+      start,
+      items: items.slice(start, start + DIRECTORY_PAGE_SIZE),
+    });
+  }
+  return pages;
 }
 
-/* Hints go between cards, never before the first or after the last: an ad
-   above the opening card would sit directly under the H1, and one after
-   the closing card is just a footer ad in the wrong place. */
-function withHints(entries) {
-  if (AD_NETWORK !== 'mediavine') return entries;
-  if (entries.length <= HINT_EVERY_MOBILE) return entries;
-  const out = [];
-  let placed = 0;
-  entries.forEach((entry, i) => {
-    out.push(entry);
-    const n = i + 1;
-    if (n === entries.length || placed >= HINT_MAX) return;
-    const mob = n % HINT_EVERY_MOBILE === 0;
-    const desk = n % HINT_EVERY_DESKTOP === 0;
-    if (mob) out.push(hintLi('mobile'));
-    if (desk) out.push(hintLi('desktop'));
-    if (mob || desk) placed++;
+function paginationNav(basePath, pageNum, totalPages) {
+  if (totalPages <= 1) return '';
+  const prev = pageNum > 1
+    ? `<a class="btn btn-outline btn-sm" href="${directoryPagePath(basePath, pageNum - 1)}">&larr; Previous</a>`
+    : '<span></span>';
+  const next = pageNum < totalPages
+    ? `<a class="btn btn-outline btn-sm" href="${directoryPagePath(basePath, pageNum + 1)}">Next &rarr;</a>`
+    : '<span></span>';
+  return `<nav class="pagination" aria-label="More listings">
+  ${prev}
+  <span class="pagination-status">Page ${pageNum} of ${totalPages}</span>
+  ${next}
+</nav>`;
+}
+
+function paginationHead(basePath, pageNum, totalPages) {
+  const tags = [];
+  if (pageNum > 1) tags.push(`<link rel="prev" href="${SITE_URL}${directoryPagePath(basePath, pageNum - 1)}">`);
+  if (pageNum < totalPages) tags.push(`<link rel="next" href="${SITE_URL}${directoryPagePath(basePath, pageNum + 1)}">`);
+  return tags.join('\n');
+}
+
+/* Journey inserts in-content ads between direct block children of
+   #page-list-view, and it needs real paragraph text at those gaps. A
+   sentence grounded in the listing's own rating and features sits between
+   cards. Nothing is wrapped in a list, and no placement hint is emitted —
+   a hint turns automatic placement off. */
+function entryBridge(l, index, placeName) {
+  return `    <p class="entry-bridge">${blurbFor(l, index, placeName || l.state || '')}</p>`;
+}
+
+function blocksWithBridges(items, renderEntry, placeName) {
+  const parts = [];
+  items.forEach((item, i) => {
+    parts.push(renderEntry(item, i));
+    if (i < items.length - 1) parts.push(entryBridge(item, i, placeName));
   });
-  return out;
+  return parts.join('\n');
 }
 
-/* The same marker outside a list, for the gaps between a post's own
-   sections. A page that hints inside its list has to hint between its
-   sections too, or the prose above and below the list silently loses every
-   slot auto-placement would have given it. */
-function hintBlock() {
-  return `<div class="ad-hint ad-hint-mobile" aria-hidden="true"><div class="content_mobile_hint"></div></div>
-<div class="ad-hint ad-hint-desktop" aria-hidden="true"><div class="content_desktop_hint"></div></div>`;
+function listicleEntries(items, renderEntry, placeName) {
+  return blocksWithBridges(items, renderEntry, placeName);
 }
 
-/* Joins a post's major sections with a hint between each pair — never
-   before the first, which would put an ad between the H1 and the opening
-   line, and never after the last. */
+/* Joins a post's sections with whitespace only. Journey places its own
+   ads between the paragraphs; hint markers are not used. */
 function hintBetween(parts) {
-  const real = parts.filter((p) => p && String(p).trim());
-  if (AD_NETWORK !== 'mediavine' || real.length < 2) return real.join('\n');
-  return real.join(`\n${hintBlock()}\n`);
+  return parts.filter((p) => p && String(p).trim()).join('\n');
 }
 
-function pillarEntries(items, renderEntry) {
-  const entries = items.map((l, i) => renderEntry(l, i));
-  // Mediavine does its own placing, so the list carries hints marking
-  // where rather than ad units of our own.
-  if (AD_NETWORK === 'mediavine') return withHints(entries).join('\n');
-  // Native to the scroll a mobile visitor is already doing. Skipped on
-  // short lists (nothing to interrupt); a second one past 20 entries,
-  // where a single unit near the top would leave a long unbroken tail.
-  if (entries.length < 6) return entries.join('\n');
-  const adLi = `    <li class="pillar-ad">${renderAdSlot('inFeed')}</li>`;
-  const withAds = entries.slice();
-  withAds.splice(4, 0, adLi);
-  if (entries.length >= 20) withAds.splice(15, 0, adLi);
-  return withAds.join('\n');
+function pillarEntries(items, renderEntry, placeName) {
+  return blocksWithBridges(items, renderEntry, placeName);
+}
+
+/* The element Journey treats as the content column on a directory page.
+   Its direct children are the cards and the paragraphs between them. */
+function pillarFeed(items, renderEntry, placeName) {
+  if (!items.length) return '';
+  return `<div class="pillar-feed" id="page-list-view">
+${pillarEntries(items, renderEntry, placeName)}
+</div>`;
 }
 
 function joinNatural(words) {
@@ -847,7 +827,7 @@ function businessSummaryHtml(l, rank, stateName) {
 function renderListicleEntry(l, rank, stateName) {
   const place = [l.city, l.stateCode].filter(Boolean).join(', ');
   const tags = (l.features || []).slice(0, 4);
-  return `<li class="listicle-item${l.featured ? ' is-featured' : ''}" id="${attr(l.slug)}">
+  return `<article class="listicle-item${l.featured ? ' is-featured' : ''}" id="${attr(l.slug)}">
   <span class="listicle-rank" aria-hidden="true">${rank}</span>
   <a class="listicle-media" href="${listingPath(l)}" tabindex="-1" aria-hidden="true">
     ${listingImage(l, { className: 'listicle-img', sizes: '(min-width: 640px) 180px, 100vw', size: 'thumb' })}
@@ -861,7 +841,6 @@ function renderListicleEntry(l, rank, stateName) {
       ${place ? `<span>${esc(place)}</span>` : ''}
       ${l.sample ? '<span class="tag">Sample data</span>' : ''}
     </div>
-    <p class="listicle-blurb">${blurbFor(l, rank - 1, stateName)}</p>
     ${l.street ? `<p class="listing-address">${esc(l.street)}${l.postalCode ? `, ${esc(l.postalCode)}` : ''}</p>` : ''}
     ${tags.length ? `<div class="tag-row">${tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
     <button class="listicle-toggle" type="button" aria-expanded="false">Read full write-up<span class="listicle-toggle-icon" aria-hidden="true"></span></button>
@@ -873,7 +852,7 @@ function renderListicleEntry(l, rank, stateName) {
       <a class="btn btn-outline btn-sm" href="https://www.google.com/maps/dir/?api=1&amp;destination=${l.lat},${l.lng}" target="_blank" rel="noopener nofollow">Directions</a>
     </div>
   </div>
-</li>`;
+</article>`;
 }
 
 // A one-line steer for who a farm suits, derived only from real feature
@@ -933,7 +912,7 @@ function renderPillarEntry(l, rank, stateName) {
   if (photosUrl) contactParts.push(`<a href="${attr(photosUrl)}" target="_blank" rel="noopener nofollow">${l.photosCount ? `Photos (${l.photosCount.toLocaleString('en-US')})` : 'Photos'}</a>`);
   const contactHtml = contactParts.length ? `<p class="pillar-contact">${contactParts.join(' <span aria-hidden="true">&middot;</span> ')}</p>` : '';
 
-  return `    <li class="pillar-entry" id="${attr(l.slug)}" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-city-label="${attr(l.city || '')}" data-state="${attr((l.state || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}" data-lat="${l.lat ?? ''}" data-lng="${l.lng ?? ''}"${hoursJson ? ` data-hours='${hoursJson}'` : ''}>
+  return `    <article class="pillar-entry" id="${attr(l.slug)}" data-name="${attr(l.name.toLowerCase())}" data-city="${attr((l.city || '').toLowerCase())}" data-city-label="${attr(l.city || '')}" data-state="${attr((l.state || '').toLowerCase())}" data-features="${attr(features.toLowerCase())}" data-rating="${l.rating || 0}" data-reviews="${l.reviews || 0}" data-lat="${l.lat ?? ''}" data-lng="${l.lng ?? ''}"${hoursJson ? ` data-hours='${hoursJson}'` : ''}>
       <a class="pillar-media" href="${listingPath(l)}" tabindex="-1" aria-hidden="true">
         ${listingImage(l, { className: 'pillar-img', sizes: '(min-width: 640px) 120px, 96px', size: 'thumb' })}
       </a>
@@ -944,10 +923,9 @@ function renderPillarEntry(l, rank, stateName) {
         ${contactHtml}
         <p class="pillar-hours-today">${l.hours ? '' : 'Hours not listed — confirm directly before you go.'}</p>
         <p class="pillar-perfect-for"><strong>${esc(perfectForText(l))}.</strong></p>
-        <p class="pillar-blurb">${blurbFor(l, rank, stateName)}</p>
         ${tags.length ? `<div class="tag-row">${tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
       </div>
-    </li>`;
+    </article>`;
 }
 
 /* ------------------------------------------------ listing detail content */
@@ -1210,17 +1188,20 @@ function renderScopedMap(items, listHtml, { singular = 'pumpkin patch', plural =
   const mappable = items.filter((l) => Number.isFinite(l.lat) && Number.isFinite(l.lng));
   if (!mappable.length) return listHtml;
 
-  const mapData = mappable.map((l) => ({
-    name: l.name,
-    url: l.url,
-    lat: l.lat,
-    lng: l.lng,
-    rating: l.rating,
-    reviews: l.reviews,
-    city: l.city,
-    stateCode: l.stateCode,
-    photo: l.photo,
-  }));
+  const mapData = mappable.map((l) => {
+    const photo = ownedPhoto(l.photo);
+    return {
+      name: l.name,
+      url: l.url,
+      lat: l.lat,
+      lng: l.lng,
+      rating: l.rating,
+      reviews: l.reviews,
+      city: l.city,
+      stateCode: l.stateCode,
+      ...(photo ? { photo } : {}),
+    };
+  });
   // Inline JSON inside a <script> tag must not contain a literal "</" or a
   // browser will parse it as the tag's own closing tag.
   const json = JSON.stringify(mapData).replace(/</g, '\\u003c');
@@ -1481,10 +1462,7 @@ function render(meta, body, opts = {}) {
     // loader stays alongside it because the application still pending needs
     // that snippet on the site to be reviewed; it fills nothing until the
     // account is approved, and the manual <ins> units stay off until then.
-    '{{ADSENSE_SCRIPT}}': AD_NETWORK === 'mediavine'
-      ? `<script type="text/javascript" async="async" data-noptimize="1" data-cfasync="false" src="//scripts.scriptwrapper.com/tags/${MEDIAVINE_SITE_ID}.js"></script>\n`
-        + `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${AD_CLIENT}" crossorigin="anonymous"></script>`
-      : `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${AD_CLIENT}" crossorigin="anonymous"></script>`,
+    '{{ADSENSE_SCRIPT}}': JOURNEY_SCRIPT,
     // Corn Mazes and Hayrides are the only two category hubs in the main
     // nav, so they pick up a link from every page on the site while the
     // other six only get linked from pages that happen to carry that
@@ -1566,8 +1544,7 @@ const addToSitemap = (path, priority, changefreq, lastmod) =>
 // directory, rotated deterministically so rebuilds are reproducible. Posts
 // tied to a specific city (the programmatic "5 Best" posts) use a photo from
 // one of their own top-5 businesses instead; see the city-post loop below.
-const photoPool = rankListings(listings.filter((l) => l.photo));
-const pickBlogPhoto = (seedIndex) => (photoPool.length ? photoPool[seedIndex % photoPool.length].photo : PLACEHOLDER_IMAGE);
+const pickBlogPhoto = (seedIndex) => FALLBACK_PHOTOS[Math.abs(seedIndex) % FALLBACK_PHOTOS.length];
 const absImageUrl = (src) => (src.startsWith('http') ? src : `${SITE_URL}${src}`);
 
 /* ------------------------------------------------------------- sharing ---
@@ -1663,14 +1640,15 @@ function renderEmailCapture(stateName, { heading, tone = 'standalone' } = {}) {
 }
 
 function blogHeroFigureHtml(src, altText) {
-  const isPlaceholder = src === PLACEHOLDER_IMAGE;
   // Seeded off the alt text (which carries the state/city/category) so each
   // page keeps the same hero across rebuilds instead of reshuffling.
   const fallback = FALLBACK_PHOTOS[seededHash(altText || 'hero') % FALLBACK_PHOTOS.length];
-  const resized = isPlaceholder ? fallback : resizedPhotoUrl(src, IMAGE_SIZES.hero.width, IMAGE_SIZES.hero.height);
+  const owned = ownedPhoto(src);
+  const resized = owned ? resizedPhotoUrl(owned, IMAGE_SIZES.hero.width, IMAGE_SIZES.hero.height) : fallback;
+  const onerror = owned ? ` onerror="this.onerror=null;this.src='${fallback}';"` : '';
   return `<figure class="detail-hero blog-hero">
-  <img class="detail-hero-img" src="${attr(resized)}" alt="${attr(altText)}" width="${IMAGE_SIZES.hero.width}" height="${IMAGE_SIZES.hero.height}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${fallback}';">
-  <figcaption>${isPlaceholder ? 'Photo of a pumpkin patch' : 'Photo via Google, from a pumpkin patch in our directory'}</figcaption>
+  <img class="detail-hero-img" src="${attr(resized)}" alt="${attr(altText)}" width="${IMAGE_SIZES.hero.width}" height="${IMAGE_SIZES.hero.height}" loading="lazy" decoding="async"${onerror}>
+  <figcaption>${owned ? esc(altText) : 'Seasonal photo — shown until the farm shares one of its own.'}</figcaption>
 </figure>`;
 }
 
@@ -1749,26 +1727,21 @@ const pillarPosts = [];
   const heroSrc = pickBlogPhoto(0);
   const heroHtml = blogHeroFigureHtml(heroSrc, h1);
 
+  const mustSeeSections = statePicks.filter((s) => s.top5.length);
+  const MUST_SEE_PER_PAGE = 8;
+  const mustSeePageCount = Math.max(1, Math.ceil(mustSeeSections.length / MUST_SEE_PER_PAGE));
+  const mustSeePageOf = new Map(mustSeeSections.map((s, i) => [s.stateName, Math.floor(i / MUST_SEE_PER_PAGE) + 1]));
   const tocHtml = `<div class="tag-row">
-${statePicks.map((s) => `  <a class="tag tag-link" href="#${attr(slugify(s.stateName))}">${esc(s.stateName)}</a>`).join('\n')}
+${mustSeeSections.map((s) => {
+  const pageNum = mustSeePageOf.get(s.stateName);
+  const href = `${pageNum === 1 ? path : directoryPagePath(path, pageNum)}#${attr(slugify(s.stateName))}`;
+  return `  <a class="tag tag-link" href="${href}">${esc(s.stateName)}</a>`;
+}).join('\n')}
 </div>`;
 
   const introHtml = `<p>Halloween season means one thing above all: finding a pumpkin patch worth the drive. We pulled the ${esc(totalPicks.toLocaleString('en-US'))} highest-rated pumpkin patches from our directory — up to five per state, ranked by Google rating and review volume — into one list, state by state, so you can find the best option near you or scout one out before a trip. Jump to your state below, or read straight through for the full coast-to-coast picture.</p>
 <p>Every farm below links to its full profile with hours, admission details and a map, and every state links to our complete, ranked directory of every pumpkin patch we track there — this list is the highlight reel, not the whole picture. For help narrowing it down once you're on a specific farm's page, see our guide to <a href="/blog/how-to-choose-a-pumpkin-patch/">choosing the right pumpkin patch for your group</a>, and check <a href="/blog/when-does-pumpkin-patch-season-start/">when pumpkin patch season actually starts</a> in your region before you plan the trip. Want to search instead of scroll? Head to <a href="/pumpkin-patches/">Find a Pumpkin Patch Near You</a> and filter by state, ZIP code or attraction.</p>
 <p><button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button></p>`;
-
-  const stateSectionsHtml = statePicks
-    .map(({ stateName, top5 }) => {
-      if (!top5.length) return '';
-      const stateSlug = slugify(stateName);
-      const entriesHtml = top5.map((l, i) => renderPillarEntry(l, i, stateName)).join('\n');
-      return `<h2 id="${attr(stateSlug)}">${esc(stateName)}</h2>
-<p>${esc(top5[0].name)} leads our ${esc(stateName)} picks${top5[0].rating ? `, rated ${top5[0].rating.toFixed(1)} out of 5` : ''}. <a href="${statePath(stateName)}">See every pumpkin patch we track in ${esc(stateName)} &rarr;</a></p>
-<ol class="pillar-list">
-${entriesHtml}
-</ol>`;
-    })
-    .join('\n\n');
 
   const faqQa = [
     {
@@ -1810,11 +1783,17 @@ ${faqQa
   const tocSection = `<p class="listicle-toc"><strong>Jump to your state:</strong></p>
 ${tocHtml}`;
 
+  const sectionBlocks = mustSeeSections.map(({ stateName, top5 }) => {
+    const stateSlug = slugify(stateName);
+    return `<h2 id="${attr(stateSlug)}">${esc(stateName)}</h2>
+<p>${esc(top5[0].name)} leads our ${esc(stateName)} picks${top5[0].rating ? `, rated ${top5[0].rating.toFixed(1)} out of 5` : ''}. <a href="${statePath(stateName)}">See every pumpkin patch we track in ${esc(stateName)} &rarr;</a></p>
+${pillarEntries(top5, (l, i) => renderPillarEntry(l, i, stateName), stateName)}`;
+  });
+
   const body = `${tocSection}
 ${introHtml}
-${stateSectionsHtml}
-${faqHtml}
-${closingSummary}`;
+${sectionBlocks.slice(0, MUST_SEE_PER_PAGE).join('\n\n')}
+${mustSeePageCount > 1 ? paginationNav(path, 1, mustSeePageCount) : ''}`;
 
   const description = `Our picks for the best pumpkin patches to visit this Halloween season, state by state — ranked by rating and reviews, with ${esc(totalPicks.toLocaleString('en-US'))} farms across ${esc(String(statePicks.filter((s) => s.top5.length).length))} states.`;
   const postMeta = {
@@ -1883,8 +1862,35 @@ ${closingSummary}`;
   };
   const byline = renderByline(pillarAuthorSlug, postMeta.date, postMeta.readingTime);
   const pillarScripts = `<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
-  writePage(path, render(meta, heroHtml + byline + injectInArticleAd(body), { jsonld, scripts: pillarScripts }));
-  addToSitemap(path, '0.7', 'weekly', postMeta.date);
+  for (let pageNum = 1; pageNum <= mustSeePageCount; pageNum++) {
+    const slice = sectionBlocks.slice((pageNum - 1) * MUST_SEE_PER_PAGE, pageNum * MUST_SEE_PER_PAGE);
+    const pagePath = directoryPagePath(path, pageNum);
+    const pageBody = `${tocSection}
+${pageNum === 1 ? introHtml : `<p><a href="${path}">Back to the start of this list</a></p>`}
+${slice.join('\n\n')}
+${paginationNav(path, pageNum, mustSeePageCount)}
+${pageNum === mustSeePageCount ? `${faqHtml}\n${closingSummary}` : ''}`;
+    const pageMeta = pageNum === 1 ? meta : {
+      ...meta,
+      path: pagePath,
+      title: `${h1} — Page ${pageNum} of ${mustSeePageCount}`,
+      description: truncateMetaDescription(`Page ${pageNum} of ${mustSeePageCount}. ${description}`),
+      trail: [{ label: 'Blog', href: '/blog/' }, { label: h1, href: path }, { label: `Page ${pageNum}` }],
+    };
+    const pageJson = pageNum === 1 ? jsonld : {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'BlogPosting', headline: pageMeta.title, description: pageMeta.description, datePublished: postMeta.date, dateModified: postMeta.date, mainEntityOfPage: SITE_URL + pagePath, image: absImageUrl(heroSrc), author: jsonld['@graph'][0].author, publisher: jsonld['@graph'][0].publisher },
+        breadcrumbJsonLd(pageMeta.trail, pagePath),
+      ],
+    };
+    writePage(pagePath, render(pageMeta, heroHtml + byline + injectInArticleAd(pageBody), {
+      jsonld: pageJson,
+      scripts: pillarScripts,
+      headExtra: paginationHead(path, pageNum, mustSeePageCount),
+    }));
+    addToSitemap(pagePath, pageNum === 1 ? '0.7' : '0.4', 'weekly', postMeta.date);
+  }
 }
 
 /* --- programmatic "10 Best Pumpkin Patches in <State>" posts -------------
@@ -1922,7 +1928,7 @@ for (const stateName of stateNames) {
   const slug = slugify(h1);
   const path = `/blog/${slug}/`;
 
-  const heroSrc = (topN.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+  const heroSrc = displayPhoto((topN.find((l) => l.photo) || {}).photo, (topN[0] && topN[0].slug) || 'list');
   const heroHtml = blogHeroFigureHtml(heroSrc, `Pumpkin patches in ${stateName}`);
 
   const tocSection = `<p class="listicle-toc"><strong>Jump to:</strong> ${topN
@@ -1932,9 +1938,7 @@ for (const stateName of stateNames) {
   const summaryIntro = `<p>The ${STATE_POST_COUNT} best pumpkin patches in ${esc(stateName)} are ${joinNatural(names.map((n) => esc(n)))}, ranked by rating and review volume out of the ${esc(items.length.toLocaleString('en-US'))} pumpkin patches we track statewide. Each entry below includes the full address, today's hours, and what visitors say the farm is best for. Want the complete, searchable list? See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or start from our <a href="/pumpkin-patches/">state-by-state directory</a>.</p>
 <p><button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button></p>`;
 
-  const listHtml = `<ol class="pillar-list">
-${pillarEntries(topN, (l, i) => renderPillarEntry(l, i, stateName))}
-</ol>`;
+  const listHtml = pillarEntries(topN, (l, i) => renderPillarEntry(l, i, stateName), stateName);
 
   const faqQa = [
     {
@@ -2082,7 +2086,7 @@ function generateStateNounListicles(nounSingular) {
     const slug = slugify(h1);
     const path = `/blog/${slug}/`;
 
-    const heroSrc = (top10.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+    const heroSrc = displayPhoto((top10.find((l) => l.photo) || {}).photo, (top10[0] && top10[0].slug) || 'list');
     const heroHtml = blogHeroFigureHtml(heroSrc, `Pumpkin ${nounPlural} in ${stateName}`);
 
     const tocSection = `<p class="listicle-toc"><strong>Jump to:</strong> ${top10
@@ -2092,9 +2096,7 @@ function generateStateNounListicles(nounSingular) {
     const linkedNames = top10.map((l) => `<a href="${listingPath(l)}">${esc(l.name)}</a>`);
     const summaryIntro = `<p>The ${STATE_POST_COUNT} best pumpkin ${nounPlural} in ${esc(stateName)} are ${joinNatural(linkedNames)}, ranked by rating and review volume out of the ${esc(stateItems.length.toLocaleString('en-US'))} pumpkin patches we track statewide. Below, each ${nounSingular} gets a closer look — what it offers, how it's rated, and how to get there — followed by a table of contents' worth of jumping-off points and answers to the questions we hear most about visiting a ${esc(stateName)} pumpkin ${nounSingular}. Want the complete, searchable list? See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or start from our <a href="/pumpkin-patches/">state-by-state directory</a>.</p>`;
 
-    const listicleHtml = `<ol class="listicle">
-${listicleEntries(top10, (l, i) => renderListicleEntry(l, i + 1, stateName))}
-</ol>`;
+    const listicleHtml = listicleEntries(top10, (l, i) => renderListicleEntry(l, i + 1, stateName), stateName);
 
     const kidFriendly = top10.filter((l) => (l.features || []).some((f) => ['Petting zoo', 'Kids play area'].includes(f)));
     const kidAnswer = kidFriendly.length
@@ -2248,7 +2250,7 @@ for (const stateName of stateNames) {
   const slug = slugify(h1);
   const path = `/blog/${slug}/`;
 
-  const heroSrc = (topN.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+  const heroSrc = displayPhoto((topN.find((l) => l.photo) || {}).photo, (topN[0] && topN[0].slug) || 'list');
   const heroHtml = blogHeroFigureHtml(heroSrc, `U-pick pumpkin patches in ${stateName}`);
 
   const tocSection = `<p class="listicle-toc"><strong>Jump to:</strong> ${topN
@@ -2260,9 +2262,7 @@ for (const stateName of stateNames) {
     ? `<p>The best place to pick your own pumpkin in ${esc(stateName)} is ${linkedNames[0]} — the only farm we track statewide that's tagged for true u-pick, where you cut a pumpkin straight from the vine instead of choosing from a pile by the barn. Here's a closer look at what it offers, how it's rated, and how to get there, followed by answers to the questions we hear most about visiting. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse u-pick farms in every state on our <a href="${categoryPath(UPICK_CATEGORY)}">U-Pick Pumpkin Patches near me</a> page.</p>`
     : `<p>The ${x} best places to pick your own pumpkin in ${esc(stateName)} are ${joinNatural(linkedNames)} — farms tagged for true u-pick, where you cut a pumpkin straight from the vine instead of choosing from a pile by the barn. Below, each gets a closer look — what it offers, how it's rated, and how to get there — followed by answers to the questions we hear most about visiting. See every pumpkin patch we track in <a href="${statePath(stateName)}">${esc(stateName)}</a>, or browse u-pick farms in every state on our <a href="${categoryPath(UPICK_CATEGORY)}">U-Pick Pumpkin Patches near me</a> page.</p>`;
 
-  const listicleHtml = `<ol class="listicle">
-${listicleEntries(topN, (l, i) => renderListicleEntry(l, i + 1, stateName))}
-</ol>`;
+  const listicleHtml = listicleEntries(topN, (l, i) => renderListicleEntry(l, i + 1, stateName), stateName);
 
   const faqQa = [
     {
@@ -2398,7 +2398,7 @@ for (const stateName of stateNames) {
   const slug = slugify(h1);
   const path = `/blog/${slug}/`;
 
-  const heroSrc = (stateItems.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+  const heroSrc = displayPhoto((stateItems.find((l) => l.photo) || {}).photo, stateName || 'state');
   const heroHtml = blogHeroFigureHtml(heroSrc, `Pumpkin patch pricing in ${stateName}`);
 
   const upickCount = new Set(
@@ -2612,7 +2612,7 @@ function generateStateAttractionListicles(catOrSlug, content) {
     const slug = slugify(h1);
     const path = `/blog/${slug}/`;
 
-    const heroSrc = (topN.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+    const heroSrc = displayPhoto((topN.find((l) => l.photo) || {}).photo, (topN[0] && topN[0].slug) || 'list');
     const heroHtml = blogHeroFigureHtml(heroSrc, content.heroAlt(stateName));
 
     const tocSection = `<p class="listicle-toc"><strong>Jump to:</strong> ${topN
@@ -2620,9 +2620,7 @@ function generateStateAttractionListicles(catOrSlug, content) {
       .join(' <span aria-hidden="true">&middot;</span> ')}</p>`;
 
     const summaryIntro = content.intro({ topN, x, names, linkedNames, stateName, cat });
-    const listicleHtml = `<ol class="listicle">
-${listicleEntries(topN, (l, i) => renderListicleEntry(l, i + 1, stateName))}
-</ol>`;
+    const listicleHtml = listicleEntries(topN, (l, i) => renderListicleEntry(l, i + 1, stateName), stateName);
 
     const faqQa = content.faq({ topN, x, names, stateName, cat });
     const faqHtml = `<h2>Frequently asked questions</h2>
@@ -3259,7 +3257,7 @@ for (const [key, items] of byCity) {
   const slug = slugify(`5 best pumpkin patches in ${cityName} ${stateCode}`);
   const path = `/blog/${slug}/`;
 
-  const heroSrc = (top5.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+  const heroSrc = displayPhoto((top5.find((l) => l.photo) || {}).photo, (top5[0] && top5[0].slug) || 'list');
   const heroHtml = blogHeroFigureHtml(heroSrc, `Pumpkin patches near ${label}`);
 
   const tocSection = `<p class="listicle-toc"><strong>Jump to:</strong> ${top5
@@ -3268,9 +3266,7 @@ for (const [key, items] of byCity) {
 
   const summaryIntro = `<p>The 5 best pumpkin patches in ${esc(label)} are ${joinNatural(names.map((n) => esc(n)))}, ranked by rating and review volume. Here's a closer look at each — what they offer, how they're rated, and how to get there — followed by answers to the questions we hear most about visiting. Want the full picture? See every farm we track in <a href="${cityPath(stateName, cityName)}">${esc(label)}</a>, browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>, or start from our <a href="/pumpkin-patches/">state-by-state directory</a>.</p>`;
 
-  const listicleHtml = `<ol class="listicle">
-${listicleEntries(top5, (l, i) => renderListicleEntry(l, i + 1, cityName))}
-</ol>`;
+  const listicleHtml = listicleEntries(top5, (l, i) => renderListicleEntry(l, i + 1, cityName), cityName);
 
   const kidFriendly = top5.filter((l) => (l.features || []).some((f) => CITY_POST_KID_FEATURES.includes(f)));
   const kidAnswer = kidFriendly.length
@@ -3431,7 +3427,7 @@ for (const [key, items] of byCity) {
     const path = `/blog/${slug}/`;
     const h1 = x === 1 ? `Best ${attractionNameForCount} in ${label}` : `${x} Best ${attractionNamePlural} in ${label}`;
 
-    const heroSrc = (topN.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+    const heroSrc = displayPhoto((topN.find((l) => l.photo) || {}).photo, (topN[0] && topN[0].slug) || 'list');
     const heroHtml = blogHeroFigureHtml(heroSrc, `${cat.name} near ${label}`);
 
     const tocSection = `<p class="listicle-toc"><strong>Jump to:</strong> ${topN
@@ -3442,9 +3438,7 @@ for (const [key, items] of byCity) {
       ? `<p>The best ${esc(cat.singular)} in ${esc(label)} is ${esc(names[0])}, based on rating and review volume — it's the only one we currently track in town. Here's what it offers, how it's rated, and how to get there — followed by the questions we hear most about visiting. For every pumpkin patch we track nearby, see the full <a href="${cityPath(stateName, cityName)}">list of pumpkin patches in ${esc(label)}</a> or browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>. You can also browse ${esc(cat.name.toLowerCase())} everywhere we track them on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>`
       : `<p>The ${x} best ${esc(cat.name.toLowerCase())} in ${esc(label)} are ${joinNatural(names.map((n) => esc(n)))}, ranked by rating and review volume. Here's what each offers, how it's rated, and how to get there — followed by the questions we hear most about visiting. For every pumpkin patch we track nearby, see the full <a href="${cityPath(stateName, cityName)}">list of pumpkin patches in ${esc(label)}</a> or browse all of <a href="${statePath(stateName)}">${esc(stateName)}</a>. You can also browse ${esc(cat.name.toLowerCase())} everywhere we track them on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>`;
 
-    const listicleHtml = `<ol class="listicle">
-${listicleEntries(topN, (l, i) => renderListicleEntry(l, i + 1, cityName))}
-</ol>`;
+    const listicleHtml = listicleEntries(topN, (l, i) => renderListicleEntry(l, i + 1, cityName), cityName);
 
     const faqQa = [
       {
@@ -3633,13 +3627,12 @@ function generateCategoryCityPages(catOrSlug, { minListings = 1, itemFilter = nu
       ],
     };
 
-    const heroSrc = (distinct.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+    const heroSrc = displayPhoto((distinct.find((l) => l.photo) || {}).photo, (distinct[0] && distinct[0].slug) || 'list');
     const heroHtml = blogHeroFigureHtml(heroSrc, `${cat.name} in ${label}`);
 
     const listHtml = `<p><button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button></p>
-<ol class="pillar-list">
-${pillarEntries(distinct, (l, i) => renderPillarEntry(l, i, cityName))}
-</ol>`;
+${pillarFeed(distinct, (l, i) => renderPillarEntry(l, i, cityName), cityName)}
+${paginationNav(path, 1, 1)}`;
 
     const relatedGuide = (cityGuideLinks.get(`${stateName}|${cityName}`) || []).find((g) => g.catSlug === cat.slug);
     const siblings = qualifying.filter((q) => q.stateName === stateName && q.cityName !== cityName);
@@ -3740,13 +3733,11 @@ function generateCategoryStatePages(catOrSlug, { minListings = 1, itemFilter = n
       ],
     };
 
-    const heroSrc = (distinct.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+    const heroSrc = displayPhoto((distinct.find((l) => l.photo) || {}).photo, (distinct[0] && distinct[0].slug) || 'list');
     const heroHtml = blogHeroFigureHtml(heroSrc, `${cat.name} in ${stateName}`);
 
     const listHtml = `<p><button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button></p>
-<ol class="pillar-list">
-${pillarEntries(distinct, (l, i) => renderPillarEntry(l, i, stateName))}
-</ol>`;
+${pillarFeed(distinct, (l, i) => renderPillarEntry(l, i, stateName), stateName)}`;
 
     const cityPages = cities
       .map((city) => categoryCityPageLinks.get(`${cat.slug}|${stateName}|${city}`))
@@ -3820,9 +3811,9 @@ const farmsHub = {
   name: 'Pumpkin Farms',
   singular: 'pumpkin farm',
   title: 'Pumpkin Farms Near Me — Find a Pumpkin Farm in Your State',
-  description: 'Find pumpkin farms near you. Browse every pumpkin farm we track across all 50 states, with addresses, hours, ratings and directions.',
+  description: 'Find pumpkin farms near you. Browse every pumpkin farm we track across the United States, with addresses, hours, ratings and directions.',
   lede: 'Real, working farms growing and selling pumpkins — browse every one we track near you, from small roadside stands to full agritourism destinations.',
-  intro: `<p>"Pumpkin farm," "pumpkin patch" and "pumpkin field" all describe the same kind of place, and people search for all three — so we cover all three. Every listing here is a real, working farm or seasonal lot pulled from public business data: address, hours, rating and what's actually on site, in one page.</p>
+  intro: `<p>"Pumpkin farm," "pumpkin patch" and "pumpkin field" all describe the same kind of place, and people search for all three — so we cover all three. Every listing here is a real, working farm or seasonal lot pulled from public business data: address, hours, rating and what's actually on site.</p>
 <p>Some are small roadside operations selling pumpkins from a stand or a field; others run a full fall program with a corn maze, hayrides and a petting zoo alongside the pumpkins. Filter by state or attraction below, or search by name or town.</p>`,
 };
 
@@ -3844,10 +3835,31 @@ const farmsHub = {
     trail: [{ label: 'Pumpkin Patches', href: '/pumpkin-patches/' }, { label: farmsHub.name }],
   };
 
-  const heroSrc = (items.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+  const heroSrc = displayPhoto((items.find((l) => l.photo) || {}).photo, (items[0] && items[0].slug) || 'hub');
   const heroHtml = blogHeroFigureHtml(heroSrc, `${farmsHub.name} near you`);
 
-  const filterBar = `<div class="find-tool state-filter" id="state-filter">
+  const stateGrid = `<h2>${esc(farmsHub.name)} by state</h2>
+  <div class="state-grid">
+${stateCounts.map(({ state, n }) => `    <a class="state-link" href="${statePath(state)}">${esc(state)} <span>${n}</span></a>`).join('\n')}
+  </div>
+  <p style="margin-top:1.5rem"><a class="btn btn-outline" href="/pumpkin-patches/">Browse the full pumpkin patch directory</a></p>`;
+
+  const pages = directoryPages(items);
+  for (const pg of pages) {
+    const pagePath = directoryPagePath('/farms/', pg.pageNum);
+    const pageStates = [...new Set(pg.items.map((l) => l.state).filter(Boolean))].sort();
+    const pageCategories = categories
+      .map((c) => ({ c, n: pg.items.filter((l) => (l.features || []).includes(c.feature)).length }))
+      .filter((x) => x.n > 0);
+    const rangeNote = `Listings ${(pg.start + 1).toLocaleString('en-US')}–${(pg.start + pg.items.length).toLocaleString('en-US')} of ${items.length.toLocaleString('en-US')} pumpkin farms`;
+    const pageMeta = {
+      ...meta,
+      path: pagePath,
+      title: pg.pageNum === 1 ? meta.title : `${meta.title} — Page ${pg.pageNum} of ${pg.totalPages}`,
+      description: pg.pageNum === 1 ? meta.description : truncateMetaDescription(`Page ${pg.pageNum} of ${pg.totalPages}. ${meta.description}`),
+      trail: pg.pageNum === 1 ? meta.trail : [{ label: 'Pumpkin Patches', href: '/pumpkin-patches/' }, { label: farmsHub.name, href: '/farms/' }, { label: `Page ${pg.pageNum}` }],
+    };
+    const filterBar = `<div class="find-tool state-filter" id="state-filter">
   <div class="search-field">
     <label class="visually-hidden" for="state-filter-q">Search by name, city or state</label>
     <input id="state-filter-q" type="text" placeholder="Search by name, city or state..." autocomplete="off">
@@ -3856,15 +3868,15 @@ const farmsHub = {
     <label class="control">
       <span class="control-label">State</span>
       <select id="state-filter-state" aria-label="Filter by state">
-        <option value="">All states</option>
-${stateCounts.map(({ state, n }) => `        <option value="${attr(state.toLowerCase())}">${esc(state)} (${n})</option>`).join('\n')}
+        <option value="">All states on this page</option>
+${pageStates.map((state) => `        <option value="${attr(state.toLowerCase())}">${esc(state)} (${pg.items.filter((l) => l.state === state).length})</option>`).join('\n')}
       </select>
     </label>
     <label class="control">
       <span class="control-label">Attraction</span>
       <select id="state-filter-feature" aria-label="Filter by attraction">
         <option value="">All</option>
-${presentCategoriesAll.map(({ c, n }) => `        <option value="${attr(c.feature.toLowerCase())}">${esc(c.name)} (${n})</option>`).join('\n')}
+${pageCategories.map(({ c, n }) => `        <option value="${attr(c.feature.toLowerCase())}">${esc(c.name)} (${n})</option>`).join('\n')}
       </select>
     </label>
     <label class="control">
@@ -3880,48 +3892,39 @@ ${presentCategoriesAll.map(({ c, n }) => `        <option value="${attr(c.featur
     <button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button>
   </div>
   <div class="results-head" style="padding:0.6rem 0 0;background:transparent;border:0">
-    <p class="results-count" id="state-filter-count">${items.length.toLocaleString('en-US')} pumpkin farms</p>
+    <p class="results-count" id="state-filter-count">${rangeNote}</p>
   </div>
 </div>`;
-
-  const listHtml = `${filterBar}
-<ol class="pillar-list" id="state-pillar-list">
-${pillarEntriesTiered(items, (l, i) => renderPillarEntry(l, i, l.state), NATIONAL_HUB_RICH_ENTRIES)}
-</ol>
-<p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search, state or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
-
-  const body = `${heroHtml}
-${farmsHub.intro}
-${renderScopedMap(items, listHtml, { singular: farmsHub.singular, plural: farmsHub.name.toLowerCase() })}
+    const listHtml = `${filterBar}
+${pillarFeed(pg.items, (l, i) => renderPillarEntry(l, pg.start + i, l.state), null)}
+<p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search, state or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>
+${paginationNav('/farms/', pg.pageNum, pg.totalPages)}`;
+    const body = `${pg.pageNum === 1 ? `${heroHtml}\n${farmsHub.intro}` : `<p><a href="/farms/">Back to pumpkin farms</a></p>`}
+${renderScopedMap(pg.items, listHtml, { singular: farmsHub.singular, plural: farmsHub.name.toLowerCase() })}
 <div class="section" style="padding-bottom:0">
-  <h2>${esc(farmsHub.name)} by state</h2>
-  <div class="state-grid">
-${stateCounts.map(({ state, n }) => `    <a class="state-link" href="${statePath(state)}">${esc(state)} <span>${n}</span></a>`).join('\n')}
-  </div>
-  <p style="margin-top:1.5rem"><a class="btn btn-outline" href="/pumpkin-patches/">Browse the full pumpkin patch directory</a></p>
+  ${stateGrid}
 </div>`;
-
-  const jsonld = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      { '@type': 'CollectionPage', name: meta.title, description: meta.description, url: SITE_URL + meta.path },
-      {
-        '@type': 'ItemList',
-        numberOfItems: items.length,
-        itemListElement: items.slice(0, 25).map((l, i) => ({
-          '@type': 'ListItem',
-          position: i + 1,
-          url: SITE_URL + listingPath(l),
-          name: l.name,
-        })),
-      },
-      breadcrumbJsonLd(meta.trail, meta.path),
-    ],
-  };
-
-  const scripts = `${pageMapScripts}\n<script src="/assets/js/state-filter.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
-  writePage(meta.path, render(meta, body, { jsonld, scripts }));
-  addToSitemap(meta.path, '0.7', 'weekly');
+    const jsonld = {
+      '@context': 'https://schema.org',
+      '@graph': [
+        { '@type': 'CollectionPage', name: pageMeta.title, description: pageMeta.description, url: SITE_URL + pagePath },
+        {
+          '@type': 'ItemList',
+          numberOfItems: pg.items.length,
+          itemListElement: pg.items.map((l, i) => ({
+            '@type': 'ListItem',
+            position: pg.start + i + 1,
+            url: SITE_URL + listingPath(l),
+            name: l.name,
+          })),
+        },
+        breadcrumbJsonLd(pageMeta.trail, pagePath),
+      ],
+    };
+    const scripts = `${pageMapScripts}\n<script src="/assets/js/state-filter.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
+    writePage(pagePath, render(pageMeta, body, { jsonld, scripts, headExtra: paginationHead('/farms/', pg.pageNum, pg.totalPages) }));
+    addToSitemap(pagePath, pg.pageNum === 1 ? '0.7' : '0.4', 'weekly');
+  }
 }
 
 // CITY_POST_MIN_LISTINGS (5) turned out far too strict for an unfiltered
@@ -4049,13 +4052,24 @@ ${authors
 // no location known yet) default for each homepage "Near Me" carousel —
 // swapped client-side for a real distance-sorted set the moment a visitor's
 // location is known (auto-locate on load, ZIP search, or "Use my location").
-function topRated(items, count = 12) {
+function rankByScore(items) {
   return [...items]
     .filter((l) => l.rating)
-    .sort((a, b) => (b.rating || 0) * Math.log10((b.reviews || 1) + 1) - (a.rating || 0) * Math.log10((a.reviews || 1) + 1))
-    .slice(0, count);
+    .sort((a, b) => (b.rating || 0) * Math.log10((b.reviews || 1) + 1) - (a.rating || 0) * Math.log10((a.reviews || 1) + 1));
 }
-const topRatedAll = topRated(listings);
+function takeUnique(ranked, count, used) {
+  const out = [];
+  for (const l of ranked) {
+    if (!l.slug || used.has(l.slug)) continue;
+    used.add(l.slug);
+    out.push(l);
+    if (out.length >= count) break;
+  }
+  return out;
+}
+const homeCardUsed = new Set();
+const rankedAll = rankByScore(listings);
+const topRatedAll = takeUnique(rankedAll, 12, homeCardUsed);
 
 // The two carousels that sit directly under the map/results, ahead of the
 // per-category ones. "Open Now" has no valid *server-rendered* content —
@@ -4091,10 +4105,10 @@ const homepageNearbySections = [
     key: `nearby-${c.slug}`,
     title: `${c.name} Near Me`,
     href: categoryPath(c),
-    items: topRated(byCategory.get(c.slug) || []),
+    items: takeUnique(rankByScore(byCategory.get(c.slug) || []), 12, homeCardUsed),
   })),
-  { key: 'nearby-farms', title: 'Farms Near Me', href: '/farms/', items: topRatedAll },
-  { key: 'nearby-pumpkin-patches', title: 'Pumpkin Patches Near Me', href: '/pumpkin-patches/', items: topRatedAll },
+  { key: 'nearby-farms', title: 'Farms Near Me', href: '/farms/', items: takeUnique(rankedAll, 12, homeCardUsed) },
+  { key: 'nearby-pumpkin-patches', title: 'Pumpkin Patches Near Me', href: '/pumpkin-patches/', items: takeUnique(rankedAll, 12, homeCardUsed) },
 ];
 
 function renderNearbyCarouselSection(section, altBg) {
@@ -4203,12 +4217,19 @@ const tokens = {
   // scoped to one state.
   '{{PUMPKIN_PATCHES_DIRECTORY}}': (() => {
     const items = rankListings(listings);
-    const presentCategoriesAll = categories
-      .map((c) => ({ c, n: items.filter((l) => (l.features || []).includes(c.feature)).length }))
-      .filter((x) => x.n > 0);
-    const stateCounts = stateNames.map((s) => ({ state: s, n: (byState.get(s) || []).length }));
+    const pages = directoryPages(items);
+    const stateGrid = `<h2>Pumpkin patches by state</h2>
+<div class="state-grid">
+${stateNames.map((s) => `  <a class="state-link" href="${statePath(s)}">${esc(s)} <span>${byState.get(s).length}</span></a>`).join('\n')}
+</div>`;
 
-    const filterBar = `<div class="find-tool state-filter" id="state-filter">
+    function directoryBlock(pg) {
+      const pageStates = [...new Set(pg.items.map((l) => l.state).filter(Boolean))].sort();
+      const pageCategories = categories
+        .map((c) => ({ c, n: pg.items.filter((l) => (l.features || []).includes(c.feature)).length }))
+        .filter((x) => x.n > 0);
+      const rangeNote = `Listings ${(pg.start + 1).toLocaleString('en-US')}–${(pg.start + pg.items.length).toLocaleString('en-US')} of ${items.length.toLocaleString('en-US')} pumpkin patches`;
+      const filterBar = `<div class="find-tool state-filter" id="state-filter">
   <div class="search-field">
     <label class="visually-hidden" for="state-filter-q">Search by name, city or state</label>
     <input id="state-filter-q" type="text" placeholder="Search by name, city or state..." autocomplete="off">
@@ -4217,15 +4238,15 @@ const tokens = {
     <label class="control">
       <span class="control-label">State</span>
       <select id="state-filter-state" aria-label="Filter by state">
-        <option value="">All states</option>
-${stateCounts.map(({ state, n }) => `        <option value="${attr(state.toLowerCase())}">${esc(state)} (${n})</option>`).join('\n')}
+        <option value="">All states on this page</option>
+${pageStates.map((state) => `        <option value="${attr(state.toLowerCase())}">${esc(state)} (${pg.items.filter((l) => l.state === state).length})</option>`).join('\n')}
       </select>
     </label>
     <label class="control">
       <span class="control-label">Attraction</span>
       <select id="state-filter-feature" aria-label="Filter by attraction">
         <option value="">All</option>
-${presentCategoriesAll.map(({ c, n }) => `        <option value="${attr(c.feature.toLowerCase())}">${esc(c.name)} (${n})</option>`).join('\n')}
+${pageCategories.map(({ c, n }) => `        <option value="${attr(c.feature.toLowerCase())}">${esc(c.name)} (${n})</option>`).join('\n')}
       </select>
     </label>
     <label class="control">
@@ -4241,17 +4262,54 @@ ${presentCategoriesAll.map(({ c, n }) => `        <option value="${attr(c.featur
     <button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button>
   </div>
   <div class="results-head" style="padding:0.6rem 0 0;background:transparent;border:0">
-    <p class="results-count" id="state-filter-count">${items.length.toLocaleString('en-US')} pumpkin patches</p>
+    <p class="results-count" id="state-filter-count">${rangeNote}</p>
   </div>
 </div>`;
+      const listHtml = `${filterBar}
+${pillarFeed(pg.items, (l, i) => renderPillarEntry(l, pg.start + i, l.state), null)}
+<p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search, state or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>
+${paginationNav('/pumpkin-patches/', pg.pageNum, pg.totalPages)}`;
+      return renderScopedMap(pg.items, listHtml);
+    }
 
-    const listHtml = `${filterBar}
-<ol class="pillar-list" id="state-pillar-list">
-${pillarEntriesTiered(items, (l, i) => renderPillarEntry(l, i, l.state), NATIONAL_HUB_RICH_ENTRIES)}
-</ol>
-<p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search, state or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
+    for (const pg of pages.slice(1)) {
+      const pagePath = directoryPagePath('/pumpkin-patches/', pg.pageNum);
+      const pageMeta = {
+        path: pagePath,
+        title: `Find a Pumpkin Patch Near You — Page ${pg.pageNum} of ${pg.totalPages}`,
+        description: truncateMetaDescription(`Page ${pg.pageNum} of ${pg.totalPages}. Search pumpkin patches by name, city, state or attraction.`),
+        h1: 'Find a Pumpkin Patch Near You',
+        lede: `Page ${pg.pageNum} of ${pg.totalPages}.`,
+        nav: 'pumpkin-patches',
+        layout: 'wide',
+        trail: [{ label: 'Pumpkin Patches', href: '/pumpkin-patches/' }, { label: `Page ${pg.pageNum}` }],
+      };
+      const body = `<p><a href="/pumpkin-patches/">Back to the first page</a></p>
+${directoryBlock(pg)}
+<div class="section" style="padding-bottom:0">${stateGrid}</div>`;
+      const jsonld = {
+        '@context': 'https://schema.org',
+        '@graph': [
+          { '@type': 'CollectionPage', name: pageMeta.title, description: pageMeta.description, url: SITE_URL + pagePath },
+          {
+            '@type': 'ItemList',
+            numberOfItems: pg.items.length,
+            itemListElement: pg.items.map((l, i) => ({
+              '@type': 'ListItem',
+              position: pg.start + i + 1,
+              url: SITE_URL + listingPath(l),
+              name: l.name,
+            })),
+          },
+          breadcrumbJsonLd(pageMeta.trail, pagePath),
+        ],
+      };
+      const scripts = `${pageMapScripts}\n<script src="/assets/js/state-filter.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
+      writePage(pagePath, render(pageMeta, body, { jsonld, scripts, headExtra: paginationHead('/pumpkin-patches/', pg.pageNum, pg.totalPages) }));
+      addToSitemap(pagePath, '0.4', 'weekly');
+    }
 
-    return renderScopedMap(items, listHtml);
+    return directoryBlock(pages[0]);
   })(),
 };
 
@@ -4328,6 +4386,7 @@ for (const page of staticPages) {
   const body = expandTokens(page.body);
   let jsonld = null;
   let scripts = '';
+  let headExtra = '';
 
   if (meta.path === '/') {
     jsonld = {
@@ -4372,6 +4431,8 @@ for (const page of staticPages) {
 
   if (meta.path === '/pumpkin-patches/') {
     scripts = `${pageMapScripts}\n<script src="/assets/js/state-filter.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`;
+    const totalDirectoryPages = Math.max(1, Math.ceil(listings.length / DIRECTORY_PAGE_SIZE));
+    headExtra = paginationHead('/pumpkin-patches/', 1, totalDirectoryPages);
   }
 
   if (meta.path === '/dashboard/') {
@@ -4394,7 +4455,7 @@ for (const page of staticPages) {
     };
   }
 
-  writePage(meta.path, render(meta, body, { jsonld, scripts }));
+  writePage(meta.path, render(meta, body, { jsonld, scripts, headExtra }));
   if (!meta.noindex) addToSitemap(meta.path, meta.path === '/' ? '1.0' : '0.7', meta.path === '/' ? 'daily' : 'monthly');
 }
 
@@ -4429,7 +4490,17 @@ for (const stateName of stateNames) {
     .map((c) => ({ c, n: items.filter((l) => (l.features || []).includes(c.feature)).length }))
     .filter((x) => x.n > 0);
 
-  const cityCounts = cities.map((c) => ({ city: c, n: items.filter((l) => l.city === c).length }));
+  const pages = directoryPages(items);
+  for (const pg of pages) {
+  const pagePath = directoryPagePath(path, pg.pageNum);
+  const pageCities = [...new Set(pg.items.map((l) => l.city).filter(Boolean))].sort();
+  const pageCityCounts = pageCities.map((c) => ({ city: c, n: pg.items.filter((l) => l.city === c).length }));
+  const pageCategories = categories
+    .map((c) => ({ c, n: pg.items.filter((l) => (l.features || []).includes(c.feature)).length }))
+    .filter((x) => x.n > 0);
+  const rangeNote = pg.totalPages === 1
+    ? `${items.length.toLocaleString('en-US')} pumpkin patch${items.length === 1 ? '' : 'es'}`
+    : `Listings ${(pg.start + 1).toLocaleString('en-US')}–${(pg.start + pg.items.length).toLocaleString('en-US')} of ${items.length.toLocaleString('en-US')}`;
 
   const filterBar = `<div class="find-tool state-filter" id="state-filter">
   <div class="search-field">
@@ -4440,15 +4511,15 @@ for (const stateName of stateNames) {
     <label class="control">
       <span class="control-label">City</span>
       <select id="state-filter-city" aria-label="Filter by city">
-        <option value="">All cities</option>
-${cityCounts.map(({ city, n }) => `        <option value="${attr(city.toLowerCase())}">${esc(city)} (${n})</option>`).join('\n')}
+        <option value="">All cities on this page</option>
+${pageCityCounts.map(({ city, n }) => `        <option value="${attr(city.toLowerCase())}">${esc(city)} (${n})</option>`).join('\n')}
       </select>
     </label>
     <label class="control">
       <span class="control-label">Attraction</span>
       <select id="state-filter-feature" aria-label="Filter by attraction">
         <option value="">All</option>
-${presentCategories.map(({ c, n }) => `        <option value="${attr(c.feature.toLowerCase())}">${esc(c.name)} (${n})</option>`).join('\n')}
+${pageCategories.map(({ c, n }) => `        <option value="${attr(c.feature.toLowerCase())}">${esc(c.name)} (${n})</option>`).join('\n')}
       </select>
     </label>
     <label class="control">
@@ -4464,15 +4535,14 @@ ${presentCategories.map(({ c, n }) => `        <option value="${attr(c.feature.t
     <button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button>
   </div>
   <div class="results-head" style="padding:0.6rem 0 0;background:transparent;border:0">
-    <p class="results-count" id="state-filter-count">${items.length.toLocaleString('en-US')} pumpkin patch${items.length === 1 ? '' : 'es'}</p>
+    <p class="results-count" id="state-filter-count">${rangeNote}</p>
   </div>
 </div>`;
 
   const listHtml = `${filterBar}
-<ol class="pillar-list" id="state-pillar-list">
-${pillarEntries(items, (l, i) => renderPillarEntry(l, i, stateName))}
-</ol>
-<p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search, city or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
+${pillarFeed(pg.items, (l, i) => renderPillarEntry(l, pg.start + i, stateName), stateName)}
+<p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search, city or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>
+${paginationNav(path, pg.pageNum, pg.totalPages)}`;
 
   const citySection = cities.length
     ? `<h2>Pumpkin patches by town in ${esc(stateName)}</h2>
@@ -4510,18 +4580,26 @@ ${stateGuides.map((g) => `  <li><a href="${g.href}">${esc(g.title)}</a></li>`).j
 </ul>`
     : '';
 
-  const body = `${renderScopedMap(items, listHtml)}
+  const pageMeta = {
+    ...meta,
+    path: pagePath,
+    title: pg.pageNum === 1 ? meta.title : `${meta.title} — Page ${pg.pageNum} of ${pg.totalPages}`,
+    description: pg.pageNum === 1 ? meta.description : truncateMetaDescription(`Page ${pg.pageNum} of ${pg.totalPages}. ${meta.description}`),
+    trail: pg.pageNum === 1 ? meta.trail : [{ label: 'Pumpkin Patches', href: '/pumpkin-patches/' }, { label: stateName, href: path }, { label: `Page ${pg.pageNum}` }],
+  };
+
+  const body = `${renderScopedMap(pg.items, listHtml)}
 <div class="section" style="padding-bottom:0">
-${citySection}
+${pg.pageNum === 1 ? `${citySection}
 ${catSection}
 ${guidesSection}
-${experiencesLink}
+${experiencesLink}` : `<p><a href="${path}">All ${esc(stateName)} pumpkin patches</a></p>`}
 <h2>Planning a ${esc(stateName)} pumpkin patch trip</h2>
 <p>Pumpkin patch season in ${esc(stateName)} generally runs from mid-September through the first weekend of November, with the busiest weekends falling in mid-October. Weekday mornings are the quietest time to visit, and many farms charge admission only on weekends when the corn maze, hayrides and food stands are all running.</p>
 <p>Bring cash — plenty of family farms still run cash-only gates or wagon rides — and check whether the patch charges by the pumpkin, by the pound or as a flat admission. Call ahead after heavy rain, since field access is the first thing farms close.</p>
 <p><a class="btn btn-outline" href="/">Search the ${esc(stateName)} map</a></p>
-${renderEmailCapture(stateName, { tone: 'inline' })}
-${renderPhotoGallery(items, path, stateName)}
+${pg.pageNum === 1 ? renderEmailCapture(stateName, { tone: 'inline' }) : ''}
+${pg.pageNum === 1 ? renderPhotoGallery(items, path, stateName) : ''}
 </div>`;
 
   const jsonld = {
@@ -4529,29 +4607,30 @@ ${renderPhotoGallery(items, path, stateName)}
     '@graph': [
       {
         '@type': 'CollectionPage',
-        name: meta.title,
-        description: meta.description,
-        url: SITE_URL + path,
+        name: pageMeta.title,
+        description: pageMeta.description,
+        url: SITE_URL + pagePath,
       },
       {
         '@type': 'ItemList',
-        numberOfItems: items.length,
-        itemListElement: items.slice(0, 25).map((l, i) => ({
+        numberOfItems: pg.items.length,
+        itemListElement: pg.items.map((l, i) => ({
           '@type': 'ListItem',
-          position: i + 1,
+          position: pg.start + i + 1,
           url: SITE_URL + listingPath(l),
           name: l.name,
         })),
       },
-      breadcrumbJsonLd(meta.trail, path),
+      breadcrumbJsonLd(pageMeta.trail, pagePath),
     ],
   };
 
-  const scripts = items.length
+  const scripts = pg.items.length
     ? `${pageMapScripts}\n<script src="/assets/js/state-filter.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`
     : '';
-  writePage(path, render(meta, body, { jsonld, scripts }));
-  addToSitemap(path, '0.8', 'weekly');
+  writePage(pagePath, render(pageMeta, body, { jsonld, scripts, headExtra: paginationHead(path, pg.pageNum, pg.totalPages) }));
+  addToSitemap(pagePath, pg.pageNum === 1 ? '0.8' : '0.5', 'weekly');
+  }
 }
 
 /* --- city pages ---------------------------------------------------------- */
@@ -4619,9 +4698,7 @@ ${featureCounts.map(({ c, n }) => `        <option value="${attr(c.feature.toLow
 </div>`;
 
   const listHtml = `${filterBar}
-<ol class="pillar-list" id="state-pillar-list">
-${pillarEntries(items, (l, i) => renderPillarEntry(l, i, cityName))}
-</ol>
+${pillarFeed(items, (l, i) => renderPillarEntry(l, i, cityName), cityName)}
 <p class="empty-state" id="state-filter-empty" hidden><strong>No matches.</strong> Try a different search or attraction, or <button type="button" class="btn-link" id="state-filter-empty-reset">reset the filters</button>.</p>`;
 
   // Every city page carries one unit regardless of how many farms it
@@ -4713,7 +4790,7 @@ for (const cat of categories) {
     trail: [{ label: 'Pumpkin Patches', href: '/pumpkin-patches/' }, { label: cat.name }],
   };
 
-  const catHeroSrc = (items.find((l) => l.photo) || {}).photo || PLACEHOLDER_IMAGE;
+  const catHeroSrc = displayPhoto((items.find((l) => l.photo) || {}).photo, (items[0] && items[0].slug) || 'hub');
   const catHeroHtml = blogHeroFigureHtml(catHeroSrc, `${cat.name} near you`);
 
   const filterBar = `<div class="find-tool state-filter" id="cat-filter">
@@ -4746,12 +4823,47 @@ ${statesWith.map((s) => `        <option value="${attr(s.toLowerCase())}">${esc(
   </div>
 </div>`;
 
-  const listHtml = items.length
-    ? `${filterBar}
-<ol class="pillar-list" id="cat-pillar-list">
-${pillarEntries(items, (l, i) => renderPillarEntry(l, i, cat.name))}
-</ol>
-<p class="empty-state" id="cat-filter-empty" hidden><strong>No matches.</strong> Try a different search or state, or <button type="button" class="btn-link" id="cat-filter-empty-reset">reset the filters</button>.</p>`
+  const catPages = items.length ? directoryPages(items) : [{ pageNum: 1, totalPages: 1, start: 0, items: [] }];
+  for (const pg of catPages) {
+  const pagePath = directoryPagePath(path, pg.pageNum);
+  const pageStates = [...new Set(pg.items.map((l) => l.state).filter(Boolean))].sort();
+  const rangeNote = pg.totalPages === 1
+    ? `${items.length.toLocaleString('en-US')} listings`
+    : `Listings ${(pg.start + 1).toLocaleString('en-US')}–${(pg.start + pg.items.length).toLocaleString('en-US')} of ${items.length.toLocaleString('en-US')}`;
+  const pageFilterBar = `<div class="find-tool state-filter" id="cat-filter">
+  <div class="search-field">
+    <label class="visually-hidden" for="cat-filter-q">Search by name or town</label>
+    <input id="cat-filter-q" type="text" placeholder="Search by name or town..." autocomplete="off">
+  </div>
+  <div class="control-group">
+    <label class="control">
+      <span class="control-label">State</span>
+      <select id="cat-filter-state" aria-label="Filter by state">
+        <option value="">All states on this page</option>
+${pageStates.map((s) => `        <option value="${attr(s.toLowerCase())}">${esc(s)} (${pg.items.filter((l) => l.state === s).length})</option>`).join('\n')}
+      </select>
+    </label>
+    <label class="control">
+      <span class="control-label">Sort</span>
+      <select id="cat-filter-sort" aria-label="Sort results">
+        <option value="rating">Top rated</option>
+        <option value="reviews">Most reviewed</option>
+        <option value="name">Name A-Z</option>
+        <option value="distance">Nearest to me</option>
+      </select>
+    </label>
+    <button class="toggle-btn" type="button" id="cat-filter-reset">Reset</button>
+    <button class="toggle-btn" type="button" data-geo-trigger>Show distance from me</button>
+  </div>
+  <div class="results-head" style="padding:0.6rem 0 0;background:transparent;border:0">
+    <p class="results-count" id="cat-filter-count">${rangeNote}</p>
+  </div>
+</div>`;
+  const listHtml = pg.items.length
+    ? `${pageFilterBar}
+${pillarFeed(pg.items, (l, i) => renderPillarEntry(l, pg.start + i, cat.name), cat.name)}
+<p class="empty-state" id="cat-filter-empty" hidden><strong>No matches.</strong> Try a different search or state, or <button type="button" class="btn-link" id="cat-filter-empty-reset">reset the filters</button>.</p>
+${paginationNav(path, pg.pageNum, pg.totalPages)}`
     : `<div class="empty-state">
   <h3>No ${esc(cat.name.toLowerCase())} listed yet</h3>
   <p>We are still building out this category. If you know a farm that should be here, send it to us.</p>
@@ -4810,11 +4922,18 @@ ${cat.faq
   </div>`
     : '';
 
-  const body = `${catHeroHtml}
-${cat.intro}
-${cat.extraIntro || ''}
+  const pageMeta = {
+    ...meta,
+    path: pagePath,
+    title: pg.pageNum === 1 ? meta.title : `${meta.title} — Page ${pg.pageNum} of ${pg.totalPages}`,
+    description: pg.pageNum === 1 ? meta.description : truncateMetaDescription(`Page ${pg.pageNum} of ${pg.totalPages}. ${meta.description}`),
+    h1: pg.pageNum === 1 ? meta.h1 : `${meta.h1} — Page ${pg.pageNum}`,
+    trail: pg.pageNum === 1 ? meta.trail : [{ label: 'Pumpkin Patches', href: '/pumpkin-patches/' }, { label: cat.name, href: path }, { label: `Page ${pg.pageNum}` }],
+  };
 
-${renderScopedMap(items, listHtml, { singular: cat.singular, plural: cat.name.toLowerCase() })}
+  const body = `${pg.pageNum === 1 ? `${catHeroHtml}\n${cat.intro}\n${cat.extraIntro || ''}` : `<p><a href="${path}">All ${esc(cat.name.toLowerCase())}</a></p>`}
+
+${renderScopedMap(pg.items, listHtml, { singular: cat.singular, plural: cat.name.toLowerCase() })}
 
 <div class="section" style="padding-bottom:0">
   ${statesWith.length ? `<h2>${esc(cat.name)} by state</h2>
@@ -4846,13 +4965,13 @@ ${statesWith
   const jsonld = {
     '@context': 'https://schema.org',
     '@graph': [
-      { '@type': 'CollectionPage', name: cat.title, description: cat.description, url: SITE_URL + path },
+      { '@type': 'CollectionPage', name: pageMeta.title, description: pageMeta.description, url: SITE_URL + pagePath },
       {
         '@type': 'ItemList',
-        numberOfItems: items.length,
-        itemListElement: items.slice(0, 25).map((l, i) => ({
+        numberOfItems: pg.items.length,
+        itemListElement: pg.items.map((l, i) => ({
           '@type': 'ListItem',
-          position: i + 1,
+          position: pg.start + i + 1,
           url: SITE_URL + listingPath(l),
           name: l.name,
         })),
@@ -4869,16 +4988,17 @@ ${statesWith
             },
           ]
         : []),
-      breadcrumbJsonLd(meta.trail, path),
+      breadcrumbJsonLd(pageMeta.trail, pagePath),
     ],
   };
 
-  const scripts = items.length
+  const scripts = pg.items.length
     ? `${pageMapScripts}\n<script src="/assets/js/category-filter.js?v=${ASSET_VERSION}" defer></script>\n<script src="/assets/js/pillar-entry.js?v=${ASSET_VERSION}" defer></script>`
     : '';
 
-  writePage(path, render(meta, body, { jsonld, scripts }));
-  addToSitemap(path, '0.8', 'weekly');
+  writePage(pagePath, render(pageMeta, body, { jsonld, scripts, headExtra: paginationHead(path, pg.pageNum, pg.totalPages) }));
+  addToSitemap(pagePath, pg.pageNum === 1 ? '0.8' : '0.5', 'weekly');
+  }
 }
 
 /* --- listing detail pages ------------------------------------------------ */
@@ -4963,8 +5083,8 @@ for (const l of listings) {
 
   const body = `${l.sample ? `<div class="notice"><p><strong>Sample listing.</strong> This is placeholder data used to demonstrate the directory layout. It is excluded from search engines and will be replaced when the live Outscraper import runs.</p></div>` : ''}
 <figure class="detail-hero">
-  ${listingImage(l, { className: 'detail-hero-img', sizes: '(min-width: 900px) 900px, 100vw', size: 'hero' })}
-  <figcaption>${l.photo ? `Photo of ${esc(l.name)} via Google` : `Illustration — a real photo is not yet available for ${esc(l.name)}`}</figcaption>
+  ${listingImage(l, { className: 'detail-hero-img', sizes: '(min-width: 900px) 900px, 100vw', size: 'hero', loading: 'eager', fetchPriority: 'high' })}
+  <figcaption>${ownedPhoto(l.photo) ? `Photo of ${esc(l.name)}` : `A seasonal stand-in is shown until ${esc(l.name)} shares a photo.`}</figcaption>
 </figure>
 ${renderAdSlot('square')}
 <div class="detail-grid">
@@ -5131,9 +5251,17 @@ const CLIENT_LISTING_FIELDS = [
   'slug', 'name', 'street', 'city', 'county', 'state', 'stateCode', 'postalCode',
   'lat', 'lng', 'rating', 'reviews', 'photo', 'features', 'featured', 'sample', 'url', 'hours',
 ];
-const clientListings = listings.map((l) => {
+  const clientListings = listings.map((l) => {
   const out = {};
-  for (const key of CLIENT_LISTING_FIELDS) if (l[key] != null) out[key] = l[key];
+  for (const key of CLIENT_LISTING_FIELDS) {
+    if (l[key] == null) continue;
+    if (key === 'photo') {
+      const owned = ownedPhoto(l[key]);
+      if (owned) out.photo = owned;
+      continue;
+    }
+    out[key] = l[key];
+  }
   return out;
 });
 writeFileSync(join(DIST, 'data/listings.json'), JSON.stringify({ listings: clientListings }, null, 0));
@@ -5200,14 +5328,10 @@ Sitemap: ${SITE_URL}/sitemap.xml
 `
 );
 
-/* Mediavine hosts its own ads.txt and wants /ads.txt redirected to it, so
-   that it can add and remove its demand partners without a deploy here.
-   Both hosts serve a real file ahead of a redirect, so while Mediavine is
-   the live network we deliberately write no file and let the redirect in
-   vercel.json and netlify.toml answer instead. */
-if (AD_NETWORK === 'adsense') {
-  writeFileSync(join(DIST, 'ads.txt'), `google.com, ${AD_CLIENT.replace(/^ca-/, '')}, DIRECT, f08c47fec0942fa0\n`);
-}
+/* Journey hosts its own ads.txt and wants /ads.txt redirected to it, so
+   that it can add and remove demand partners without a deploy here.
+   Vercel serves a real file ahead of a redirect, so this build writes no
+   ads.txt and the redirect in vercel.json answers instead. */
 
 writeFileSync(
   join(DIST, 'site.webmanifest'),
@@ -5215,7 +5339,7 @@ writeFileSync(
     {
       name: SITE_NAME,
       short_name: 'Pumpkin Patches',
-      description: 'Find pumpkin patches near you across all 50 states.',
+      description: 'Find pumpkin patches near you across the United States.',
       start_url: '/',
       display: 'standalone',
       background_color: '#ffffff',
@@ -5229,6 +5353,32 @@ writeFileSync(
     2
   )
 );
+
+cpSync(join(SRC, 'assets/img/favicon.ico'), join(DIST, 'favicon.ico'));
+
+{
+  const notFoundMeta = {
+    path: '/404.html',
+    title: 'Page not found | Pumpkin Patches Near Me',
+    description: 'That page is not in the pumpkin patch directory. Search for a farm or browse by state.',
+    h1: 'Page not found',
+    lede: 'We could not find that page. Search the directory, or pick a state below.',
+    layout: 'wide',
+    noindex: true,
+    trail: [{ label: 'Page not found' }],
+  };
+  const notFoundBody = `<form class="search-form" action="/search/" method="get" role="search">
+  <label class="visually-hidden" for="not-found-q">Search farms, towns, or states</label>
+  <div class="search-field">
+    <input id="not-found-q" name="q" type="text" placeholder="Search farms, towns, states…">
+    <button class="btn btn-primary" type="submit">Search</button>
+  </div>
+</form>
+<h2>Browse by state</h2>
+${renderStateGrid()}
+<p style="margin-top:1.5rem"><a class="btn btn-outline" href="/">Home</a> <a class="btn btn-outline" href="/pumpkin-patches/">All pumpkin patches</a> <a class="btn btn-outline" href="/blog/">Guides</a></p>`;
+  writeFileSync(join(DIST, '404.html'), render(notFoundMeta, notFoundBody));
+}
 
 console.log(`Built ${sitemapEntries.length} indexable pages`);
 console.log(

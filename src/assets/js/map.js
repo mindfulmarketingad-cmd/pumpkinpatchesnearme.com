@@ -47,6 +47,13 @@
   // Google's photo CDN takes the pixel size straight in the URL
   // (=w800-h500-k-no) — request only what the rendered element needs
   // instead of downloading the full-size source for a small card or popup.
+  function usablePhoto(url) {
+    if (!url) return '';
+    if (/googleusercontent\.com|googleapis\.com|ggpht\.com/i.test(url)) return '';
+    if (/^https?:\/\/([^/]*\.)?google\.com\//i.test(url)) return '';
+    return url;
+  }
+
   function resizedPhotoUrl(url, width, height) {
     if (!url || url.indexOf('googleusercontent.com') === -1) return url;
     return url.replace(/=w\d+-h\d+[^&]*$/, '=w' + width + '-h' + height + '-k-no');
@@ -79,8 +86,10 @@
 
   function imgHtml(item, className, width, height) {
     var fallback = fallbackPhoto(item);
-    var src = item.photo ? resizedPhotoUrl(item.photo, width, height) : fallback;
-    return '<img class="' + className + '" src="' + esc(src) + '" alt="' + esc(item.name) + '" width="' + width + '" height="' + height + '" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=\'' + fallback + '\';">';
+    var owned = usablePhoto(item.photo);
+    var src = owned ? resizedPhotoUrl(owned, width, height) : fallback;
+    var onerror = owned ? ' onerror="this.onerror=null;this.src=\'' + fallback + '\';"' : '';
+    return '<img class="' + className + '" src="' + esc(src) + '" alt="' + esc(item.name) + '" width="' + width + '" height="' + height + '" loading="lazy" decoding="async"' + onerror + '>';
   }
 
   function distanceMiles(lat1, lng1, lat2, lng2) {
@@ -381,6 +390,7 @@
     }
 
     var picked = withinRadius(sorted);
+    picked.items = claimCarousel(picked.items);
     track.innerHTML = picked.items.map(function (x) { x.item._distance = x.dist; return cardHtml(x.item); }).join('');
     if (picked.local) {
       if (heading) heading.textContent = section.label + ' Near ' + (locationLabel === 'you' ? 'You' : locationLabel);
@@ -431,12 +441,11 @@
     // Rank by review strength *within* the drivable pool, so this stays "the
     // best options you can actually get to" rather than the best anywhere.
     var picked = withinRadius(sorted, 12);
-    var ranked = picked.items
+    var ranked = claimCarousel(picked.items
       .slice()
       .sort(function (a, b) {
         return (b.item.rating || 0) * Math.log10((b.item.reviews || 1) + 1) - (a.item.rating || 0) * Math.log10((a.item.reviews || 1) + 1);
-      })
-      .slice(0, 12);
+      })).slice(0, 12);
 
     track.innerHTML = ranked.map(function (x) { x.item._distance = x.dist; return cardHtml(x.item); }).join('');
     if (heading) heading.textContent = 'Top Rated';
@@ -476,7 +485,7 @@
           return (b.item.rating || 0) * Math.log10((b.item.reviews || 1) + 1) - (a.item.rating || 0) * Math.log10((a.item.reviews || 1) + 1);
         });
     }
-    var nearby = ranked.slice(0, 16);
+    var nearby = claimCarousel(ranked.slice(0, 16));
 
     if (!nearby.length) {
       track.innerHTML = '<p class="carousel-empty">Nothing in our directory shows open hours right now' +
@@ -501,10 +510,35 @@
     }
   }
 
+  function claimCarousel(entries) {
+    var used = state._carouselUsed;
+    if (!used) return entries;
+    var out = [];
+    entries.forEach(function (entry) {
+      var item = entry.item || entry;
+      var slug = item.slug || item.url;
+      if (!slug || used[slug]) return;
+      used[slug] = true;
+      out.push(entry);
+    });
+    return out;
+  }
+
   function renderNearbyCarousels() {
-    NEARBY_SECTIONS.forEach(renderNearbySection);
-    renderTopRatedSection();
+    state._carouselUsed = {};
+    // Without a location, the server-rendered rows are already unique.
+    // Seed them so "Open Now" does not repeat those same farms.
+    if (!state.origin) {
+      NEARBY_SECTIONS.concat([{ key: 'nearby-top-rated' }]).forEach(function (section) {
+        var html = nearbyDefaultHtml[section.key] || '';
+        var re = /data-slug="([^"]+)"/g;
+        var match;
+        while ((match = re.exec(html))) state._carouselUsed[match[1]] = true;
+      });
+    }
     renderOpenNowSection();
+    renderTopRatedSection();
+    NEARBY_SECTIONS.forEach(renderNearbySection);
   }
 
   function bindCarouselArrows() {

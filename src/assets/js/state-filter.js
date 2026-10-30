@@ -8,7 +8,7 @@
 (function () {
   'use strict';
 
-  var list = document.getElementById('state-pillar-list');
+  var list = document.getElementById('page-list-view');
   var qInput = document.getElementById('state-filter-q');
   var citySelect = document.getElementById('state-filter-city');
   var stateSelect = document.getElementById('state-filter-state');
@@ -21,21 +21,12 @@
   if (!list || !qInput || !featureSelect || !sortSelect) return;
 
   var items = Array.prototype.slice.call(list.querySelectorAll('.pillar-entry'));
-
-  // Ad slots spliced into the list (see pillarEntriesWithAds() in
-  // build.mjs) aren't .pillar-entry elements, so the sort below never
-  // moves them — left alone, appendChild()-ing every real entry to the
-  // end would drag every ad to the top of the list after the first
-  // filter/sort interaction. Record each ad's original "after the Nth
-  // entry" position once, then restore it after every re-sort.
-  var adAnchors = Array.prototype.slice.call(list.querySelectorAll('.pillar-ad, .ad-hint')).map(function (adEl) {
-    var precedingCount = 0;
-    var node = adEl.previousSibling;
-    while (node) {
-      if (node.nodeType === 1 && node.classList && node.classList.contains('pillar-entry')) precedingCount++;
-      node = node.previousSibling;
-    }
-    return { el: adEl, precedingCount: precedingCount };
+  // The paragraph between cards is a sibling, not part of the card. Keep
+  // it with the card when the list is filtered or re-sorted.
+  var bridges = new Map();
+  items.forEach(function (el) {
+    var next = el.nextElementSibling;
+    if (next && next.classList.contains('entry-bridge')) bridges.set(el, next);
   });
 
   function apply() {
@@ -57,6 +48,8 @@
       var matchesFeature = !feature || features.split('|').indexOf(feature) !== -1;
       var show = matchesQuery && matchesCity && matchesState && matchesFeature;
       el.hidden = !show;
+      var bridge = bridges.get(el);
+      if (bridge) bridge.hidden = !show;
       if (show) visible++;
     });
 
@@ -79,8 +72,11 @@
       }
       return Number(b.getAttribute('data-rating')) - Number(a.getAttribute('data-rating'));
     });
-    sorted.forEach(function (el) { list.appendChild(el); });
-    adAnchors.forEach(function (anchor) { list.insertBefore(anchor.el, sorted[anchor.precedingCount] || null); });
+    sorted.forEach(function (el) {
+      list.appendChild(el);
+      var bridge = bridges.get(el);
+      if (bridge) list.appendChild(bridge);
+    });
 
     if (countEl) countEl.textContent = visible.toLocaleString('en-US') + ' pumpkin patch' + (visible === 1 ? '' : 'es');
     if (emptyEl) emptyEl.hidden = visible !== 0;

@@ -1,7 +1,7 @@
 # pumpkinpatchesnearme.com
 
 Directory website for **Pumpkin Patches Near Me** — a map-first directory of pumpkin
-patches, corn mazes and fall farms across all 50 US states. Listing data comes from
+patches, corn mazes and fall farms across the United States. Listing data comes from
 an Outscraper export.
 
 Static site, zero runtime dependencies, built with plain Node. No framework, no

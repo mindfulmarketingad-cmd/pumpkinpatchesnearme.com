@@ -34,23 +34,6 @@
   ],
   "headers": [
     {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "https://claude.ai"
-        },
-        {
-          "key": "Vary",
-          "value": "Origin"
-        },
-        {
-          "key": "Content-Security-Policy",
-          "value": "frame-ancestors 'self' https://claude.ai"
-        }
-      ]
-    },
-    {
       "source": "/assets/(.*)",
       "headers": [
         {
@@ -61,24 +44,6 @@
     },
     {
       "source": "/data/listings.json",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600"
-        }
-      ]
-    },
-    {
-      "source": "/data/link-graph.json",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600"
-        }
-      ]
-    },
-    {
-      "source": "/data/page-meta.json",
       "headers": [
         {
           "key": "Cache-Control",
