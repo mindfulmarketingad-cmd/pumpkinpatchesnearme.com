@@ -1147,12 +1147,10 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
 .dash-business-table td:last-child { font-weight: 700; color: var(--ink); }
 
 /* ===================================================================
-   Journey (Mediavine) ad structure
-   The script finds its three anchors by id -- #page-list-view for the
-   content column, #sidebar for the rail, #footer for where the sticky
-   rail ad stops -- and places everything itself. Nothing here loads or
-   sizes an ad; it only gives the script somewhere to put one and
-   reserves the space so the page does not jump when it arrives.
+   Ad layout
+   Auto ads look for #page-list-view (content), #sidebar (rail) and
+   #footer (where a rail ad should stop). Nothing here loads an ad; it
+   only reserves the rail so the page does not jump when one arrives.
    =================================================================== */
 
 /* Below the sidebar breakpoint this is a plain block and the page is
@@ -1182,7 +1180,7 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
     /* Reserved so the column does not grow under the reader when the
        first ad lands. Roughly one 600-tall unit. */
     min-height: 600px;
-    /* Journey asks for a sidebar that scrolls with the page. */
+    /* The rail scrolls with the page. */
     position: static;
   }
   /* The listing page has its own 340px rail; the sidebar sits at the top
@@ -1193,8 +1191,8 @@ a.tag-link:hover { background: var(--orange); border-color: var(--orange); color
   }
 }
 
-/* A hint is a marker, not a slot: it has no size of its own and the ad
-   Journey places at it brings its own. The min-height is a floor under
+/* A hint is a marker, not a slot: it has no size of its own and any ad
+   placed at it brings its own. The min-height is a floor under
    the shift, not a reservation for a specific unit -- a hint that never
    fills costs a little whitespace between two cards, which is why it is
    nearer the height of the smallest unit than the largest. */
