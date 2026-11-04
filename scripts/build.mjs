@@ -592,10 +592,10 @@ function pillarEntriesTiered(items, renderEntry, richCount) {
   return rest ? `${rich}\n${rest}` : rich;
 }
 
-/* Journey (Mediavine) is the only ad network. It places every unit from
-   the script in the head. Manual slots are not emitted. */
-const MEDIAVINE_SITE_ID = '5e44c2e0-bcb8-46ab-98fd-b9342d32f4c6';
-const JOURNEY_SCRIPT = `<script type="text/javascript" async="async" data-noptimize="1" data-cfasync="false" src="//scripts.scriptwrapper.com/tags/${MEDIAVINE_SITE_ID}.js"></script>`;
+/* Google AdSense Auto ads. One loader in the head; no manual units. */
+const ADSENSE_CLIENT = 'ca-pub-9332749804326149';
+const ADSENSE_HEAD = `<meta name="google-adsense-account" content="${ADSENSE_CLIENT}">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}" crossorigin="anonymous"></script>`;
 
 function renderAdSlot() {
   return '';
@@ -1254,14 +1254,16 @@ ${stateNames
 
 function jsonLdFor(meta, extra) {
   if (extra) return JSON.stringify(extra);
-  return JSON.stringify({
+  const page = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: meta.title,
     description: meta.description,
-    url: SITE_URL + meta.path,
     isPartOf: { '@type': 'WebSite', name: SITE_NAME, url: SITE_URL },
-  });
+  };
+  // A noindex error page is not a URL we want declared as itself.
+  if (!meta.omitCanonical) page.url = SITE_URL + meta.path;
+  return JSON.stringify(page);
 }
 
 function breadcrumbs(trail) {
@@ -1448,7 +1450,8 @@ function render(meta, body, opts = {}) {
   const replacements = {
     '{{TITLE}}': esc(meta.title),
     '{{DESCRIPTION}}': attr(truncateMetaDescription(meta.description)),
-    '{{CANONICAL}}': SITE_URL + meta.path,
+    '{{CANONICAL_LINK}}': meta.omitCanonical ? '' : `<link rel="canonical" href="${SITE_URL + meta.path}">`,
+    '{{OG_URL_TAG}}': meta.omitCanonical ? '' : `<meta property="og:url" content="${SITE_URL + meta.path}">`,
     '{{SITE_URL}}': SITE_URL,
     '{{OG_TYPE}}': meta.ogType || 'website',
     '{{BODY_CLASS}}': meta.bodyClass || 'page',
@@ -1457,12 +1460,7 @@ function render(meta, body, opts = {}) {
     '{{NAV_EXPERIENCES_ITEM}}': experiencesByState.size
       ? `<li><a href="/experiences/"${meta.nav === 'experiences' ? ' aria-current="page"' : ''}>Experiences</a></li>`
       : '',
-    // Mediavine's tag places and fills every unit by itself, so while it is
-    // the live network this is the only ad code on the page. The AdSense
-    // loader stays alongside it because the application still pending needs
-    // that snippet on the site to be reviewed; it fills nothing until the
-    // account is approved, and the manual <ins> units stay off until then.
-    '{{ADSENSE_SCRIPT}}': JOURNEY_SCRIPT,
+    '{{ADSENSE_SCRIPT}}': ADSENSE_HEAD,
     // Corn Mazes and Hayrides are the only two category hubs in the main
     // nav, so they pick up a link from every page on the site while the
     // other six only get linked from pages that happen to carry that
@@ -5328,10 +5326,10 @@ Sitemap: ${SITE_URL}/sitemap.xml
 `
 );
 
-/* Journey hosts its own ads.txt and wants /ads.txt redirected to it, so
-   that it can add and remove demand partners without a deploy here.
-   Vercel serves a real file ahead of a redirect, so this build writes no
-   ads.txt and the redirect in vercel.json answers instead. */
+writeFileSync(
+  join(DIST, 'ads.txt'),
+  'google.com, pub-9332749804326149, DIRECT, f08c47fec0942fa0\n'
+);
 
 writeFileSync(
   join(DIST, 'site.webmanifest'),
@@ -5365,6 +5363,7 @@ cpSync(join(SRC, 'assets/img/favicon.ico'), join(DIST, 'favicon.ico'));
     lede: 'We could not find that page. Search the directory, or pick a state below.',
     layout: 'wide',
     noindex: true,
+    omitCanonical: true,
     trail: [{ label: 'Page not found' }],
   };
   const notFoundBody = `<form class="search-form" action="/search/" method="get" role="search">
