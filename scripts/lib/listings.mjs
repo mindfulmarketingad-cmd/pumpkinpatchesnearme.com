@@ -121,6 +121,28 @@ const FEATURE_RULES = [
   [/food truck|concession|snack/i, 'Food and drinks'],
 ];
 
+/** Visitor-facing label for a business the source text says sells Christmas trees. */
+export const CHRISTMAS_TREES_FEATURE = 'Christmas trees';
+
+/**
+ * True when a strong Christmas-tree term appears in the supplied text.
+ *
+ * Pass only the name, Google category and description. Review tags, the
+ * street address and the slug are not evidence: a review that mentions
+ * trees, or a road named Christmas Tree Lane, does not mean the business
+ * sells them. A bare "Christmas" (lights, a winter event) or "tree farm"
+ * with no tree-selling term does not qualify either.
+ *
+ * "Choose and cut", "u-cut" and "cut your own" count only when the same
+ * text also says "tree", so "cut your own pumpkin" stays a pumpkin phrase.
+ */
+export function sellsChristmasTrees(...texts) {
+  const haystack = texts.filter((value) => value != null && String(value).trim()).join('\n');
+  if (/\b(?:christmas|x-?mas|holiday)\s+trees?\b/i.test(haystack)) return true;
+  if (!/\btrees?\b/i.test(haystack)) return false;
+  return /\bchoose[\s-]*(?:and|&|n)[\s-]*cut\b|\bu-cut\b|\bu cut\b|\bcut[\s-]your[\s-]own\b/i.test(haystack);
+}
+
 /** Derives visitor-facing feature tags from free-text fields. */
 export function deriveFeatures(...texts) {
   const haystack = texts.filter(Boolean).join(' ');
@@ -128,7 +150,22 @@ export function deriveFeatures(...texts) {
   for (const [pattern, label] of FEATURE_RULES) {
     if (pattern.test(haystack)) found.add(label);
   }
+  if (sellsChristmasTrees(...texts)) found.add(CHRISTMAS_TREES_FEATURE);
   return [...found];
+}
+
+/**
+ * Precomputed feature lists skip deriveFeatures(), so a newly detected
+ * Christmas-tree seller has to be merged in after the fact. The texts must
+ * be the same name / category / description fields sellsChristmasTrees
+ * accepts — never an address, slug or review tag.
+ */
+export function withChristmasTreeFeature(features, ...texts) {
+  const list = Array.isArray(features) ? [...features] : [];
+  if (sellsChristmasTrees(...texts) && !list.includes(CHRISTMAS_TREES_FEATURE)) {
+    list.push(CHRISTMAS_TREES_FEATURE);
+  }
+  return list;
 }
 
 /**
@@ -271,10 +308,16 @@ export function normaliseListing(input, taken) {
     photosCount: Number.isFinite(Number(input.photos_count)) ? Math.round(Number(input.photos_count)) || null : null,
     mapsUrl: String(input.location_link || input.mapsUrl || '').trim() || null,
     placeId: String(input.place_id || '').trim() || null,
-    features:
+    features: withChristmasTreeFeature(
       Array.isArray(input.features) && input.features.length
         ? input.features
         : deriveFeatures(name, input.description, input.subtypes, input.category, input.type),
+      name,
+      input.description,
+      input.subtypes,
+      input.category,
+      input.type,
+    ),
     // Owner-supplied extras. Outscraper rarely carries these, so they stay null
     // until a farm sends them in; the listing page hides whatever is missing.
     season: String(input.season || '').trim() || null,

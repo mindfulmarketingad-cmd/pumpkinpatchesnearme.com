@@ -12,7 +12,7 @@ import {
 } from 'node:fs';
 import { resolve, dirname, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { slugify, STATES, DAYS } from './lib/listings.mjs';
+import { slugify, STATES, DAYS, CHRISTMAS_TREES_FEATURE, withChristmasTreeFeature } from './lib/listings.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'src');
@@ -149,6 +149,17 @@ function listingImage(l, { alt, className = '', sizes = '', size = 'card', loadi
 
 const data = JSON.parse(readFileSync(join(ROOT, 'data/listings.json'), 'utf8'));
 const listings = data.listings || [];
+// listings.json stores features computed at import time, so a new rule in
+// deriveFeatures() never reaches an existing row. Apply the Christmas-tree
+// test here, and only against the name, Google category and description.
+for (const listing of listings) {
+  listing.features = withChristmasTreeFeature(
+    listing.features,
+    listing.name,
+    listing.category,
+    listing.description,
+  );
+}
 const faqs = JSON.parse(readFileSync(join(SRC, 'data/faqs.json'), 'utf8'));
 const categories = JSON.parse(readFileSync(join(SRC, 'data/categories.json'), 'utf8'));
 const authors = JSON.parse(readFileSync(join(SRC, 'data/authors.json'), 'utf8'));
@@ -305,6 +316,32 @@ function stars(rating) {
 const statePath = (stateName) => `/${slugify(stateName)}/`;
 const cityPath = (stateName, cityName) => `/${slugify(stateName)}/${slugify(cityName)}/`;
 const categoryPath = (category) => `/${category.slug}/`;
+
+function categoryNav(cat) {
+  if (cat.slug === 'corn-mazes') return 'corn-mazes';
+  if (cat.slug === 'hayrides') return 'hayrides';
+  // Christmas tree farms are their own section. Highlighting Pumpkin Patches
+  // would put the reader in the wrong place.
+  if (cat.slug === 'christmas-tree-farms') return '';
+  return 'pumpkin-patches';
+}
+
+/** Breadcrumb trail for a category hub, state or city page.
+ *  `tail` is the crumbs after the category name. Christmas tree pages stay
+ *  out from under Pumpkin Patches, which would read as the wrong section. */
+function categorySectionTrail(cat, tail = []) {
+  const trail = [];
+  if (cat.slug !== 'christmas-tree-farms') {
+    trail.push({ label: 'Pumpkin Patches', href: '/pumpkin-patches/' });
+  }
+  if (tail.length) {
+    trail.push({ label: cat.name, href: categoryPath(cat) });
+    trail.push(...tail);
+  } else {
+    trail.push({ label: cat.name });
+  }
+  return trail;
+}
 // City-scoped service page, e.g. /hayrides/calhoun-ga/ — same "city-state
 // code" slug shape the per-city blog posts already use, so URLs read
 // consistently across the site.
@@ -496,6 +533,37 @@ const categoryStatePageLinks = new Map(); // "catSlug|state" -> { title, href }
 
 function addCategoryStatePage(catSlug, stateName, title, href) {
   categoryStatePageLinks.set(`${catSlug}|${stateName}`, { title, href });
+}
+
+/** Most specific Christmas-tree directory page for a listing: its city
+ *  page when that city has one, else its state page, else the hub. */
+function christmasDirectoryPath(listing) {
+  if (listing?.state && listing?.city) {
+    const cityPage = categoryCityPageLinks.get(`christmas-tree-farms|${listing.state}|${listing.city}`);
+    if (cityPage) return cityPage.href;
+  }
+  if (listing?.state) {
+    const statePage = categoryStatePageLinks.get(`christmas-tree-farms|${listing.state}`);
+    if (statePage) return statePage.href;
+  }
+  return '/christmas-tree-farms/';
+}
+
+function christmasDirectoryLabel(listing) {
+  if (listing?.state && listing?.city && categoryCityPageLinks.get(`christmas-tree-farms|${listing.state}|${listing.city}`)) {
+    return `Christmas trees in ${listing.city}, ${listing.stateCode || listing.state}`;
+  }
+  if (listing?.state && categoryStatePageLinks.get(`christmas-tree-farms|${listing.state}`)) {
+    return `Christmas trees in ${listing.state}`;
+  }
+  return 'Christmas Tree Farms & Lots near me';
+}
+
+function featureTagHtml(listing, feature) {
+  if (feature === CHRISTMAS_TREES_FEATURE) {
+    return `<a class="tag tag-link" href="${christmasDirectoryPath(listing)}">${esc(feature)}</a>`;
+  }
+  return `<span class="tag">${esc(feature)}</span>`;
 }
 
 /* ------------------------------------------------------- shared fragments */
@@ -1463,9 +1531,9 @@ function render(meta, body, opts = {}) {
     '{{ADSENSE_SCRIPT}}': ADSENSE_HEAD,
     // Corn Mazes and Hayrides are the only two category hubs in the main
     // nav, so they pick up a link from every page on the site while the
-    // other six only get linked from pages that happen to carry that
-    // feature — a 10-100x gap in internal links pointing at them. This
-    // footer block gives all eight the same site-wide link.
+    // other feature sections only get linked from pages that happen to
+    // carry that feature. This footer block gives every feature section
+    // the same site-wide link.
     '{{FOOTER_CATEGORY_NAV}}': `<nav class="footer-nav footer-nav-cats" aria-label="Browse by feature">
       <span class="footer-nav-label">Browse by feature</span>
       <ul>
@@ -3401,6 +3469,9 @@ for (const [key, items] of byCity) {
   const label = `${cityName}, ${stateCode}`;
 
   for (const cat of categories) {
+    // Directory pages only. A per-city "best of" post, including a one-farm
+    // post, is not generated for this category.
+    if (cat.attractionPosts === false) continue;
     const seenNames = new Set();
     const distinct = items.filter((l) => {
       if (!(l.features || []).includes(cat.feature)) return false;
@@ -3573,7 +3644,7 @@ const posts = [...handAuthoredPosts, ...pillarPosts, ...statePosts, ...cityPosts
    pillar-list format the state/city/category pages use). Only generated
    for a category once explicitly requested — call
    generateCategoryCityPages for each one that should get these. */
-function generateCategoryCityPages(catOrSlug, { minListings = 1, itemFilter = null } = {}) {
+function generateCategoryCityPages(catOrSlug, { minListings = 1, itemFilter = null, distinctNames = true } = {}) {
   const cat = typeof catOrSlug === 'string' ? categories.find((c) => c.slug === catOrSlug) : catOrSlug;
   const test = itemFilter || ((l) => (l.features || []).includes(cat.feature));
 
@@ -3586,6 +3657,7 @@ function generateCategoryCityPages(catOrSlug, { minListings = 1, itemFilter = nu
     const seen = new Set();
     const distinct = items.filter((l) => {
       if (!test(l)) return false;
+      if (!distinctNames) return true;
       const k = l.name.trim().toLowerCase();
       if (seen.has(k)) return false;
       seen.add(k);
@@ -3604,10 +3676,14 @@ function generateCategoryCityPages(catOrSlug, { minListings = 1, itemFilter = nu
     // cat.feature is null for the "farms" virtual category (every listing
     // qualifies — there's no attraction being offered), so it reads as a
     // plain roster rather than "N patches offer pumpkin farm."
-    const description = cat.feature
+    const description = cat.slug === 'christmas-tree-farms'
+      ? `Find Christmas tree farms and lots in ${label} — ${n} ${n === 1 ? 'farm or lot' : 'farms and lots'} we track that sell Christmas trees, with address, hours and directions.`
+      : cat.feature
       ? `Find ${cat.name.toLowerCase()} in ${label} — ${n} pumpkin patch${n === 1 ? '' : 'es'} we track with ${cat.singular}, ranked by rating, with address, hours and directions.`
       : `${n} ${cat.singular}${n === 1 ? '' : 's'} in ${label}, ranked by rating, with address, hours and directions for each.`;
-    const lede = cat.feature
+    const lede = cat.slug === 'christmas-tree-farms'
+      ? `${n} Christmas tree ${n === 1 ? 'farm or lot' : 'farms and lots'} we track in ${label}, ranked by rating and review volume.`
+      : cat.feature
       ? `${n} pumpkin patch${n === 1 ? '' : 'es'} we track in ${label} ${n === 1 ? 'offers' : 'offer'} ${cat.singular}, ranked by rating and review volume.`
       : `${n} ${cat.singular}${n === 1 ? '' : 's'} we track in ${label}, ranked by rating and review volume.`;
     const meta = {
@@ -3616,13 +3692,9 @@ function generateCategoryCityPages(catOrSlug, { minListings = 1, itemFilter = nu
       description,
       h1,
       lede,
-      nav: cat.slug === 'corn-mazes' ? 'corn-mazes' : cat.slug === 'hayrides' ? 'hayrides' : 'pumpkin-patches',
+      nav: categoryNav(cat),
       layout: 'wide',
-      trail: [
-        { label: 'Pumpkin Patches', href: '/pumpkin-patches/' },
-        { label: cat.name, href: categoryPath(cat) },
-        { label },
-      ],
+      trail: categorySectionTrail(cat, [{ label }]),
     };
 
     const heroSrc = displayPhoto((distinct.find((l) => l.photo) || {}).photo, (distinct[0] && distinct[0].slug) || 'list');
@@ -3634,6 +3706,9 @@ ${paginationNav(path, 1, 1)}`;
 
     const relatedGuide = (cityGuideLinks.get(`${stateName}|${cityName}`) || []).find((g) => g.catSlug === cat.slug);
     const siblings = qualifying.filter((q) => q.stateName === stateName && q.cityName !== cityName);
+    const alsoSee = cat.slug === 'christmas-tree-farms'
+      ? `<p>These are the Christmas tree farms and lots we track in ${esc(label)}. For the fall directory, see <a href="${cityPath(stateName, cityName)}">every pumpkin patch we track in ${esc(label)}</a>, or browse <a href="${categoryPath(cat)}">Christmas tree farms and lots in every state</a>.</p>`
+      : `<p>Want everything ${esc(label)} has to offer, not just ${esc(cat.name.toLowerCase())}? See <a href="${cityPath(stateName, cityName)}">every pumpkin patch we track in ${esc(label)}</a>, or browse ${esc(cat.name.toLowerCase())} in every state on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>`;
 
     const body = `${heroHtml}
 ${renderScopedMap(distinct, listHtml, { singular: cat.singular, plural: cat.name.toLowerCase() })}
@@ -3641,7 +3716,7 @@ ${renderScopedMap(distinct, listHtml, { singular: cat.singular, plural: cat.name
 ${renderAdSlot('square')}
 
 <div class="section" style="padding-bottom:0">
-  <p>Want everything ${esc(label)} has to offer, not just ${esc(cat.name.toLowerCase())}? See <a href="${cityPath(stateName, cityName)}">every pumpkin patch we track in ${esc(label)}</a>, or browse ${esc(cat.name.toLowerCase())} in every state on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>
+  ${alsoSee}
   ${relatedGuide ? `<p>Want the full write-up? Read <a href="${relatedGuide.href}">${esc(relatedGuide.title)}</a>.</p>` : ''}
 
   ${siblings.length ? `<h2>${esc(cat.name)} in other ${esc(stateName)} towns</h2>
@@ -3688,7 +3763,7 @@ ${siblings.map((s) => `    <a class="tag tag-link" href="${categoryCityPath(cat,
    a category AFTER generateCategoryCityPages has already run for it, so
    this page can list its own city sub-pages (from categoryCityPageList)
    without caring about Map iteration order. */
-function generateCategoryStatePages(catOrSlug, { minListings = 1, itemFilter = null } = {}) {
+function generateCategoryStatePages(catOrSlug, { minListings = 1, itemFilter = null, distinctNames = true } = {}) {
   const cat = typeof catOrSlug === 'string' ? categories.find((c) => c.slug === catOrSlug) : catOrSlug;
   const test = itemFilter || ((l) => (l.features || []).includes(cat.feature));
 
@@ -3697,6 +3772,7 @@ function generateCategoryStatePages(catOrSlug, { minListings = 1, itemFilter = n
     const seen = new Set();
     const distinct = stateItems.filter((l) => {
       if (!test(l)) return false;
+      if (!distinctNames) return true;
       const k = l.name.trim().toLowerCase();
       if (seen.has(k)) return false;
       seen.add(k);
@@ -3708,13 +3784,18 @@ function generateCategoryStatePages(catOrSlug, { minListings = 1, itemFilter = n
     const n = distinct.length;
     const h1 = `${cat.name} in ${stateName}`;
     const cities = [...new Set(distinct.map((l) => l.city).filter(Boolean))].sort();
+    const townWord = cities.length === 1 ? 'town' : 'towns';
 
-    const description = cat.feature
+    const description = cat.slug === 'christmas-tree-farms'
+      ? `Find Christmas tree farms and lots in ${stateName} — ${n} ${n === 1 ? 'farm or lot' : 'farms and lots'} we track that sell Christmas trees, with address, hours and directions.`
+      : cat.feature
       ? `Find ${cat.name.toLowerCase()} in ${stateName} — ${n} pumpkin patch${n === 1 ? '' : 'es'} we track statewide with ${cat.singular}, ranked by rating, with address, hours and directions.`
       : `${n} ${cat.singular}${n === 1 ? '' : 's'} in ${stateName}, ranked by rating, with address, hours and directions for each.`;
-    const lede = cat.feature
-      ? `${n} pumpkin patch${n === 1 ? '' : 'es'} we track in ${stateName} ${n === 1 ? 'offers' : 'offer'} ${cat.singular}, ranked by rating and review volume across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'}.`
-      : `${n} ${cat.singular}${n === 1 ? '' : 's'} we track in ${stateName}, ranked by rating and review volume across ${cities.length} ${cities.length === 1 ? 'town' : 'towns'}.`;
+    const lede = cat.slug === 'christmas-tree-farms'
+      ? `${n} Christmas tree ${n === 1 ? 'farm or lot' : 'farms and lots'} we track in ${stateName}, ranked by rating and review volume across ${cities.length} ${townWord}.`
+      : cat.feature
+      ? `${n} pumpkin patch${n === 1 ? '' : 'es'} we track in ${stateName} ${n === 1 ? 'offers' : 'offer'} ${cat.singular}, ranked by rating and review volume across ${cities.length} ${townWord}.`
+      : `${n} ${cat.singular}${n === 1 ? '' : 's'} we track in ${stateName}, ranked by rating and review volume across ${cities.length} ${townWord}.`;
 
     const meta = {
       path,
@@ -3722,13 +3803,9 @@ function generateCategoryStatePages(catOrSlug, { minListings = 1, itemFilter = n
       description,
       h1,
       lede,
-      nav: cat.slug === 'corn-mazes' ? 'corn-mazes' : cat.slug === 'hayrides' ? 'hayrides' : 'pumpkin-patches',
+      nav: categoryNav(cat),
       layout: 'wide',
-      trail: [
-        { label: 'Pumpkin Patches', href: '/pumpkin-patches/' },
-        { label: cat.name, href: categoryPath(cat) },
-        { label: stateName },
-      ],
+      trail: categorySectionTrail(cat, [{ label: stateName }]),
     };
 
     const heroSrc = displayPhoto((distinct.find((l) => l.photo) || {}).photo, (distinct[0] && distinct[0].slug) || 'list');
@@ -3741,11 +3818,14 @@ ${pillarFeed(distinct, (l, i) => renderPillarEntry(l, i, stateName), stateName)}
       .map((city) => categoryCityPageLinks.get(`${cat.slug}|${stateName}|${city}`))
       .filter(Boolean);
     const stateGuide = (stateGuideLinks.get(stateName) || []).find((g) => g.catSlug === cat.slug);
+    const alsoSee = cat.slug === 'christmas-tree-farms'
+      ? `<p>These are the Christmas tree farms and lots we track in ${esc(stateName)}. For the fall directory, see <a href="${statePath(stateName)}">every pumpkin patch we track in ${esc(stateName)}</a>, or browse <a href="${categoryPath(cat)}">Christmas tree farms and lots in every state</a>.</p>`
+      : `<p>Want everything ${esc(stateName)} has to offer, not just ${esc(cat.name.toLowerCase())}? See <a href="${statePath(stateName)}">every pumpkin patch we track in ${esc(stateName)}</a>, or browse ${esc(cat.name.toLowerCase())} in every state on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>`;
 
     const body = `${heroHtml}
 ${renderScopedMap(distinct, listHtml, { singular: cat.singular, plural: cat.name.toLowerCase() })}
 <div class="section" style="padding-bottom:0">
-  <p>Want everything ${esc(stateName)} has to offer, not just ${esc(cat.name.toLowerCase())}? See <a href="${statePath(stateName)}">every pumpkin patch we track in ${esc(stateName)}</a>, or browse ${esc(cat.name.toLowerCase())} in every state on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>
+  ${alsoSee}
   ${stateGuide ? `<p>Want the full write-up? Read <a href="${stateGuide.href}">${esc(stateGuide.title)}</a>.</p>` : ''}
 
   ${cityPages.length ? `<h2>${esc(cat.name)} by town in ${esc(stateName)}</h2>
@@ -3790,6 +3870,12 @@ generateCategoryCityPages('corn-mazes');
 generateCategoryStatePages('hayrides');
 generateCategoryStatePages('corn-mazes');
 generateCategoryStatePages('haunted-attractions');
+// City pages only at 2 or more matching listings, state pages at 3 or more.
+// Same-named lots at different addresses stay on the page (distinctNames
+// off) — several California operators run more than one stand under one name.
+// No best-of posts: attractionPosts is false on this category.
+generateCategoryCityPages('christmas-tree-farms', { minListings: 2, distinctNames: false });
+generateCategoryStatePages('christmas-tree-farms', { minListings: 3, distinctNames: false });
 
 /* --- /farms/ hub and /farms/<city>-<state>/ pages -------------------------
    "Pumpkin farm" is real, distinct search phrasing from "pumpkin patch" —
@@ -4099,7 +4185,9 @@ const homepagePrioritySections = [
 // ones (Farms, Pumpkin Patches) that cover the same full dataset under
 // different wording, same as the /farms/ and /pumpkin-patches/ pages.
 const homepageNearbySections = [
-  ...categories.map((c) => ({
+  // Christmas trees is appended after the existing carousels so it does not
+  // take cards away from sections that were already on the homepage.
+  ...categories.filter((c) => c.slug !== 'christmas-tree-farms').map((c) => ({
     key: `nearby-${c.slug}`,
     title: `${c.name} Near Me`,
     href: categoryPath(c),
@@ -4108,6 +4196,15 @@ const homepageNearbySections = [
   { key: 'nearby-farms', title: 'Farms Near Me', href: '/farms/', items: takeUnique(rankedAll, 12, homeCardUsed) },
   { key: 'nearby-pumpkin-patches', title: 'Pumpkin Patches Near Me', href: '/pumpkin-patches/', items: takeUnique(rankedAll, 12, homeCardUsed) },
 ];
+const christmasHomeCat = categories.find((c) => c.slug === 'christmas-tree-farms');
+if (christmasHomeCat) {
+  homepageNearbySections.push({
+    key: `nearby-${christmasHomeCat.slug}`,
+    title: `${christmasHomeCat.name} Near Me`,
+    href: categoryPath(christmasHomeCat),
+    items: takeUnique(rankByScore(byCategory.get(christmasHomeCat.slug) || []), 12, homeCardUsed),
+  });
+}
 
 function renderNearbyCarouselSection(section, altBg) {
   const label = section.title.replace(/ Near Me$/, '');
@@ -4783,9 +4880,9 @@ for (const cat of categories) {
     description: truncateMetaDescription(`${cat.description} Updated for ${SEASON_YEAR}.`),
     h1: `${cat.name} Near Me`,
     lede: cat.lede,
-    nav: cat.slug === 'corn-mazes' ? 'corn-mazes' : cat.slug === 'hayrides' ? 'hayrides' : 'pumpkin-patches',
+    nav: categoryNav(cat),
     layout: 'wide',
-    trail: [{ label: 'Pumpkin Patches', href: '/pumpkin-patches/' }, { label: cat.name }],
+    trail: categorySectionTrail(cat),
   };
 
   const catHeroSrc = displayPhoto((items.find((l) => l.photo) || {}).photo, (items[0] && items[0].slug) || 'hub');
@@ -4926,7 +5023,7 @@ ${cat.faq
     title: pg.pageNum === 1 ? meta.title : `${meta.title} — Page ${pg.pageNum} of ${pg.totalPages}`,
     description: pg.pageNum === 1 ? meta.description : truncateMetaDescription(`Page ${pg.pageNum} of ${pg.totalPages}. ${meta.description}`),
     h1: pg.pageNum === 1 ? meta.h1 : `${meta.h1} — Page ${pg.pageNum}`,
-    trail: pg.pageNum === 1 ? meta.trail : [{ label: 'Pumpkin Patches', href: '/pumpkin-patches/' }, { label: cat.name, href: path }, { label: `Page ${pg.pageNum}` }],
+    trail: pg.pageNum === 1 ? meta.trail : categorySectionTrail(cat, [{ label: `Page ${pg.pageNum}` }]),
   };
 
   const body = `${pg.pageNum === 1 ? `${catHeroHtml}\n${cat.intro}\n${cat.extraIntro || ''}` : `<p><a href="${path}">All ${esc(cat.name.toLowerCase())}</a></p>`}
@@ -4940,7 +5037,11 @@ ${statesWith
   .map((s) => {
     const n = items.filter((l) => l.state === s).length;
     const statePage = categoryStatePageLinks.get(`${cat.slug}|${s}`);
-    return `    <a class="state-link" href="${statePage ? statePage.href : statePath(s)}">${esc(s)} <span>${n}</span></a>`;
+    // States under the Christmas-tree minimum stay on this hub, where those
+    // listings are actually listed. The pumpkin-patch state page is a
+    // different directory.
+    const href = statePage ? statePage.href : cat.slug === 'christmas-tree-farms' ? path : statePath(s);
+    return `    <a class="state-link" href="${href}">${esc(s)} <span>${n}</span></a>`;
   })
   .join('\n')}
   </div>` : ''}
@@ -4951,8 +5052,11 @@ ${statesWith
 
   ${catFaqHtml}
 
-  <h2>Find a ${esc(cat.singular)} near you</h2>
-  <p>The fastest way to find a farm with a ${esc(cat.singular)} nearby is the map: enter your ZIP code, then set the feature filter to ${esc(cat.name.toLowerCase())}. Results re-sort by distance from your location.</p>
+  ${cat.slug === 'christmas-tree-farms'
+    ? `<h2>Find a Christmas tree near you</h2>
+  <p>The fastest way to find a farm or lot selling Christmas trees nearby is the map: enter your ZIP code, then set the feature filter to Christmas trees. Results re-sort by distance from your location.</p>`
+    : `<h2>Find a ${esc(cat.singular)} near you</h2>
+  <p>The fastest way to find a farm with a ${esc(cat.singular)} nearby is the map: enter your ZIP code, then set the feature filter to ${esc(cat.name.toLowerCase())}. Results re-sort by distance from your location.</p>`}
   <p>
     <a class="btn btn-primary" href="/">Search the map</a>
     <a class="btn btn-outline" href="/pumpkin-patches/">Browse all attractions</a>
@@ -5092,7 +5196,7 @@ ${renderAdSlot('square')}
       ${l.reviews ? `<span>${l.reviews.toLocaleString('en-US')} Google reviews</span>` : ''}
       ${l.category ? `<span>${esc(l.category)}</span>` : ''}
     </div>
-    ${(l.features || []).length ? `<div class="tag-row">${l.features.map((f) => `<span class="tag">${esc(f)}</span>`).join('')}</div>` : ''}
+    ${(l.features || []).length ? `<div class="tag-row">${l.features.map((f) => featureTagHtml(l, f)).join('')}</div>` : ''}
     ${l.description
       ? `<p>${esc(l.description)}</p>`
       : `<p>${esc(l.name)} is a listed pumpkin patch${place ? ` in ${esc(place)}` : ''}${l.county ? `, ${esc(l.county)} County` : ''}. We don't yet have a farm-provided description for this listing — if you run or have visited ${esc(l.name)}, <a href="/contact/">let us know</a> what makes it worth a stop and we will add it.</p>`}
@@ -5175,7 +5279,11 @@ ${listingGuides.map((g) => `      <li><a href="${g.href}">${esc(g.title)}</a></l
       <ul class="fact-list">
 ${categories
   .filter((c) => (l.features || []).includes(c.feature))
-  .map((c) => `        <li><a href="${categoryPath(c)}">${esc(c.name)} near me</a></li>`)
+  .map((c) => {
+    const href = c.slug === 'christmas-tree-farms' ? christmasDirectoryPath(l) : categoryPath(c);
+    const label = c.slug === 'christmas-tree-farms' ? christmasDirectoryLabel(l) : `${c.name} near me`;
+    return `        <li><a href="${href}">${esc(label)}</a></li>`;
+  })
   .join('\n')}
       </ul>
     </div>` : ''}
