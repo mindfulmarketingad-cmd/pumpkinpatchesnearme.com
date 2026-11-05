@@ -134,5 +134,23 @@
       { "q": "When are fall festival weekends usually held?", "a": "Typically a handful of specific weekends in the back half of the season, rather than the whole season — often concentrated in October. Exact dates vary farm to farm and change year to year, so check the farm's own site directly before planning a trip around one." },
       { "q": "Is a fall festival the same as a regular pumpkin patch visit?", "a": "Not quite. A regular visit gets you the pumpkin patch and whichever attractions run daily; a festival weekend adds live music, food vendors and craft or produce markets on top, and is usually busier and sometimes pricier as a result." }
     ]
+  },
+  {
+    "slug": "christmas-tree-farms",
+    "feature": "Christmas trees",
+    "name": "Christmas Tree Farms & Lots",
+    "singular": "Christmas tree farm or lot",
+    "attractionPosts": false,
+    "title": "Christmas Tree Farms Near Me — Choose-and-Cut Farms and Lots",
+    "description": "Find Christmas tree farms and seasonal lots near you. Choose-and-cut farms and pre-cut lots, with addresses, hours and directions.",
+    "lede": "Choose-and-cut farms and seasonal lots that sell Christmas trees, from a field you cut yourself to a pre-cut stand open for a few weeks.",
+    "intro": "<p>Two kinds of Christmas tree seller show up in this directory. A choose-and-cut farm — also called u-cut or cut-your-own — is where you pick a tree in the field and it is cut there. A pre-cut lot sells trees that were cut somewhere else and brought to the stand. Lots are common in cities, including many of the California entries here, where one grower may run several stands under the same name for the season.</p><p>Tree season is short. Most farms and lots open around the weekend after Thanksgiving and sell through the days before Christmas. The first two weekends usually have the widest choice of height and species. A busy lot can be down to a thin selection, or already closed, well before Christmas Eve.</p><p>The hours on these pages often come from a business's wider-year or fall listing, not a confirmed December schedule, and this directory does not track tree prices. Prices move with height, species and the week. Call the number on the listing, or check the business's own site, before you drive out.</p>",
+    "extraIntro": "<p>A listing is on this list only when its name, Google category or description says it sells Christmas trees. A name that merely says \"tree farm,\" or a pumpkin patch that mentions Christmas in passing, is not enough, and a mention that shows up only in a review tag or a street address is not enough either. If you are deciding between a few nearby, the useful question is whether you want to cut a tree in a field or pick one up already cut — and whether that stand still has trees the week you plan to go.</p>",
+    "faq": [
+      { "q": "What is the difference between a choose-and-cut farm and a pre-cut lot?", "a": "Choose-and-cut, also called u-cut or cut-your-own, means you select a tree in the field and it is cut there. A pre-cut lot sells trees that were already cut and trucked to the stand, which is how a lot of city locations work for a few weeks in December. The listing name and description are the clue we have to which one a business runs. Call ahead if that is not clear." },
+      { "q": "When should I go for a Christmas tree?", "a": "Most farms and lots open the weekend after Thanksgiving and stay open into the week of Christmas, though the dates move every year. The first two weekends usually have the widest choice. The closer you get to Christmas Eve, the more likely a lot is to be picked over or already closed for the season." },
+      { "q": "Should I call ahead for hours and prices?", "a": "Yes, if the trip depends on either one. Hours in our listings can reflect a fall or year-round schedule rather than December tree hours, and we do not publish tree prices because they change by height, species and week. Use the phone number or website on the listing to confirm both before you go." },
+      { "q": "Are these the same places as the pumpkin patches?", "a": "Some are. A farm may run a pumpkin patch in the fall and sell trees in December, and both can show up in our data. Others are tree lots that only operate for the holidays. Being listed here means the listing says it sells Christmas trees. It does not mean every fall attraction is still open, or that a tree is in stock the day you visit." }
+    ]
   }
 ]
