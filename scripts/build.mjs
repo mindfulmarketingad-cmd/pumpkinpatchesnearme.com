@@ -14,6 +14,59 @@ import { resolve, dirname, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { slugify, STATES, DAYS, CHRISTMAS_TREES_FEATURE, withChristmasTreeFeature } from './lib/listings.mjs';
 
+const BERRY_SLUG = 'u-pick-berry-farms';
+const BERRY_FEATURE = 'Berry & fruit picking';
+const BERRY_CROP_FEATURES = ['Strawberries', 'Blueberries', 'Blackberries', 'Cherries', 'Peaches'];
+const BERRY_FEATURE_SET = new Set([BERRY_FEATURE, ...BERRY_CROP_FEATURES, 'Pick-your-own']);
+const BERRY_SEASON_PHRASE = {
+  Strawberries: 'strawberries in late spring',
+  Cherries: 'cherries in early summer',
+  Blueberries: 'blueberries in mid-summer',
+  Blackberries: 'blackberries in mid-summer',
+  Peaches: 'peaches from mid to late summer',
+};
+const BERRY_SEARCH_PHRASE = {
+  Strawberries: 'strawberry picking',
+  Blueberries: 'blueberry picking',
+  Blackberries: 'blackberry picking',
+  Cherries: 'cherry picking',
+  Peaches: 'peach picking',
+};
+
+function berryCropsPresent(items) {
+  return BERRY_CROP_FEATURES
+    .map((crop) => ({ crop, n: items.filter((l) => (l.features || []).includes(crop)).length }))
+    .filter((row) => row.n > 0)
+    .sort((a, b) => b.n - a.n || BERRY_CROP_FEATURES.indexOf(a.crop) - BERRY_CROP_FEATURES.indexOf(b.crop));
+}
+
+function berryMetaDescription(place, n, items) {
+  const crops = berryCropsPresent(items).slice(0, 3).map((row) => BERRY_SEARCH_PHRASE[row.crop]);
+  const focus = crops.length ? joinAnd(crops) : 'berry and fruit picking';
+  const noun = n === 1 ? 'farm' : 'farms';
+  const sentence = `${focus.charAt(0).toUpperCase()}${focus.slice(1)} in ${place}: ${n} u-pick ${noun}, with address, hours and directions.`;
+  return truncateMetaDescription(sentence);
+}
+
+function joinAnd(items) {
+  if (!items || items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+}
+
+/** A listing that belongs to the berry section and is not also a pumpkin-patch record. */
+function isBerryPrimary(listing) {
+  const features = listing?.features || [];
+  if (!features.includes(BERRY_FEATURE)) return false;
+  if (/pumpkin/i.test(`${listing.category || ''} ${listing.name || ''}`)) return false;
+  return features.every((feature) => BERRY_FEATURE_SET.has(feature));
+}
+
+function berryCropsOn(listing) {
+  return BERRY_CROP_FEATURES.filter((crop) => (listing?.features || []).includes(crop));
+}
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'src');
 const DIST = join(ROOT, 'dist');
@@ -320,18 +373,18 @@ const categoryPath = (category) => `/${category.slug}/`;
 function categoryNav(cat) {
   if (cat.slug === 'corn-mazes') return 'corn-mazes';
   if (cat.slug === 'hayrides') return 'hayrides';
-  // Christmas tree farms are their own section. Highlighting Pumpkin Patches
-  // would put the reader in the wrong place.
-  if (cat.slug === 'christmas-tree-farms') return '';
+  // Christmas tree farms and u-pick berry farms are their own sections.
+  // Highlighting Pumpkin Patches would put the reader in the wrong place.
+  if (cat.slug === 'christmas-tree-farms' || cat.slug === BERRY_SLUG) return '';
   return 'pumpkin-patches';
 }
 
 /** Breadcrumb trail for a category hub, state or city page.
- *  `tail` is the crumbs after the category name. Christmas tree pages stay
- *  out from under Pumpkin Patches, which would read as the wrong section. */
+ *  `tail` is the crumbs after the category name. Christmas tree and berry
+ *  pages stay out from under Pumpkin Patches, which would read as the wrong section. */
 function categorySectionTrail(cat, tail = []) {
   const trail = [];
-  if (cat.slug !== 'christmas-tree-farms') {
+  if (cat.slug !== 'christmas-tree-farms' && cat.slug !== BERRY_SLUG) {
     trail.push({ label: 'Pumpkin Patches', href: '/pumpkin-patches/' });
   }
   if (tail.length) {
@@ -559,9 +612,35 @@ function christmasDirectoryLabel(listing) {
   return 'Christmas Tree Farms & Lots near me';
 }
 
+/** Most specific berry-and-fruit directory page for a listing. */
+function berryDirectoryPath(listing) {
+  if (listing?.state && listing?.city) {
+    const cityPage = categoryCityPageLinks.get(`${BERRY_SLUG}|${listing.state}|${listing.city}`);
+    if (cityPage) return cityPage.href;
+  }
+  if (listing?.state) {
+    const statePage = categoryStatePageLinks.get(`${BERRY_SLUG}|${listing.state}`);
+    if (statePage) return statePage.href;
+  }
+  return `/${BERRY_SLUG}/`;
+}
+
+function berryDirectoryLabel(listing) {
+  if (listing?.state && listing?.city && categoryCityPageLinks.get(`${BERRY_SLUG}|${listing.state}|${listing.city}`)) {
+    return `U-pick berries in ${listing.city}, ${listing.stateCode || listing.state}`;
+  }
+  if (listing?.state && categoryStatePageLinks.get(`${BERRY_SLUG}|${listing.state}`)) {
+    return `U-pick berries in ${listing.state}`;
+  }
+  return 'U-Pick Berry & Fruit Farms near me';
+}
+
 function featureTagHtml(listing, feature) {
   if (feature === CHRISTMAS_TREES_FEATURE) {
     return `<a class="tag tag-link" href="${christmasDirectoryPath(listing)}">${esc(feature)}</a>`;
+  }
+  if (feature === BERRY_FEATURE) {
+    return `<a class="tag tag-link" href="${berryDirectoryPath(listing)}">${esc(feature)}</a>`;
   }
   return `<span class="tag">${esc(feature)}</span>`;
 }
@@ -851,7 +930,9 @@ function businessSummaryHtml(l, rank, stateName) {
   const tagsSentence = (l.reviewTags || []).length
     ? `Recurring themes in reviews of ${name} include ${joinNatural(l.reviewTags.slice(0, 5).map((t) => esc(t.toLowerCase())))} — not a direct quote from any single visitor, but the topics that come up most often when people describe the farm.`
     : `Google hasn't surfaced a set of recurring review themes for ${name} yet, so there isn't a themed summary of what visitors say to pass along here — the star rating and review count above remain the clearest public signal until more detail comes in.`;
-  const descSentence = l.description ? ` In the farm's own words: "${esc(l.description)}"` : '';
+  // generatedDescription is copy we wrote from the listing fields. It is not
+  // a line the farm published, so it must not be presented as their words.
+  const descSentence = l.description && !l.generatedDescription ? ` In the farm's own words: "${esc(l.description)}"` : '';
   const categoryMatch = categories.find((c) => (l.features || []).includes(c.feature));
   const categorySentence = categoryMatch
     ? ` ${esc(l.name)} is one of the farms we track with a ${esc(categoryMatch.singular)}, which typically means ${(categoryMatch.intro.match(/<p>(.*?)<\/p>/) || ['', 'guests get more than a straightforward pumpkin field — check the listing for specifics on what runs and when'])[1].replace(/<[^>]+>/g, '').toLowerCase().slice(0, 220)}${(categoryMatch.intro.match(/<p>(.*?)<\/p>/) || ['', ''])[1].length > 220 ? '…' : '.'}`
@@ -936,6 +1017,13 @@ function perfectForText(l) {
   if (f.includes('Fall festival')) return 'Perfect for a full day out with food and music';
   if (f.includes('Hayrides')) return 'Perfect for a classic hayride out to the field';
   if (f.includes('U-pick pumpkins')) return 'Perfect for picking your own pumpkin straight from the vine';
+  if (isBerryPrimary(l)) {
+    const crops = berryCropsOn(l);
+    if (crops.length === 1) return `Perfect for ${crops[0].toLowerCase()}`;
+    if (crops.length > 1) return 'Perfect for mixed berry and fruit picking';
+    if (f.includes('Pick-your-own')) return 'Perfect for pick-your-own fruit';
+    return 'Perfect for berry and fruit picking';
+  }
   if (l.rating >= 4.7 && l.reviews >= 200) return 'Perfect for a reliably great visit, based on reviews';
   return 'Perfect for a straightforward pumpkin-picking trip';
 }
@@ -1090,7 +1178,9 @@ function locationParagraphHtml(l, address, place) {
     );
   }
   parts.push(
-    `<p>As with most pumpkin patches, parking is typically in a grass field rather than a paved lot, so allow a few extra minutes on busy weekends for staff or volunteers to direct traffic. If you are relying on a GPS app rather than the link on this page, search the farm name directly rather than just the street address — rural addresses sometimes route to the wrong gate or an adjacent property.</p>`
+    isBerryPrimary(l)
+      ? `<p>If you are relying on a GPS app rather than the link on this page, search the farm name directly rather than just the street address. Rural addresses sometimes route to the wrong gate or an adjacent property.</p>`
+      : `<p>As with most pumpkin patches, parking is typically in a grass field rather than a paved lot, so allow a few extra minutes on busy weekends for staff or volunteers to direct traffic. If you are relying on a GPS app rather than the link on this page, search the farm name directly rather than just the street address — rural addresses sometimes route to the wrong gate or an adjacent property.</p>`
   );
   return parts.join('\n    ');
 }
@@ -1149,6 +1239,126 @@ ${qa
     </div>`;
 
   return { html, qa };
+}
+
+function visitingBerryHtml(l, place) {
+  const name = esc(l.name);
+  const crops = berryCropsOn(l);
+  const kind = /orchard/i.test(l.category || '') ? 'an orchard' : 'a farm';
+  const season = crops.length
+    ? `For the crops named here, the usual window is ${joinAnd(crops.map((crop) => BERRY_SEASON_PHRASE[crop]))}.`
+    : 'Berry and summer-fruit picking generally runs from late spring into late summer.';
+  return `<h2>Visiting ${name}</h2>
+    <p>${name} is listed as ${kind}${place ? ` in ${esc(place)}` : ''}. ${season} That is a general calendar, not this farm's open date. A field can be finished, rained out, or not yet ripe when other farms nearby are picking.</p>
+    <p>The hours on this page come from the business's public listing${l.hours ? '' : ', and in this case no weekly hours were on that record'}. They may describe a year-round stand rather than the picking field. If ${place ? `the drive to ${esc(place)}` : 'the drive'} is more than a few minutes, call ${l.phone ? 'the number on this page' : 'the farm'} or check ${l.website ? `<a href="${attr(l.website)}" target="_blank" rel="noopener nofollow">the farm's website</a>` : 'its own site'} before you leave.</p>
+    <p>Prices are not listed here. U-pick fruit is often sold by the pound, the quart, or the flat, and some farms add a container fee. Ask when you call.</p>`;
+}
+
+function visitBerryTipsHtml() {
+  return `<h2>Tips for a good visit</h2>
+    <ul>
+      <li><strong>Call and ask what is ripe.</strong> Strawberries, cherries, blueberries, and peaches do not ripen in the same week, and a farm's name is not a live crop report.</li>
+      <li><strong>Ask whether you pick it or they already did.</strong> A u-pick field and a pre-picked stand are different trips. The name is the only clue on the listing.</li>
+      <li><strong>Go earlier in the day when you can.</strong> Picked fruit holds up worse after it sits in the sun, and popular rows are thinner by a weekend afternoon.</li>
+      <li><strong>Treat the posted hours as a starting point.</strong> The public listing may be the stand's year-round schedule. Picking hours are often shorter, and sometimes weekend-only.</li>
+    </ul>`;
+}
+
+function listingBerryFaqData(l, place) {
+  const name = l.name;
+  const hoursSummary = hoursSummaryText(l);
+  const crops = berryCropsOn(l);
+  const pick = (l.features || []).includes('Pick-your-own');
+  const seasonAnswer = crops.length
+    ? `The name points to ${joinAnd(crops.map((crop) => crop.toLowerCase()))}. In general that means ${joinAnd(crops.map((crop) => BERRY_SEASON_PHRASE[crop]))}. This farm's own start and finish can differ, so call before you go.`
+    : `The name does not pin down one fruit. Berry and summer-fruit picking generally runs from late spring into late summer. Call ${name} and ask what is ripe.`;
+  const qa = [
+    {
+      q: `What are ${name}'s hours?`,
+      a: hoursSummary
+        ? `The public listing shows ${name} as open ${hoursSummary}. Those hours can be the stand's year-round schedule rather than picking hours, so confirm before you visit.`
+        : `Hours are not listed for ${name} in our data. Call the farm or check its website before you drive out.`,
+    },
+    {
+      q: `How much does it cost to pick at ${name}?`,
+      a: `Prices are not listed for ${name}. U-pick fruit is often charged by the pound, the quart, or the flat, and the number changes by crop and by week. Ask the farm directly.`,
+    },
+    {
+      q: `When is fruit in season at ${name}?`,
+      a: seasonAnswer,
+    },
+    {
+      q: `Can I pick my own fruit at ${name}?`,
+      a: pick
+        ? `The name says pick-your-own or u-pick. That is the only evidence we have. Call to confirm the field is open the week you want to go.`
+        : `The name does not say pick-your-own. It may be a u-pick field, a pre-picked stand, or both, depending on the week. Call and ask.`,
+    },
+    {
+      q: `Where is ${name} located?`,
+      a: place
+        ? `${name} is in or near ${place}${l.county ? `, in ${l.county} County` : ''}. The address and map are on this page.`
+        : `The address and map on this page show where ${name} is.`,
+    },
+  ];
+  const html = `<h2>Frequently asked questions</h2>
+    <div class="faq-list">
+${qa
+  .map(
+    (item) => `      <details class="faq-item">
+        <summary>${esc(item.q)}</summary>
+        <div class="faq-answer"><p>${esc(item.a)}</p></div>
+      </details>`
+  )
+  .join('\n')}
+    </div>`;
+  return { html, qa };
+}
+
+/**
+ * Original intro for a berry state or city page. Facts come from the
+ * listings on that page: how many, which crops their names point to, and
+ * one rating. Season language stays general.
+ */
+function berryLocalIntro(items, { place, cityName }) {
+  const crops = BERRY_CROP_FEATURES.filter((crop) => items.some((l) => (l.features || []).includes(crop)));
+  const pickCount = items.filter((l) => (l.features || []).includes('Pick-your-own')).length;
+  const n = items.length;
+  const towns = [...new Set(items.map((l) => l.city).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const cropSentence = crops.length
+    ? `Names on this page point to ${joinAnd(crops.map((crop) => crop.toLowerCase()))}.`
+    : 'The names here say pick-your-own or berries, without all of them naming one crop.';
+  const townSentence = !cityName && towns.length
+    ? ` They are in ${towns.length === 1 ? esc(towns[0]) : `${towns.length} towns, including ${esc(joinAnd(towns.slice(0, 4)))}`}.`
+    : '';
+  const pickSentence = pickCount
+    ? pickCount === n
+      ? ' Every name says pick-your-own or u-pick.'
+      : ` ${pickCount} of the names say pick-your-own or u-pick.`
+    : '';
+  const rated = items
+    .filter((l) => l.rating)
+    .sort((a, b) => (b.rating || 0) - (a.rating || 0) || (b.reviews || 0) - (a.reviews || 0))[0];
+  const ratedSentence = rated
+    ? ` ${esc(rated.name)}${rated.city && rated.city !== cityName ? ` in ${esc(rated.city)}` : ''} is one of the higher-rated stops here${rated.rating ? `, at ${rated.rating.toFixed(1)}` : ''}${rated.reviews ? ` from ${rated.reviews.toLocaleString('en-US')} Google reviews` : ''}.`
+    : '';
+  const leadCrop = berryCropsPresent(items)[0]?.crop;
+  const searchLine = leadCrop === 'Strawberries'
+    ? `For strawberry picking in ${esc(place)}, start with the farms whose names say strawberry.`
+    : leadCrop === 'Cherries'
+      ? `For cherry picking in ${esc(place)}, the cherry names are the ones to call.`
+      : leadCrop === 'Blueberries'
+        ? `For blueberry picking in ${esc(place)}, start with the blueberry names.`
+        : leadCrop === 'Peaches'
+          ? `For peach picking in ${esc(place)}, the peach names are the places to check.`
+          : leadCrop === 'Blackberries'
+            ? `For blackberry picking in ${esc(place)}, start with the blackberry names.`
+            : `For berry picking or a u-pick farm in ${esc(place)}, these are the farms and orchards we can place.`;
+  const seasonBits = crops.map((crop) => BERRY_SEASON_PHRASE[crop]).filter(Boolean);
+  const seasonSentence = seasonBits.length
+    ? `In a typical year that means ${joinAnd(seasonBits)}.`
+    : 'Berry and fruit picking generally runs from late spring into late summer.';
+  return `<p>This page lists ${n} u-pick berry and fruit ${n === 1 ? 'farm' : 'farms'} we track in ${esc(place)}. ${cropSentence}${townSentence}${pickSentence}${ratedSentence}</p>
+<p>${searchLine} ${seasonSentence} Hours come from each business's public listing and can describe the farm stand rather than the field. We do not publish prices or which rows are open. See <a href="/${BERRY_SLUG}/">u-pick berry and fruit farms in every state</a>, and call ahead before you drive.</p>`;
 }
 
 /* ---------------------------------------------------------- blog authors */
@@ -3678,11 +3888,15 @@ function generateCategoryCityPages(catOrSlug, { minListings = 1, itemFilter = nu
     // plain roster rather than "N patches offer pumpkin farm."
     const description = cat.slug === 'christmas-tree-farms'
       ? `Find Christmas tree farms and lots in ${label} — ${n} ${n === 1 ? 'farm or lot' : 'farms and lots'} we track that sell Christmas trees, with address, hours and directions.`
+      : cat.slug === BERRY_SLUG
+      ? berryMetaDescription(label, n, distinct)
       : cat.feature
       ? `Find ${cat.name.toLowerCase()} in ${label} — ${n} pumpkin patch${n === 1 ? '' : 'es'} we track with ${cat.singular}, ranked by rating, with address, hours and directions.`
       : `${n} ${cat.singular}${n === 1 ? '' : 's'} in ${label}, ranked by rating, with address, hours and directions for each.`;
     const lede = cat.slug === 'christmas-tree-farms'
       ? `${n} Christmas tree ${n === 1 ? 'farm or lot' : 'farms and lots'} we track in ${label}, ranked by rating and review volume.`
+      : cat.slug === BERRY_SLUG
+      ? `${n} u-pick berry and fruit ${n === 1 ? 'farm' : 'farms'} we track in ${label}, ranked by rating and review volume.`
       : cat.feature
       ? `${n} pumpkin patch${n === 1 ? '' : 'es'} we track in ${label} ${n === 1 ? 'offers' : 'offer'} ${cat.singular}, ranked by rating and review volume.`
       : `${n} ${cat.singular}${n === 1 ? '' : 's'} we track in ${label}, ranked by rating and review volume.`;
@@ -3708,9 +3922,13 @@ ${paginationNav(path, 1, 1)}`;
     const siblings = qualifying.filter((q) => q.stateName === stateName && q.cityName !== cityName);
     const alsoSee = cat.slug === 'christmas-tree-farms'
       ? `<p>These are the Christmas tree farms and lots we track in ${esc(label)}. For the fall directory, see <a href="${cityPath(stateName, cityName)}">every pumpkin patch we track in ${esc(label)}</a>, or browse <a href="${categoryPath(cat)}">Christmas tree farms and lots in every state</a>.</p>`
+      : cat.slug === BERRY_SLUG
+      ? `<p>These are the u-pick berry and fruit farms we track in ${esc(label)}. For the fall directory, see <a href="${cityPath(stateName, cityName)}">every pumpkin patch we track in ${esc(label)}</a>, or browse <a href="${categoryPath(cat)}">u-pick berry and fruit farms in every state</a>.</p>`
       : `<p>Want everything ${esc(label)} has to offer, not just ${esc(cat.name.toLowerCase())}? See <a href="${cityPath(stateName, cityName)}">every pumpkin patch we track in ${esc(label)}</a>, or browse ${esc(cat.name.toLowerCase())} in every state on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>`;
 
+    const localIntro = cat.slug === BERRY_SLUG ? berryLocalIntro(distinct, { place: label, cityName, stateName }) : '';
     const body = `${heroHtml}
+${localIntro}
 ${renderScopedMap(distinct, listHtml, { singular: cat.singular, plural: cat.name.toLowerCase() })}
 
 ${renderAdSlot('square')}
@@ -3788,11 +4006,15 @@ function generateCategoryStatePages(catOrSlug, { minListings = 1, itemFilter = n
 
     const description = cat.slug === 'christmas-tree-farms'
       ? `Find Christmas tree farms and lots in ${stateName} — ${n} ${n === 1 ? 'farm or lot' : 'farms and lots'} we track that sell Christmas trees, with address, hours and directions.`
+      : cat.slug === BERRY_SLUG
+      ? berryMetaDescription(stateName, n, distinct)
       : cat.feature
       ? `Find ${cat.name.toLowerCase()} in ${stateName} — ${n} pumpkin patch${n === 1 ? '' : 'es'} we track statewide with ${cat.singular}, ranked by rating, with address, hours and directions.`
       : `${n} ${cat.singular}${n === 1 ? '' : 's'} in ${stateName}, ranked by rating, with address, hours and directions for each.`;
     const lede = cat.slug === 'christmas-tree-farms'
       ? `${n} Christmas tree ${n === 1 ? 'farm or lot' : 'farms and lots'} we track in ${stateName}, ranked by rating and review volume across ${cities.length} ${townWord}.`
+      : cat.slug === BERRY_SLUG
+      ? `${n} u-pick berry and fruit ${n === 1 ? 'farm' : 'farms'} we track in ${stateName}, ranked by rating and review volume across ${cities.length} ${townWord}.`
       : cat.feature
       ? `${n} pumpkin patch${n === 1 ? '' : 'es'} we track in ${stateName} ${n === 1 ? 'offers' : 'offer'} ${cat.singular}, ranked by rating and review volume across ${cities.length} ${townWord}.`
       : `${n} ${cat.singular}${n === 1 ? '' : 's'} we track in ${stateName}, ranked by rating and review volume across ${cities.length} ${townWord}.`;
@@ -3820,9 +4042,13 @@ ${pillarFeed(distinct, (l, i) => renderPillarEntry(l, i, stateName), stateName)}
     const stateGuide = (stateGuideLinks.get(stateName) || []).find((g) => g.catSlug === cat.slug);
     const alsoSee = cat.slug === 'christmas-tree-farms'
       ? `<p>These are the Christmas tree farms and lots we track in ${esc(stateName)}. For the fall directory, see <a href="${statePath(stateName)}">every pumpkin patch we track in ${esc(stateName)}</a>, or browse <a href="${categoryPath(cat)}">Christmas tree farms and lots in every state</a>.</p>`
+      : cat.slug === BERRY_SLUG
+      ? `<p>These are the u-pick berry and fruit farms we track in ${esc(stateName)}. For the fall directory, see <a href="${statePath(stateName)}">every pumpkin patch we track in ${esc(stateName)}</a>, or browse <a href="${categoryPath(cat)}">u-pick berry and fruit farms in every state</a>.</p>`
       : `<p>Want everything ${esc(stateName)} has to offer, not just ${esc(cat.name.toLowerCase())}? See <a href="${statePath(stateName)}">every pumpkin patch we track in ${esc(stateName)}</a>, or browse ${esc(cat.name.toLowerCase())} in every state on our <a href="${categoryPath(cat)}">${esc(cat.name)} near me</a> page.</p>`;
 
+    const localIntro = cat.slug === BERRY_SLUG ? berryLocalIntro(distinct, { place: stateName, cityName: null, stateName }) : '';
     const body = `${heroHtml}
+${localIntro}
 ${renderScopedMap(distinct, listHtml, { singular: cat.singular, plural: cat.name.toLowerCase() })}
 <div class="section" style="padding-bottom:0">
   ${alsoSee}
@@ -3876,6 +4102,11 @@ generateCategoryStatePages('haunted-attractions');
 // No best-of posts: attractionPosts is false on this category.
 generateCategoryCityPages('christmas-tree-farms', { minListings: 2, distinctNames: false });
 generateCategoryStatePages('christmas-tree-farms', { minListings: 3, distinctNames: false });
+// Same gates as the Christmas section: no one-farm city pages, no thin state
+// pages, and same-named farms at different addresses both stay on the page.
+// No best-of posts: attractionPosts is false on this category.
+generateCategoryCityPages(BERRY_SLUG, { minListings: 2, distinctNames: false });
+generateCategoryStatePages(BERRY_SLUG, { minListings: 3, distinctNames: false });
 
 /* --- /farms/ hub and /farms/<city>-<state>/ pages -------------------------
    "Pumpkin farm" is real, distinct search phrasing from "pumpkin patch" —
@@ -4187,7 +4418,7 @@ const homepagePrioritySections = [
 const homepageNearbySections = [
   // Christmas trees is appended after the existing carousels so it does not
   // take cards away from sections that were already on the homepage.
-  ...categories.filter((c) => c.slug !== 'christmas-tree-farms').map((c) => ({
+  ...categories.filter((c) => c.slug !== 'christmas-tree-farms' && c.slug !== BERRY_SLUG).map((c) => ({
     key: `nearby-${c.slug}`,
     title: `${c.name} Near Me`,
     href: categoryPath(c),
@@ -4203,6 +4434,15 @@ if (christmasHomeCat) {
     title: `${christmasHomeCat.name} Near Me`,
     href: categoryPath(christmasHomeCat),
     items: takeUnique(rankByScore(byCategory.get(christmasHomeCat.slug) || []), 12, homeCardUsed),
+  });
+}
+const berryHomeCat = categories.find((c) => c.slug === BERRY_SLUG);
+if (berryHomeCat) {
+  homepageNearbySections.push({
+    key: `nearby-${berryHomeCat.slug}`,
+    title: `${berryHomeCat.name} Near Me`,
+    href: categoryPath(berryHomeCat),
+    items: takeUnique(rankByScore(byCategory.get(berryHomeCat.slug) || []), 12, homeCardUsed),
   });
 }
 
@@ -5040,7 +5280,7 @@ ${statesWith
     // States under the Christmas-tree minimum stay on this hub, where those
     // listings are actually listed. The pumpkin-patch state page is a
     // different directory.
-    const href = statePage ? statePage.href : cat.slug === 'christmas-tree-farms' ? path : statePath(s);
+    const href = statePage ? statePage.href : (cat.slug === 'christmas-tree-farms' || cat.slug === BERRY_SLUG) ? path : statePath(s);
     return `    <a class="state-link" href="${href}">${esc(s)} <span>${n}</span></a>`;
   })
   .join('\n')}
@@ -5055,6 +5295,9 @@ ${statesWith
   ${cat.slug === 'christmas-tree-farms'
     ? `<h2>Find a Christmas tree near you</h2>
   <p>The fastest way to find a farm or lot selling Christmas trees nearby is the map: enter your ZIP code, then set the feature filter to Christmas trees. Results re-sort by distance from your location.</p>`
+    : cat.slug === BERRY_SLUG
+    ? `<h2>Find berry and fruit picking near you</h2>
+  <p>The fastest way to find strawberry picking, blueberry picking, cherry picking, or peach picking nearby is the map: enter your ZIP code, then set the feature filter to Berry &amp; fruit picking. Results re-sort by distance from your location.</p>`
     : `<h2>Find a ${esc(cat.singular)} near you</h2>
   <p>The fastest way to find a farm with a ${esc(cat.singular)} nearby is the map: enter your ZIP code, then set the feature filter to ${esc(cat.name.toLowerCase())}. Results re-sort by distance from your location.</p>`}
   <p>
@@ -5124,24 +5367,37 @@ for (const l of listings) {
   // Drop the site-name suffix rather than truncating mid-word when the full
   // title would run past a safe SERP display length — the business name and
   // location are the part worth keeping intact.
-  const title = `${baseTitle} | Pumpkin Patch Near Me`.length <= 60 ? `${baseTitle} | Pumpkin Patch Near Me` : baseTitle;
+  const berryPrimary = isBerryPrimary(l);
+  const titleSuffix = berryPrimary ? 'U-Pick Berry Farm' : 'Pumpkin Patch Near Me';
+  const title = `${baseTitle} | ${titleSuffix}`.length <= 60 ? `${baseTitle} | ${titleSuffix}` : baseTitle;
   const meta = {
     path,
     title,
     description:
       l.description ||
-      `${l.name} is a pumpkin patch${isDuplicateNameInCity && l.street ? ` at ${l.street}` : place ? ` in ${place}` : ''}. See the address, hours, rating and directions before you visit.`,
+      (berryPrimary
+        ? `${l.name} is a u-pick berry or fruit farm${place ? ` in ${place}` : ''}. See the address, hours, rating and directions before you visit.`
+        : `${l.name} is a pumpkin patch${isDuplicateNameInCity && l.street ? ` at ${l.street}` : place ? ` in ${place}` : ''}. See the address, hours, rating and directions before you visit.`),
     h1: l.name,
-    lede: place ? `Pumpkin patch in ${place}` : 'Pumpkin patch',
-    nav: 'pumpkin-patches',
+    lede: berryPrimary
+      ? (place ? `U-pick berry and fruit farm in ${place}` : 'U-pick berry and fruit farm')
+      : (place ? `Pumpkin patch in ${place}` : 'Pumpkin patch'),
+    nav: berryPrimary ? '' : 'pumpkin-patches',
     layout: 'wide',
     noindex: Boolean(l.sample),
-    trail: [
-      { label: 'Pumpkin Patches', href: '/pumpkin-patches/' },
-      ...(l.state ? [{ label: l.state, href: statePath(l.state) }] : []),
-      ...(l.state && l.city ? [{ label: l.city, href: cityPath(l.state, l.city) }] : []),
-      { label: l.name },
-    ],
+    trail: berryPrimary
+      ? [
+          { label: 'U-Pick Berry & Fruit Farms', href: `/${BERRY_SLUG}/` },
+          ...(l.state ? [{ label: l.state, href: categoryStatePageLinks.get(`${BERRY_SLUG}|${l.state}`)?.href || statePath(l.state) }] : []),
+          ...(l.state && l.city ? [{ label: l.city, href: categoryCityPageLinks.get(`${BERRY_SLUG}|${l.state}|${l.city}`)?.href || cityPath(l.state, l.city) }] : []),
+          { label: l.name },
+        ]
+      : [
+          { label: 'Pumpkin Patches', href: '/pumpkin-patches/' },
+          ...(l.state ? [{ label: l.state, href: statePath(l.state) }] : []),
+          ...(l.state && l.city ? [{ label: l.city, href: cityPath(l.state, l.city) }] : []),
+          { label: l.name },
+        ],
   };
 
   // Other farms in the same town, so every listing page has somewhere to go next.
@@ -5181,7 +5437,7 @@ for (const l of listings) {
       ).join('')
     : '';
 
-  const faq = listingFaqData(l, place);
+  const faq = berryPrimary ? listingBerryFaqData(l, place) : listingFaqData(l, place);
 
   const body = `${l.sample ? `<div class="notice"><p><strong>Sample listing.</strong> This is placeholder data used to demonstrate the directory layout. It is excluded from search engines and will be replaced when the live Outscraper import runs.</p></div>` : ''}
 <figure class="detail-hero">
@@ -5209,7 +5465,7 @@ ${renderAdSlot('square')}
 
     ${whatToExpectHtml(l)}
 
-    ${visitingGuidanceHtml(l, place)}
+    ${berryPrimary ? visitingBerryHtml(l, place) : visitingGuidanceHtml(l, place)}
 
     ${l.season || l.admission || (l.payment && l.payment.length) ? `<h3>Quick facts</h3>
     <ul class="fact-list">
@@ -5218,7 +5474,7 @@ ${renderAdSlot('square')}
       ${l.payment && l.payment.length ? `<li><b>Payment</b><span>${l.payment.map((p) => esc(p)).join(', ')}</span></li>` : ''}
     </ul>` : ''}
 
-    ${visitTipsHtml()}
+    ${berryPrimary ? visitBerryTipsHtml() : visitTipsHtml()}
 
     <h2>Hours</h2>
     <p>${hoursRows ? `Listed hours for ${esc(l.name)} are below. As with any seasonal farm, treat these as a strong starting point rather than a guarantee — confirm directly if you are travelling any distance to visit.` : `Hours are not listed for ${esc(l.name)} in our data. Contact the farm directly to confirm before visiting — see the phone number and website in the panel to the right, if listed.`}</p>
@@ -5229,22 +5485,22 @@ ${renderAdSlot('square')}
 
     ${faq.html}
 
-    ${nearby.length ? `<h2>Other pumpkin patches near ${esc(l.city)}</h2>
-    <p>Comparing options nearby is always worth a minute before you commit to a drive — hours, pricing and what's running can vary a lot between farms just a few miles apart.</p>
+    ${nearby.length ? `<h2>${berryPrimary ? `Other farms near ${esc(l.city)}` : `Other pumpkin patches near ${esc(l.city)}`}</h2>
+    <p>${berryPrimary ? 'Other listings in the same town are below. Hours, and which fruit is ripe, can differ from one farm to the next.' : "Comparing options nearby is always worth a minute before you commit to a drive — hours, pricing and what's running can vary a lot between farms just a few miles apart."}</p>
     <div class="grid grid-2">
 ${nearby.map((o) => renderCard(o, { showState: false, showCity: false })).join('\n')}
     </div>
-    <p><a href="${cityPath(l.state, l.city)}">All pumpkin patches in ${esc(l.city)}, ${esc(l.stateCode || '')}</a></p>` : ''}
+    <p><a href="${cityPath(l.state, l.city)}">${berryPrimary ? `All listings in ${esc(l.city)}, ${esc(l.stateCode || '')}` : `All pumpkin patches in ${esc(l.city)}, ${esc(l.stateCode || '')}`}</a>${berryPrimary ? ` · <a href="${berryDirectoryPath(l)}">${esc(berryDirectoryLabel(l))}</a>` : ''}</p>` : ''}
 
     ${related.length ? `<h2>You might also like</h2>
-    <p>${sameStateByFeature.length ? `More farms in ${esc(l.stateCode || l.state)} with similar attractions:` : `More pumpkin patches to compare across ${esc(l.stateCode || l.state)}:`}</p>
+    <p>${berryPrimary ? `More berry and fruit farms to compare in ${esc(l.stateCode || l.state)}:` : sameStateByFeature.length ? `More farms in ${esc(l.stateCode || l.state)} with similar attractions:` : `More pumpkin patches to compare across ${esc(l.stateCode || l.state)}:`}</p>
     <div class="grid grid-2">
 ${related.map((o) => renderCard(o, { showState: false, showCity: true })).join('\n')}
     </div>
-    <p><a href="${statePath(l.state)}">All pumpkin patches in ${esc(l.state)}</a></p>` : ''}
+    <p><a href="${berryPrimary ? berryDirectoryPath(l) : statePath(l.state)}">${berryPrimary ? esc(berryDirectoryLabel(l)) : `All pumpkin patches in ${esc(l.state)}`}</a></p>` : ''}
 
     ${nearCities.length ? `<h2>Nearby Cities</h2>
-    <p>Pumpkin patches in towns near ${esc(l.city)}, ${esc(l.stateCode || l.state)}:</p>
+    <p>${berryPrimary ? `Towns near ${esc(l.city)}, ${esc(l.stateCode || l.state)}:` : `Pumpkin patches in towns near ${esc(l.city)}, ${esc(l.stateCode || l.state)}:`}</p>
     <div class="tag-row">
 ${nearCities.map((c) => `      <a class="tag tag-link" href="${cityPath(l.state, c.city)}">${esc(c.city)} (${c.count})</a>`).join('\n')}
     </div>` : ''}
@@ -5280,8 +5536,8 @@ ${listingGuides.map((g) => `      <li><a href="${g.href}">${esc(g.title)}</a></l
 ${categories
   .filter((c) => (l.features || []).includes(c.feature))
   .map((c) => {
-    const href = c.slug === 'christmas-tree-farms' ? christmasDirectoryPath(l) : categoryPath(c);
-    const label = c.slug === 'christmas-tree-farms' ? christmasDirectoryLabel(l) : `${c.name} near me`;
+    const href = c.slug === 'christmas-tree-farms' ? christmasDirectoryPath(l) : c.slug === BERRY_SLUG ? berryDirectoryPath(l) : categoryPath(c);
+    const label = c.slug === 'christmas-tree-farms' ? christmasDirectoryLabel(l) : c.slug === BERRY_SLUG ? berryDirectoryLabel(l) : `${c.name} near me`;
     return `        <li><a href="${href}">${esc(label)}</a></li>`;
   })
   .join('\n')}
@@ -5485,6 +5741,16 @@ cpSync(join(SRC, 'assets/img/favicon.ico'), join(DIST, 'favicon.ico'));
 ${renderStateGrid()}
 <p style="margin-top:1.5rem"><a class="btn btn-outline" href="/">Home</a> <a class="btn btn-outline" href="/pumpkin-patches/">All pumpkin patches</a> <a class="btn btn-outline" href="/blog/">Guides</a></p>`;
   writeFileSync(join(DIST, '404.html'), render(notFoundMeta, notFoundBody));
+}
+
+{
+  const berryPaths = new Set([
+    ...sitemapEntries.map((entry) => entry.path).filter((p) => p === `/${BERRY_SLUG}/` || p.startsWith(`/${BERRY_SLUG}/`)),
+    ...listings.filter((l) => l.generatedDescription && !l.sample).map((l) => listingPath(l)),
+  ]);
+  const lines = [...berryPaths].sort().map((p) => `${SITE_URL}${p}`);
+  writeFileSync(join(DIST, 'u-pick-berry-farms-urls.txt'), `${lines.join('\n')}\n`);
+  console.log(`Berry section indexable URLs: ${lines.length}`);
 }
 
 console.log(`Built ${sitemapEntries.length} indexable pages`);
