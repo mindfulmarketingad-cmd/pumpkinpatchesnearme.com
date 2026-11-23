@@ -373,9 +373,8 @@ const categoryPath = (category) => `/${category.slug}/`;
 function categoryNav(cat) {
   if (cat.slug === 'corn-mazes') return 'corn-mazes';
   if (cat.slug === 'hayrides') return 'hayrides';
-  // Christmas tree farms and u-pick berry farms are their own sections.
-  // Highlighting Pumpkin Patches would put the reader in the wrong place.
-  if (cat.slug === 'christmas-tree-farms' || cat.slug === BERRY_SLUG) return '';
+  if (cat.slug === 'christmas-tree-farms') return 'christmas-tree-farms';
+  if (cat.slug === BERRY_SLUG) return BERRY_SLUG;
   return 'pumpkin-patches';
 }
 
@@ -1718,7 +1717,7 @@ ${body}
 }
 
 function render(meta, body, opts = {}) {
-  const navKeys = ['home', 'blog', 'about', 'find', 'pumpkin-patches', 'corn-mazes', 'hayrides', 'experiences', 'partners'];
+  const navKeys = ['home', 'blog', 'about', 'find', 'pumpkin-patches', 'corn-mazes', 'hayrides', 'christmas-tree-farms', 'u-pick-berry-farms', 'experiences', 'partners'];
   let html = template;
 
   const banner = sampleOnly && meta.path === '/'
@@ -1739,11 +1738,10 @@ function render(meta, body, opts = {}) {
       ? `<li><a href="/experiences/"${meta.nav === 'experiences' ? ' aria-current="page"' : ''}>Experiences</a></li>`
       : '',
     '{{ADSENSE_SCRIPT}}': ADSENSE_HEAD,
-    // Corn Mazes and Hayrides are the only two category hubs in the main
-    // nav, so they pick up a link from every page on the site while the
-    // other feature sections only get linked from pages that happen to
-    // carry that feature. This footer block gives every feature section
-    // the same site-wide link.
+    // Pumpkin Patches, Corn Mazes, Hayrides, Christmas Tree Farms and
+    // U-Pick Berry Farms are in the header. The other feature sections
+    // only get linked from pages that happen to carry that feature. This
+    // footer block gives every feature section the same site-wide link.
     '{{FOOTER_CATEGORY_NAV}}': `<nav class="footer-nav footer-nav-cats" aria-label="Browse by feature">
       <span class="footer-nav-label">Browse by feature</span>
       <ul>

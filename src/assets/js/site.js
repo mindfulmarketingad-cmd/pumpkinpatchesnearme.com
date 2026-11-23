@@ -69,7 +69,8 @@
     });
 
     document.addEventListener('click', function (event) {
-      if (window.innerWidth > 900) return;
+      // Same cutoff as the header menu in style.css (max-width: 1159px).
+      if (window.innerWidth > 1159) return;
       if (nav.contains(event.target) || toggle.contains(event.target)) return;
       nav.setAttribute('data-open', 'false');
       toggle.setAttribute('aria-expanded', 'false');
