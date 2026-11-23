@@ -196,6 +196,12 @@ html.promo-off { --promo-h: 0px; }
   border-bottom: 1px solid var(--line);
 }
 .site-header .wrap {
+  /* Wider than the 1200px content column so the seasonal hub links fit on
+     one line. The left edge stays lined up with that column; the nav uses
+     the room to the right of it. */
+  width: auto;
+  margin-left: max(1.25rem, calc((100% - var(--wrap)) / 2));
+  margin-right: 1.25rem;
   height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
 }
 /* The brand keeps its intrinsic width; the nav is what gives. */
@@ -276,22 +282,27 @@ html.promo-off { --promo-h: 0px; }
 .btn-shop:hover { background: #ffb838; color: var(--ink); border-color: #ffb838; }
 .btn-shop svg { flex: 0 0 auto; }
 
-/* Between the phone menu and a roomy desktop the bar has ten items that are
-   all now nowrap, so instead of letting them wrap to a second row (which is
-   what made the header a different height on /experiences/) or push the page
-   into a horizontal scroll, tighten the spacing and drop the wordmark text
-   back to the logo mark. Measured against the widest nav we ship — the one
-   with Experiences in it. */
-@media (min-width: 901px) and (max-width: 1240px) {
+/* Twelve nowrap labels (the two seasonal hubs plus Experiences) wrap the
+   header onto a second line or overflow it if they stay at full size on a
+   normal laptop. Tighten in steps, and use the menu button below 1160px,
+   where even the tight size does not fit. Cutoffs are measured against the
+   system-font fallback that paints before Fredoka loads.
+   1160–1363: logo mark only, 0.84rem.
+   1364–1519: wordmark back, still 0.84rem.
+   1520–1839: 0.88rem.
+   1840 and up: the full 0.95rem size. */
+@media (min-width: 1160px) and (max-width: 1839px) {
   .main-nav a { padding: 0.5rem 0.4rem; font-size: 0.88rem; }
   .main-nav .nav-cta a, .main-nav .nav-shop a { padding-inline: 0.8rem; }
 }
-@media (min-width: 901px) and (max-width: 1080px) {
-  .brand-text { display: none; }
+@media (min-width: 1160px) and (max-width: 1519px) {
   .main-nav a { padding: 0.5rem 0.3rem; font-size: 0.84rem; }
 }
+@media (min-width: 1160px) and (max-width: 1363px) {
+  .brand-text { display: none; }
+}
 
-@media (max-width: 900px) {
+@media (max-width: 1159px) {
   .nav-toggle { display: block; }
   .main-nav {
     position: absolute; inset: var(--header-h) 0 auto 0; background: #fff;
