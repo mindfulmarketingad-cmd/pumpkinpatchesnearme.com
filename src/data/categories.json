@@ -152,5 +152,23 @@
       { "q": "Should I call ahead for hours and prices?", "a": "Yes, if the trip depends on either one. Hours in our listings can reflect a fall or year-round schedule rather than December tree hours, and we do not publish tree prices because they change by height, species and week. Use the phone number or website on the listing to confirm both before you go." },
       { "q": "Are these the same places as the pumpkin patches?", "a": "Some are. A farm may run a pumpkin patch in the fall and sell trees in December, and both can show up in our data. Others are tree lots that only operate for the holidays. Being listed here means the listing says it sells Christmas trees. It does not mean every fall attraction is still open, or that a tree is in stock the day you visit." }
     ]
+  },
+  {
+    "slug": "u-pick-berry-farms",
+    "feature": "Berry & fruit picking",
+    "name": "U-Pick Berry & Fruit Farms",
+    "singular": "berry and fruit picking",
+    "attractionPosts": false,
+    "title": "U-Pick Berry Farms Near Me — Strawberry, Blueberry, Cherry and Peach Picking",
+    "description": "Find u-pick berry and fruit farms near you. Strawberry, blueberry, cherry, and peach picking, with addresses, hours, and directions.",
+    "lede": "Strawberry picking in late spring, cherries in early summer, blueberries in mid-summer, and peaches from mid to late summer.",
+    "intro": "<p>A u-pick berry or fruit farm is a place where you pick the crop yourself, or a farm or orchard whose name says it grows berries or summer fruit. Strawberries are usually a late-spring crop. Cherries follow in early summer, blueberries in mid-summer, and peaches from mid to late summer. The week matters more than the month: a farm can be finished with one fruit and not yet open on the next.</p><p>Strawberry picking near me, blueberry picking near me, and berry picking near me are the searches that carry this directory through spring and summer, along with cherry picking near me, peach picking near me, strawberry u-pick, and u-pick farms. The list is farms and orchards only. A garden center is not included, and a business marked closed is not included. A name has to say the crop, or say that you pick it yourself.</p><p>Hours on these pages come from each business's public listing. That record often describes the year-round stand rather than the picking field, and it does not say what is ripe or what a quart costs. Call the number on the listing, or check the farm's own site, before you drive out.</p>",
+    "extraIntro": "<p>When a few farms are equally close, the useful difference is which fruit the name actually names, and whether the name says the fruit is pick-your-own. A strawberry name is the one to try in late spring. A cherry name fits early summer. Blueberry and peach names are the mid-summer and later trips. None of that promises a particular row is open this week.</p>",
+    "faq": [
+      { "q": "When can I pick strawberries, cherries, blueberries, and peaches?", "a": "In general, strawberries come on in late spring, cherries in early summer, blueberries in mid-summer, and peaches from mid to late summer. Blackberries usually overlap the blueberry weeks. A farm's own start can be earlier or later, and a name that says strawberry does not mean strawberries are ripe the day you visit. Call ahead." },
+      { "q": "What is a strawberry u-pick, or a u-pick farm?", "a": "U-pick, also written pick-your-own, means you harvest the fruit yourself. Farms often sell it by the pound, the quart, or the flat. Some names on this list say the crop and do not say whether the field is pick-your-own or already picked. We only mark pick-your-own when the name says so. Prices are not something this directory tracks." },
+      { "q": "How do I find berry picking near me?", "a": "Use the state and city pages linked below, or search the map by ZIP code and set the feature filter to Berry and fruit picking. Strawberry picking, blueberry picking, cherry picking, and peach picking all live in this section. A city page exists only where at least two of these farms sit in the same town. A state page exists only where a state has at least three." },
+      { "q": "Are these the same places as the pumpkin patches?", "a": "Some farms do both, and those keep their existing listing with this section added. Most of the farms here are orchards and berry farms that were not in the fall directory. A berry listing does not mean a pumpkin patch, a corn maze, or a tree lot is open, and fall hours on a shared listing are not berry-season hours." }
+    ]
   }
 ]
